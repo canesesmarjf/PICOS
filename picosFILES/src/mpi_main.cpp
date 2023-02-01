@@ -122,15 +122,15 @@ void MPI_MAIN_TYP::createMPITopology(params_TYP * params)
 			MPI_Cart_shift(params->mpi.MPI_TOPO, 0, -1, &src, &params->mpi.LEFT_MPI_DOMAIN_NUMBER_CART);
 
 			// Calculate mesh index range (iIndex,fIndex) associated with each RANK:
-            params->mpi.iIndex = params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1;
-            params->mpi.fIndex = params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+      params->mpi.iIndex = params->mesh_params.Nx_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1;
+      params->mpi.fIndex = params->mesh_params.Nx_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1);
 
 			/*
 			cout << "World Rank: " << params->mpi.MPI_DOMAIN_NUMBER <<" , Cart Rank: "<< params->mpi.MPI_DOMAIN_NUMBER_CART << endl;
 			cout << "World Rank: " << params->mpi.MPI_DOMAIN_NUMBER <<" , iIndex: "<< params->mpi.iIndex << endl;
 			cout << "World Rank: " << params->mpi.MPI_DOMAIN_NUMBER <<" , fIndex: "<< params->mpi.fIndex << endl;
 			*/
-			
+
 			/*
 			World Rank: 0 , Cart Rank: 0
 			World Rank: 0 , iIndex: 1
@@ -141,10 +141,10 @@ void MPI_MAIN_TYP::createMPITopology(params_TYP * params)
 			*/
 
 			if (params->mpi.MPI_DOMAIN_NUMBER_CART == 0)
-            {
-                cout << endl << "* * * * * * * * * * * * GENERATING MPI TOPOLOGY FOR FIELDS * * * * * * * * * * * * * * * * * *" << endl;
-                cout << "+ Number of MPI processes along the x-axis: " << dims_1D[0] << endl;
-                cout << "+ Number of mesh nodes along x-axis: " << params->mesh.NX_IN_SIM << endl;
+			{
+				cout << endl << "* * * * * * * * * * * * GENERATING MPI TOPOLOGY FOR FIELDS * * * * * * * * * * * * * * * * * *" << endl;
+				cout << "+ Number of MPI processes along the x-axis: " << dims_1D[0] << endl;
+				cout << "+ Number of mesh nodes along x-axis: " << params->mesh_params.Nx << endl;
 				cout << "+ Number of MPI processes for FIELDS: " << params->mpi.MPIS_FIELDS << endl;
 				cout << "+ Number of MPI processes for PARTICLES: " << params->mpi.MPIS_PARTICLES << endl;
 				cout << "* * * * * * * * * * * * MPI TOPOLOGY FOR FIELDS GENERATED  * * * * * * * * * * * * * * * * * *" << endl << endl;
@@ -172,7 +172,7 @@ void MPI_MAIN_TYP::finalizeCommunications(params_TYP * params)
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	MPI_Comm_free(&params->mpi.COMM);
+	// MPI_Comm_free(&params->mpi.COMM);
 
 	MPI_Finalize();
 

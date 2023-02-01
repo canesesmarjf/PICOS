@@ -1,6 +1,13 @@
 #include "initialize.h"
-#include "initDistribution.h"
+// #include "initDistribution.h"
 
+void debug(int i,params_TYP * params)
+{
+  if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+  {
+    cout << "debug " << i << endl;
+  }
+}
 // Function to split strings:
 // =============================================================================
 vector<string> init_TYP::split(const string& str, const string& delim)
@@ -96,75 +103,78 @@ map<string,string> init_TYP::readTextFile(string * inputFile)
 // =============================================================================
 init_TYP::init_TYP(params_TYP * params, int argc, char* argv[])
 {
-    // Get RANK and SIZE of nodes within COMM_WORLD:
-    // =============================================
-    MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
-    MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
+  // Get RANK and SIZE of nodes within COMM_WORLD:
+  // =============================================
+  MPI_Comm_size(MPI_COMM_WORLD, &params->mpi.NUMBER_MPI_DOMAINS);
+  MPI_Comm_rank(MPI_COMM_WORLD, &params->mpi.MPI_DOMAIN_NUMBER);
 
-    // Error codes:
-    // ============
-    params->errorCodes[-100] = "Odd number of MPI processes";
-    params->errorCodes[-102] = "MPI's Cartesian topology could not be created";
-    params->errorCodes[-103] = "Grid size violates assumptions of hybrid model for the plasma -- DX smaller than the electron skind depth can not be resolved";
-    params->errorCodes[-106] = "Inconsistency in iniital ion's velocity distribution function";
+  MPI_Barrier(MPI_COMM_WORLD);
+  cout << "params->mpi.NUMBER_MPI_DOMAINS = " << params->mpi.MPI_DOMAIN_NUMBER << endl;
+  MPI_Barrier(MPI_COMM_WORLD);
 
-    // Program information:
-    // ===========================
-    if (params->mpi.MPI_DOMAIN_NUMBER == 0)
-    {
-        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
-        cout << "* PICOS++, a 1D-2V GC hybrid PIC code for Open plasma Systems           *" << endl;
-        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
-        cout << endl;
-    }
+  // Error codes:
+  // ============
+  params->errorCodes[-100] = "Odd number of MPI processes";
+  params->errorCodes[-102] = "MPI's Cartesian topology could not be created";
+  params->errorCodes[-103] = "Grid size violates assumptions of hybrid model for the plasma -- DX smaller than the electron skind depth can not be resolved";
+  params->errorCodes[-106] = "Inconsistency in iniital ion's velocity distribution function";
 
-    MPI_Barrier(MPI_COMM_WORLD);
+  // Program information:
+  // ===========================
+  if (params->mpi.MPI_DOMAIN_NUMBER == 0)
+  {
+    cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
+    cout << "* PICOS++, a 1D-2V GC hybrid PIC code for Open plasma Systems           *" << endl;
+    cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
+    cout << endl;
+  }
 
-    // Arguments and paths to main function:
-    // =====================================
-    params->PATH = argv[2];
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  // Arguments and paths to main function:
+  // =====================================
+  params->PATH = argv[2];
 	params->argc = argc;
 	params->argv = argv;
 
-    // Check number of MPI domains:
-    // ============================
+  // Check number of MPI domains:
+  // ============================
 	if( fmod( (double)params->mpi.NUMBER_MPI_DOMAINS, 2.0 ) > 0.0 )
-    {
-        MPI_Barrier(MPI_COMM_WORLD);
+  {
+    MPI_Barrier(MPI_COMM_WORLD);
 
 		if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-        {
+    {
 			cerr << "PICOS++ ERROR: The number of MPI processes must be an even number." << endl;
 		}
 
 		MPI_Abort(MPI_COMM_WORLD,-100);
 	}
 
-    // Stream date when simulation is started:
-    // =======================================
-    if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-    {
-        time_t current_time = std::time(NULL);
-        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
-        cout << "STARTING " << params->argv[1] << " SIMULATION ON: " << std::ctime(&current_time) << endl;
-        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
-    }
-
+  // Stream date when simulation is started:
+  // =======================================
+  if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+  {
+      time_t current_time = std::time(NULL);
+      cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
+      cout << "STARTING " << params->argv[1] << " SIMULATION ON: " << std::ctime(&current_time) << endl;
+      cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * " << endl;
+  }
 }
 
 // Populate params with data from input file:
 // =============================================================================
-void init_TYP::readInputFile(params_TYP * params)
+void init_TYP::read_inputFile(params_TYP * params)
 {
-    MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD);
 
-    // Print to terminal:
-    // ==================
-    if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-    {
-        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n";
-        cout << "READING INPUT FILE ..." << endl;
-    }
+  // Print to terminal:
+  // ==================
+  if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+  {
+      cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n";
+      cout << "READING INPUT FILE ..." << endl;
+  }
 
     // Get name of path to input file:
     // ===============================
@@ -181,127 +191,119 @@ void init_TYP::readInputFile(params_TYP * params)
 		params->PATH += "/";
 	}
 
-    // Read input file and assemble map:
-    // ================================
+  // Read input file and assemble map:
+  // ================================
 	std::map<string,string> parametersStringMap;
 	parametersStringMap = readTextFile(&name);
 
     // Create HDF5 folders if they don't exist:
     // ========================================
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-    {
-		string mkdir_outputs_dir = "mkdir " + params->PATH;
-		const char * sys = mkdir_outputs_dir.c_str();
-		int rsys = system(sys);
+  {
+  		string mkdir_outputs_dir = "mkdir " + params->PATH;
+  		const char * sys = mkdir_outputs_dir.c_str();
+  		int rsys = system(sys);
 
-		string mkdir_outputs_dir_HDF5 = mkdir_outputs_dir + "/HDF5";
-		sys = mkdir_outputs_dir_HDF5.c_str();
-		rsys = system(sys);
-	}
+  		string mkdir_outputs_dir_HDF5 = mkdir_outputs_dir + "/HDF5";
+  		sys = mkdir_outputs_dir_HDF5.c_str();
+  		rsys = system(sys);
+	   }
 
-    // Populate "params" with data from input file:
-    // ============================================
-    params->mpi.MPIS_FIELDS  = stoi( parametersStringMap["mpisForFields"] );
+  // Populate "params" with data from input file:
+  // ============================================
+  params->mpi.MPIS_FIELDS  = stoi( parametersStringMap["mpisForFields"] );
 
-    if(stoi( parametersStringMap["quietStart"] ) == 1)
-    {
-        params->quietStart = true;
-    }
-    else
-    {
-        params->quietStart = false;
-    }
+  params->numberOfParticleSpecies = stoi( parametersStringMap["numberOfParticleSpecies"] );
+  params->numberOfTracerSpecies   = stoi( parametersStringMap["numberOfTracerSpecies"] );
+  params->advanceParticleMethod   = stoi( parametersStringMap["advanceParticleMethod"] );
 
-    params->numberOfParticleSpecies = stoi( parametersStringMap["numberOfParticleSpecies"] );
-    params->numberOfTracerSpecies   = stoi( parametersStringMap["numberOfTracerSpecies"] );
-    params->advanceParticleMethod   = stoi( parametersStringMap["advanceParticleMethod"] );
+  // Characteristic values:
+  // -------------------------------------------------------------------------
+  params->CV.ne   = stod( parametersStringMap["CV_ne"] );
+  params->CV.Te   = stod( parametersStringMap["CV_Te"] )*F_E/F_KB;
+  params->CV.B    = stod( parametersStringMap["CV_B"] );
+  params->CV.Tpar = stod( parametersStringMap["CV_Tpar"] )*F_E/F_KB;
+  params->CV.Tper = stod( parametersStringMap["CV_Tper"] )*F_E/F_KB;
 
-    // Characteristic values:
-    // -------------------------------------------------------------------------
-    params->CV.ne   = stod( parametersStringMap["CV_ne"] );
-    params->CV.Te   = stod( parametersStringMap["CV_Te"] )*F_E/F_KB;
-    params->CV.B    = stod( parametersStringMap["CV_B"] );
-    params->CV.Tpar = stod( parametersStringMap["CV_Tpar"] )*F_E/F_KB;
-    params->CV.Tper = stod( parametersStringMap["CV_Tper"] )*F_E/F_KB;
+  // Simulation time:
+  // -------------------------------------------------------------------------
+  params->DTc            = stod( parametersStringMap["DTc"] );
+  params->simulationTime = std::stod( parametersStringMap["simulationTime"] );
 
-    // Simulation time:
-    // -------------------------------------------------------------------------
-    params->DTc            = stod( parametersStringMap["DTc"] );
-    params->simulationTime = std::stod( parametersStringMap["simulationTime"] );
+  // Switches:
+  // -------------------------------------------------------------------------
+  params->SW.EfieldSolve   = stoi( parametersStringMap["SW_EfieldSolve"] );
+  params->SW.BfieldSolve   = stoi( parametersStringMap["SW_BfieldSolve"] );
+  params->SW.Collisions    = stoi( parametersStringMap["SW_Collisions"] );
+  params->SW.RFheating     = stoi( parametersStringMap["SW_RFheating"] );
+  params->SW.advancePos    = stoi( parametersStringMap["SW_advancePos"] );
+  params->SW.linearSolve   = stoi( parametersStringMap["SW_linearSolve"] );
 
-    // Switches:
-    // -------------------------------------------------------------------------
-    params->SW.EfieldSolve   = stoi( parametersStringMap["SW_EfieldSolve"] );
-    params->SW.BfieldSolve   = stoi( parametersStringMap["SW_BfieldSolve"] );
-    params->SW.Collisions    = stoi( parametersStringMap["SW_Collisions"] );
-    params->SW.RFheating     = stoi( parametersStringMap["SW_RFheating"] );
-    params->SW.advancePos    = stoi( parametersStringMap["SW_advancePos"] );
-    params->SW.linearSolve   = stoi( parametersStringMap["SW_linearSolve"] );
+  // Magnetic field initial conditions:
+  // -------------------------------------------------------------------------
+  params->fields_IC.fileName  = parametersStringMap["IC_fields_fileName"];
+  params->fields_IC.Ex_offset = stod( parametersStringMap["IC_Ex_offset"] );
+  params->fields_IC.Ex_scale  = stod( parametersStringMap["IC_Ex_scale"] );
+  params->fields_IC.Bx_offset = stod( parametersStringMap["IC_Bx_offset"] );
+  params->fields_IC.Bx_scale  = stod( parametersStringMap["IC_Bx_scale"] );
 
-    // Magnetic field initial conditions:
-    // -------------------------------------------------------------------------
-    params->em_IC.uniformBfield = stoi( parametersStringMap["IC_uniformBfield"] );
-    params->em_IC.BX            = stod( parametersStringMap["IC_BX"] );
-    params->em_IC.BY            = stod( parametersStringMap["IC_BY"] );
-    params->em_IC.BZ            = stod( parametersStringMap["IC_BZ"] );
-    params->em_IC.BX_NX         = stoi( parametersStringMap["IC_BX_NX"] );
-    params->em_IC.BX_fileName   = parametersStringMap["IC_BX_fileName"];
+  // Electron initial conditions:
+  // -------------------------------------------------------------------------
+  params->electrons_IC.fileName  = parametersStringMap["IC_electrons_fileName"];
+  params->electrons_IC.n_offset = stod(parametersStringMap["IC_n_offset"]);
+  params->electrons_IC.n_scale  = stod(parametersStringMap["IC_n_scale"]);
+  params->electrons_IC.T_offset = stod(parametersStringMap["IC_T_offset"]);
+  params->electrons_IC.T_scale  = stod(parametersStringMap["IC_T_scale"]);
 
-    // Geometry:
-    // -------------------------------------------------------------------------
-    //unsigned int NX      = (unsigned int)stoi( parametersStringMap["NX"] );
-    params->dp           = stod( parametersStringMap["dp"] );
-    params->geometry.r1  = stod( parametersStringMap["r1"] );
-    params->geometry.r2  = stod( parametersStringMap["r2"] );
-    params->geometry.LX_min  = stod( parametersStringMap["LX_min"] );
-    params->geometry.LX_max  = stod( parametersStringMap["LX_max"] );
+  // Mesh:
+  // -------------------------------------------------------------------------
+  params->mesh_params.dx_norm = stod(parametersStringMap["M_dx_norm"]);
+  params->mesh_params.x0      = stod(parametersStringMap["M_x0"]);
+  params->mesh_params.r0_min  = stod(parametersStringMap["M_r0_min"]);
+  params->mesh_params.r0_max  = stod(parametersStringMap["M_r0_max"]);
+  params->mesh_params.Lx_min  = stod(parametersStringMap["M_Lx_min"]);
+  params->mesh_params.Lx_max  = stod(parametersStringMap["M_Lx_max"]);
+  params->mesh_params.getA0();
 
-    // Electron initial conditions:
-    // -------------------------------------------------------------------------
-    params->f_IC.ne          = stod( parametersStringMap["IC_ne"] );
-    params->f_IC.Te          = stod( parametersStringMap["IC_Te"] )*F_E/F_KB; // Te in eV in input file
-    params->f_IC.Te_NX       = stoi( parametersStringMap["IC_Te_NX"] );
-    params->f_IC.Te_fileName = parametersStringMap["IC_Te_fileName"];
+  // RF parameters
+  // -------------------------------------------------------------------------
+  params->RF.Prf        = stod( parametersStringMap["RF_Prf"] );
+  params->RF.n_harmonic = stoi( parametersStringMap["RF_n_harmonic"] );
+  params->RF.freq       = stod( parametersStringMap["RF_freq"]);
+  params->RF.x1         = stod( parametersStringMap["RF_x1"]  );
+  params->RF.x2         = stod( parametersStringMap["RF_x2"]  );
+  params->RF.t_ON       = stod( parametersStringMap["RF_t_ON"]  );
+  params->RF.t_OFF      = stod( parametersStringMap["RF_t_OFF"]  );
+  params->RF.kpar       = stod( parametersStringMap["RF_kpar"]);
+  params->RF.kper       = stod( parametersStringMap["RF_kper"]);
+  params->RF.handedness = stoi( parametersStringMap["RF_handedness"]);
+  params->RF.Prf_NS     = stoi( parametersStringMap["RF_Prf_NS"] );
+  params->RF.Prf_fileName = parametersStringMap["RF_Prf_fileName"];
 
-    // RF parameters
-    // -------------------------------------------------------------------------
-    params->RF.Prf        = stod( parametersStringMap["RF_Prf"] );
-    params->RF.n_harmonic = stoi( parametersStringMap["RF_n_harmonic"] );
-    params->RF.freq       = stod( parametersStringMap["RF_freq"]);
-    params->RF.x1         = stod( parametersStringMap["RF_x1"]  );
-    params->RF.x2         = stod( parametersStringMap["RF_x2"]  );
-    params->RF.t_ON       = stod( parametersStringMap["RF_t_ON"]  );
-    params->RF.t_OFF      = stod( parametersStringMap["RF_t_OFF"]  );
-    params->RF.kpar       = stod( parametersStringMap["RF_kpar"]);
-    params->RF.kper       = stod( parametersStringMap["RF_kper"]);
-    params->RF.handedness = stoi( parametersStringMap["RF_handedness"]);
-    params->RF.Prf_NS     = stoi( parametersStringMap["RF_Prf_NS"] );
-    params->RF.Prf_fileName = parametersStringMap["RF_Prf_fileName"];
+  // Output variables:
+  // -------------------------------------------------------------------------
+  params->outputCadence           = stod( parametersStringMap["outputCadence"] );
+  string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
+  params->outputs_variables       = split(nonparsed_variables_list,",");
 
-    // Output variables:
-    // -------------------------------------------------------------------------
-    params->outputCadence           = stod( parametersStringMap["outputCadence"] );
-    string nonparsed_variables_list = parametersStringMap["outputs_variables"].substr(1, parametersStringMap["outputs_variables"].length() - 2);
-    params->outputs_variables       = split(nonparsed_variables_list,",");
+  // Data smoothing:
+  // -------------------------------------------------------------------------
+  params->smoothingParameter        = stod( parametersStringMap["smoothingParameter"] );
+  params->filtersPerIterationFields = stoi( parametersStringMap["filtersPerIterationFields"] );
+  params->filtersPerIterationIons   = stoi( parametersStringMap["filtersPerIterationIons"] );
 
-    // Data smoothing:
-    // -------------------------------------------------------------------------
-    params->smoothingParameter        = stod( parametersStringMap["smoothingParameter"] );
-    params->filtersPerIterationFields = stoi( parametersStringMap["filtersPerIterationFields"] );
-    params->filtersPerIterationIons   = stoi( parametersStringMap["filtersPerIterationIons"] );
+  MPI_Barrier(MPI_COMM_WORLD);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-    {
-        cout << "READING INPUT FILE COMPLETED" << endl;
-        cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n";
-    }
+  if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+  {
+      cout << "READING INPUT FILE COMPLETED" << endl;
+      cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n";
+  }
 }
 
 // Read and populate ion parameters input file:
 // =============================================================================
-void init_TYP::readIonPropertiesFile(params_TYP * params, vector<ionSpecies_TYP> * IONS)
+void init_TYP::read_ionsPropertiesFile(params_TYP * params)
 {
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -309,10 +311,11 @@ void init_TYP::readIonPropertiesFile(params_TYP * params, vector<ionSpecies_TYP>
     // ==================
     if(params->mpi.MPI_DOMAIN_NUMBER == 0)
     {
-        cout << "* * * * * * * * * * * * LOADING ION PARAMETERS * * * * * * * * * * * * * * * * * *\n";
+      cout << "* * * * * * * * * * * * LOADING ION PARAMETERS * * * * * * * * * * * * * * * * * *\n";
     	cout << "+ Number of ion species: " << params->numberOfParticleSpecies << endl;
     	cout << "+ Number of tracer species: " << params->numberOfTracerSpecies << endl;
     }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // Assemble path to "ion_properties.ion":
     // ======================================
@@ -330,151 +333,251 @@ void init_TYP::readIonPropertiesFile(params_TYP * params, vector<ionSpecies_TYP>
     // Read data from "ion_properties.ion" into "parametersMap":
     // =========================================================
     std::map<string,string> parametersMap;
+    debug(1,params);
+    cout << "ion propertuies reading start, rank = " << params->mpi.MPI_DOMAIN_NUMBER << endl;
     parametersMap = readTextFile(&name);
+    cout << "ion propertuies reading end, rank = " << params->mpi.MPI_DOMAIN_NUMBER << endl;
+    cout << "IC_ions_fileName = " << parametersMap["IC_ions_fileName"] << endl;
+    debug(2,params);
+
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // Determine the total number of ION species:
     // =========================================
     int totalNumSpecies(params->numberOfParticleSpecies + params->numberOfTracerSpecies);
 
-    // Loop over all ION species and extract data from "parametersMap":
-    // ================================================================
-    for(int ss=0;ss<totalNumSpecies;ss++)
+    // Get ion parameters:
+    // ====================
+    params->ions_params.resize(totalNumSpecies);
+    for(int ss = 0; ss<totalNumSpecies; ss++)
     {
-        string name;
-        ionSpecies_TYP ions;
-        int SPECIES;
-        stringstream kk;
+    //   string name;
+    //   stringstream kk;
+    //   kk << ss + 1;
+    //
+    //   // General:
+    //   name = "SPECIES" + kk.str();
+    //   params->ions_params[ss].SPECIES = stoi(parametersMap[name]);
+    //   //IONS->at(ss).SPECIES         = stoi(parametersMap[name]);
+    //
+    //   name = "N_CP" + kk.str();
+    //   params->ions_params[ss].N_CP = stoi(parametersMap[name]);
+    //   //IONS->at(ss).N_CP         = stoul(parametersMap[name]);
+    //
+    //   name = "pct_N_CP_Output" + kk.str();
+    //   params->ions_params[ss].pct_N_CP_Output = stoi(parametersMap[name]);
+    //
+    //   name = "Z" + kk.str();
+    //   params->ions_params[ss].Z = stoi(parametersMap[name]);
+    //   //IONS->at(ss).Z         = stoi(parametersMap[name]);
+    //
+    //   name = "M" + kk.str();
+    //   params->ions_params[ss].M = F_U*stod(parametersMap[name]);
+    //   //IONS->at(ss).M         = stoi(parametersMap[name]);
+    // }
+    //
+    // // Get ion IC and BC:
+    // // ======================================================
+    // params->ions_IC.resize(totalNumSpecies);
+    // params->ions_BC.resize(totalNumSpecies);
+    // for(int ss = 0; ss<totalNumSpecies; ss++)
+    // {
+    //   params->ions_IC[ss].fileName = parametersMap["IC_ions_fileName"];
+    //   params->ions_IC[ss].CP_fileName = parametersMap["IC_CP_pdf_fileName"];
+    //
+    //   string name;
+    //   stringstream kk;
+    //   kk << ss + 1;
+    //
+    //   // IC:
+    //   name = "IC_Tpar_offset" + kk.str();
+    //   params->ions_IC[ss].Tpar_offset = stod(parametersMap[name]);
+    //
+    //   name = "IC_Tpar_scale" + kk.str();
+    //   params->ions_IC[ss].Tpar_scale = stod(parametersMap[name]);
+    //
+    //   name = "IC_Tper_offset" + kk.str();
+    //   params->ions_IC[ss].Tper_offset = stod(parametersMap[name]);
+    //
+    //   name = "IC_Tper_scale" + kk.str();
+    //   params->ions_IC[ss].Tper_scale = stod(parametersMap[name]);
+    //
+    //   name = "IC_upar_offset" + kk.str();
+    //   params->ions_IC[ss].upar_offset = stod(parametersMap[name]);
+    //
+    //   name = "IC_upar_scale" + kk.str();
+    //   params->ions_IC[ss].upar_scale = stod(parametersMap[name]);
+    //
+    //   name = "IC_densityFraction" + kk.str();
+    //   params->ions_IC[ss].densityFraction = stod(parametersMap[name]);
+    //
+    //   name = "IC_mean_ai" + kk.str();
+    //   params->ions_IC[ss].mean_ai = stod(parametersMap[name]);
+    //
+    //   // BC:
+    //   name = "BC_type" + kk.str();
+    //   params->ions_BC[ss].type = stod(parametersMap[name]);
+    //
+    //   name = "BC_T" + kk.str();
+    //   params->ions_BC[ss].T = stod(parametersMap[name]);
+    //
+    //   name = "BC_E" + kk.str();
+    //   params->ions_BC[ss].E = stod(parametersMap[name]);
+    //
+    //   name = "BC_eta" + kk.str();
+    //   params->ions_BC[ss].eta = stod(parametersMap[name]);
+    //
+    //   name = "BC_mean_x" + kk.str();
+    //   params->ions_BC[ss].mean_x = stod(parametersMap[name]);
+    //
+    //   name = "BC_sigma_x" + kk.str();
+    //   params->ions_BC[ss].sigma_x = stod(parametersMap[name]);
+    //
+    //   name = "BC_G" + kk.str();
+    //   params->ions_BC[ss].G = stod(parametersMap[name]);
+    //
+    //   name = "BC_G_fileName" + kk.str();
+    //   params->ions_BC[ss].G_fileName = parametersMap[name];
+    }
 
-        kk << ss + 1;
-
-        name = "SPECIES" + kk.str();
-        SPECIES = stoi(parametersMap[name]);
-        name.clear();
-
-        if (SPECIES == 0 || SPECIES == 1)
-        {
-            // General:
-            // =================================================================
-            // Species type, 1: Guiding center, 0: Tracer
-            ions.SPECIES = SPECIES;
-
-            // Number of particles per cell:
-            name = "NPC" + kk.str();
-            ions.NPC = stoi(parametersMap[name]);
-            name.clear();
-
-            name = "pctSupPartOutput" + kk.str();
-            ions.pctSupPartOutput = stod(parametersMap[name]);
-            name.clear();
-
-            // Charge state:
-            name = "Z" + kk.str();
-            ions.Z = stod(parametersMap[name]);
-            name.clear();
-
-            // AMU mass number:
-            name = "M" + kk.str();
-            ions.M = F_U*stod(parametersMap[name]);
-            name.clear();
-
-            // Initial condition:
-            // =================================================================
-            name = "IC_type_" + kk.str();
-            ions.p_IC.IC_type = stoi(parametersMap[name]);
-            name.clear();
-
-            // Perpendicular temperature:
-            name = "IC_Tper_" + kk.str();
-            ions.p_IC.Tper = stod(parametersMap[name])*F_E/F_KB;
-            name.clear();
-
-            name = "IC_Tper_fileName_" + kk.str();
-            ions.p_IC.Tper_fileName = parametersMap[name];
-            name.clear();
-
-            name = "IC_Tper_NX_" + kk.str();
-            ions.p_IC.Tper_NX = stoi(parametersMap[name]);
-            name.clear();
-
-            // Parallel temperature:
-            name = "IC_Tpar_" + kk.str();
-            ions.p_IC.Tpar = stod(parametersMap[name])*F_E/F_KB; // Tpar in eV in input file
-            name.clear();
-
-            name = "IC_Tpar_fileName_" + kk.str();
-            ions.p_IC.Tpar_fileName = parametersMap[name];
-            name.clear();
-
-            name = "IC_Tpar_NX_" + kk.str();
-            ions.p_IC.Tpar_NX = stoi(parametersMap[name]);
-            name.clear();
-
-            // Density fraction relative to 1:
-            name = "IC_densityFraction_" + kk.str();
-            ions.p_IC.densityFraction = stod(parametersMap[name]);
-            name.clear();
-
-            name = "IC_densityFraction_fileName_" + kk.str();
-            ions.p_IC.densityFraction_fileName = parametersMap[name];
-            name.clear();
-
-            name = "IC_densityFraction_NX_" + kk.str();
-            ions.p_IC.densityFraction_NX = stoi(parametersMap[name]);
-            name.clear();
-
-            // Boundary conditions:
-            // =================================================================
-            name = "BC_type_" + kk.str();
-            ions.p_BC.BC_type = stoi(parametersMap[name]);
-            name.clear();
-
-            name = "BC_T_" + kk.str();
-            ions.p_BC.T = stod(parametersMap[name])*F_E/F_KB;
-            name.clear();
-
-            name = "BC_E_" + kk.str();
-            ions.p_BC.E = stod(parametersMap[name])*F_E/F_KB;
-            name.clear();
-
-            name = "BC_eta_" + kk.str();
-            ions.p_BC.eta = stod(parametersMap[name]);
-            name.clear();
-
-            name = "BC_G_" + kk.str();
-            ions.p_BC.G = stod(parametersMap[name]);
-            name.clear();
-
-            name = "BC_mean_x_" + kk.str();
-            ions.p_BC.mean_x = stod(parametersMap[name]);
-            name.clear();
-
-            name = "BC_sigma_x_" + kk.str();
-            ions.p_BC.sigma_x = stod(parametersMap[name]);
-            name.clear();
-
-            name = "BC_G_fileName_" + kk.str();
-            ions.p_BC.G_fileName = parametersMap[name];
-            name.clear();
-
-            name = "BC_G_NS_" + kk.str();
-            ions.p_BC.G_NS = stoi(parametersMap[name]);
-            name.clear();
-
-            // Create new element on IONS vector:
-            IONS->push_back(ions);
-        }
-        else
-        {
-            MPI_Barrier(MPI_COMM_WORLD);
-
-            if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-            {
-                cerr << "PRO++ ERROR: Enter a valid type of species -- options are 0 = tracers, 1 = guiding center" << endl;
-            }
-            MPI_Abort(MPI_COMM_WORLD,-106);
-        }
-
-    }//Iteration over ion species
+    // // Loop over all ION species and extract data from "parametersMap":
+    // // ================================================================
+    // for(int ss=0;ss<totalNumSpecies;ss++)
+    // {
+    //     string name;
+    //     // ions_TYP ions;
+    //     // int SPECIES;
+    //     stringstream kk;
+    //     kk << ss + 1;
+    //
+    //     name = "SPECIES" + kk.str();
+    //     SPECIES = stoi(parametersMap[name]);
+    //     name.clear();
+    //
+    //     if (SPECIES == 0 || SPECIES == 1)
+    //     {
+    //         // General:
+    //         // =================================================================
+    //         // Species type, 1: Guiding center, 0: Tracer
+    //         ions.SPECIES = SPECIES;
+    //
+    //         // Number of particles per cell:
+    //         name = "NPC" + kk.str();
+    //         ions.NPC = stoi(parametersMap[name]);
+    //         name.clear();
+    //
+    //         name = "pctSupPartOutput" + kk.str();
+    //         ions.pctSupPartOutput = stod(parametersMap[name]);
+    //         name.clear();
+    //
+    //         // Charge state:
+    //         name = "Z" + kk.str();
+    //         ions.Z = stod(parametersMap[name]);
+    //         name.clear();
+    //
+    //         // AMU mass number:
+    //         name = "M" + kk.str();
+    //         ions.M = F_U*stod(parametersMap[name]);
+    //         name.clear();
+    //
+    //         // Initial condition:
+    //         // =================================================================
+    //         name = "IC_type_" + kk.str();
+    //         ions.p_IC.IC_type = stoi(parametersMap[name]);
+    //         name.clear();
+    //
+    //         // Perpendicular temperature:
+    //         name = "IC_Tper_" + kk.str();
+    //         ions.p_IC.Tper = stod(parametersMap[name])*F_E/F_KB;
+    //         name.clear();
+    //
+    //         name = "IC_Tper_fileName_" + kk.str();
+    //         ions.p_IC.Tper_fileName = parametersMap[name];
+    //         name.clear();
+    //
+    //         name = "IC_Tper_NX_" + kk.str();
+    //         ions.p_IC.Tper_NX = stoi(parametersMap[name]);
+    //         name.clear();
+    //
+    //         // Parallel temperature:
+    //         name = "IC_Tpar_" + kk.str();
+    //         ions.p_IC.Tpar = stod(parametersMap[name])*F_E/F_KB; // Tpar in eV in input file
+    //         name.clear();
+    //
+    //         name = "IC_Tpar_fileName_" + kk.str();
+    //         ions.p_IC.Tpar_fileName = parametersMap[name];
+    //         name.clear();
+    //
+    //         name = "IC_Tpar_NX_" + kk.str();
+    //         ions.p_IC.Tpar_NX = stoi(parametersMap[name]);
+    //         name.clear();
+    //
+    //         // Density fraction relative to 1:
+    //         name = "IC_densityFraction_" + kk.str();
+    //         ions.p_IC.densityFraction = stod(parametersMap[name]);
+    //         name.clear();
+    //
+    //         name = "IC_densityFraction_fileName_" + kk.str();
+    //         ions.p_IC.densityFraction_fileName = parametersMap[name];
+    //         name.clear();
+    //
+    //         name = "IC_densityFraction_NX_" + kk.str();
+    //         ions.p_IC.densityFraction_NX = stoi(parametersMap[name]);
+    //         name.clear();
+    //
+    //         // Boundary conditions:
+    //         // =================================================================
+    //         name = "BC_type_" + kk.str();
+    //         ions.p_BC.BC_type = stoi(parametersMap[name]);
+    //         name.clear();
+    //
+    //         name = "BC_T_" + kk.str();
+    //         ions.p_BC.T = stod(parametersMap[name])*F_E/F_KB;
+    //         name.clear();
+    //
+    //         name = "BC_E_" + kk.str();
+    //         ions.p_BC.E = stod(parametersMap[name])*F_E/F_KB;
+    //         name.clear();
+    //
+    //         name = "BC_eta_" + kk.str();
+    //         ions.p_BC.eta = stod(parametersMap[name]);
+    //         name.clear();
+    //
+    //         name = "BC_G_" + kk.str();
+    //         ions.p_BC.G = stod(parametersMap[name]);
+    //         name.clear();
+    //
+    //         name = "BC_mean_x_" + kk.str();
+    //         ions.p_BC.mean_x = stod(parametersMap[name]);
+    //         name.clear();
+    //
+    //         name = "BC_sigma_x_" + kk.str();
+    //         ions.p_BC.sigma_x = stod(parametersMap[name]);
+    //         name.clear();
+    //
+    //         name = "BC_G_fileName_" + kk.str();
+    //         ions.p_BC.G_fileName = parametersMap[name];
+    //         name.clear();
+    //
+    //         name = "BC_G_NS_" + kk.str();
+    //         ions.p_BC.G_NS = stoi(parametersMap[name]);
+    //         name.clear();
+    //
+    //         // Create new element on IONS vector:
+    //         IONS->push_back(ions);
+    //     }
+    //     else
+    //     {
+    //         MPI_Barrier(MPI_COMM_WORLD);
+    //
+    //         if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+    //         {
+    //             cerr << "PRO++ ERROR: Enter a valid type of species -- options are 0 = tracers, 1 = guiding center" << endl;
+    //         }
+    //         MPI_Abort(MPI_COMM_WORLD,-106);
+    //     }
+    //
+    // }//Iteration over ion species
 
     // Print to terminal:
     // ==================
@@ -486,9 +589,74 @@ void init_TYP::readIonPropertiesFile(params_TYP * params, vector<ionSpecies_TYP>
     MPI_Barrier(MPI_COMM_WORLD);
 }
 
+void init_TYP::create_mesh(params_TYP * params, mesh_TYP * mesh)
+{
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  // Print to terminal:
+  // ==================
+  if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+  {
+    cout << "* * * * * * * * * * * * CREATING MESH * * * * * * * * * * * * * * * * * * * * *\n";
+  }
+
+  // Prior to calculating mesh quantities, we need to compute the characteristic skin depth using
+  // the characteristic value for the density, mass and charge.
+  // The characteristic density is given in the inputfile.
+  // For the other terms, we use the charge and mass of the majority ion.
+
+  // Calculating Nx and dx:
+  // ==================================================================
+  // Calculate characteristic skin depth:
+  params->getCharacteristicIonSkinDepth();
+  double ionSkinDepth = params->mesh_params.ionSkinDepth;
+
+  // Calculate Nx:
+  // This step makes use of the ion skin depth and x_norm from the input to
+  // Produce Nx and dx which satify this requirement.
+  params->get_Nx_dx(ionSkinDepth);
+  int Nx    = params->mesh_params.Nx;
+  double dx = params->mesh_params.dx;
+
+  // Calculate mesh-defined cell center grid xm and xmg:
+  // ==================================================================
+  arma::vec xm  = arma::zeros(Nx);
+  arma::vec xmg = arma::zeros(Nx+2);
+  double Lx_min = params->mesh_params.Lx_min;
+
+  // No ghost cells:
+  for (int i = 0; i < Nx; i++)
+  {
+    xm.at(i) = Lx_min + (i + 0.5)*dx;
+  }
+
+  // With ghost cells:
+  for (int i = 0; i < (Nx+2); i++)
+  {
+    xmg.at(i) = Lx_min + (i - 0.5)*dx;
+  }
+
+  // Assign values:
+  // ==================================================================
+  mesh->Nx  = Nx;
+  mesh->dx  = dx;
+  mesh->xm  = xm;
+  mesh->xmg = xmg;
+
+  // Print to terminal:
+  // ==================
+  if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+  {
+      cout << "* * * * * * * * * * * * MESH CREATED * * * * * * * * * * * * * * * * * * * * *\n";
+  }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+}
+
 // Read initial condition profiles from external files:
 // =============================================================================
-void init_TYP::readInitialConditionProfiles(params_TYP * params, electrons_TYP * electrons, vector<ionSpecies_TYP> * IONS)
+/*
+void init_TYP::readInitialConditionProfiles(params_TYP * params, electrons_TYP * electrons, vector<ions_TYP> * IONS)
 {
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -570,10 +738,12 @@ void init_TYP::readInitialConditionProfiles(params_TYP * params, electrons_TYP *
     }
 
 }
+*/
 
 // Calculate IONS and params derived quantities:
 // =============================================================================
-void init_TYP::calculateDerivedQuantities(params_TYP * params, vector<ionSpecies_TYP> * IONS)
+/*
+void init_TYP::calculateDerivedQuantities(params_TYP * params, vector<ions_TYP> * IONS)
 {
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -725,9 +895,11 @@ void init_TYP::calculateDerivedQuantities(params_TYP * params, vector<ionSpecies
 
     MPI_Barrier(MPI_COMM_WORLD);
 }
+*/
 
 // Calculate mesh geometry:
 // =============================================================================
+/*
 void init_TYP::calculateMeshParams(params_TYP * params)
 {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -768,10 +940,12 @@ void init_TYP::calculateMeshParams(params_TYP * params)
     	cout << "* * * * * * * * * * * *  SIMULATION GRID LOADED/COMPUTED  * * * * * * * * * * * * * * * * * *" << endl;
     }
 }
+*/
 
 // Allocate memory to ION arrays:
 // =============================================================================
-void init_TYP::allocateMemoryIons(params_TYP * params, vector<ionSpecies_TYP> * IONS)
+/*
+void init_TYP::allocateMemoryIons(params_TYP * params, vector<ions_TYP> * IONS)
 {
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -808,10 +982,12 @@ void init_TYP::allocateMemoryIons(params_TYP * params, vector<ionSpecies_TYP> * 
 
     MPI_Barrier(MPI_COMM_WORLD);
 }
+*/
 
 // Allocate memory to mesh-defined ION arrays:
 // =============================================================================
-void init_TYP::allocateMeshDefinedIonArrays(const params_TYP * params, ionSpecies_TYP * IONS)
+/*
+void init_TYP::allocateMeshDefinedIonArrays(const params_TYP * params, ions_TYP * IONS)
 {
     // Initialize mesh-defined quantities:
     // ==================================
@@ -834,10 +1010,11 @@ void init_TYP::allocateMeshDefinedIonArrays(const params_TYP * params, ionSpecie
     IONS->Tpar_m.zeros(params->mesh.NX_IN_SIM + 2);
     IONS->Tper_m.zeros(params->mesh.NX_IN_SIM + 2);
 }
-
+*/
 // Allocate memory to Particle-defined ION arrays:
 // =============================================================================
-void init_TYP::allocateParticleDefinedIonArrays(const params_TYP * params, ionSpecies_TYP * IONS)
+/*
+void init_TYP::allocateParticleDefinedIonArrays(const params_TYP * params, ions_TYP * IONS)
 {
     // Initialize particle-defined quantities:
     // ==================================
@@ -896,10 +1073,12 @@ void init_TYP::allocateParticleDefinedIonArrays(const params_TYP * params, ionSp
     // ===========================
     IONS->mu_p.zeros(IONS->NSP);
 }
+*/
 
 // Initialize ION particle position and velocity vector:
 // =============================================================================
-void init_TYP::initializeIons(const params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS)
+/*
+void init_TYP::initializeIons(const params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS)
 {
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -970,9 +1149,11 @@ void init_TYP::initializeIons(const params_TYP * params, const CS_TYP * CS, fiel
 
     MPI_Barrier(MPI_COMM_WORLD);
 }
+*/
 
 // Initialize electrons with profile data:
 // =============================================================================
+/*
 void init_TYP::initializeElectrons(const params_TYP * params, const CS_TYP * CS, electrons_TYP * electrons)
 {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -1036,9 +1217,11 @@ void init_TYP::initializeElectrons(const params_TYP * params, const CS_TYP * CS,
     }
 
 }
+*/
 
 // Initialize fields with profile data:
 // =============================================================================
+/*
 void init_TYP::initializeFields(params_TYP * params, fields_TYP * fields)
 {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -1091,7 +1274,7 @@ void init_TYP::initializeFields(params_TYP * params, fields_TYP * fields)
         yt = BX;
         interp1(xt,yt,xq,yq);
         fields->BX_m = yq;
-    
+
         // dBX profile:
         // ===========
         arma::vec dBX(BX_NX,1);
@@ -1130,3 +1313,4 @@ void init_TYP::initializeFields(params_TYP * params, fields_TYP * fields)
         cout << "* * * * * * * * * * * * ELECTROMAGNETIC FIELDS INITIALIZED  * * * * * * * * * * * * * * * * * *" << endl;
     }
 }
+*/

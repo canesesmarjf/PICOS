@@ -13,13 +13,13 @@
 // =============================================================================
 #include "types.h"
 #include "initialize.h"
-#include "units.h"
-#include "outputHDF5.h"
-#include "PIC.h"
-#include "particleBC.h"
-#include "collisionOperator.h"
-#include "fieldSolve.h"
-#include "rfOperator.h"
+// #include "units.h"
+// #include "outputHDF5.h"
+// #include "PIC.h"
+// #include "particleBC.h"
+// #include "collisionOperator.h"
+// #include "fieldSolve.h"
+// #include "rfOperator.h"
 
 // Include headers for parallelization:
 // =============================================================================
@@ -32,11 +32,8 @@ using namespace arma;
 int main(int argc, char* argv[])
 {
     // Initialize MPI process:
-    // =========================================================================
     MPI_Init(&argc, &argv);
 
-    // Create simulation objects:
-    // =========================================================================
     // MPI object to hold topology information:
     MPI_MAIN_TYP mpi_main;
 
@@ -44,86 +41,99 @@ int main(int argc, char* argv[])
     params_TYP params;
 
     // Ion species vector:
-    vector<ionSpecies_TYP> IONS;
+    vector<ions_TYP> IONS;
 
     // Electron species object:
     electrons_TYP electrons;
 
-    // Characteristic scales:
-    CS_TYP CS;
-
     // Electromagnetic fields:
     fields_TYP fields;
 
+    // Characteristic scales:
+    CS_TYP CS;
+
+    // Mesh object:
+    mesh_TYP mesh;
+
+    // Object to hold IC condition profiles:
+    IC_TYP IC;
+
     // Collision operator object:
-    coll_operator_TYP coll_operator;
+    // coll_operator_TYP coll_operator;
 
     // Particle boundary condition operator:
-    particleBC_TYP particleBC;
+    // particleBC_TYP particleBC;
 
     // UNITS object:
-    units_TYP units;
+    // units_TYP units;
 
     // Initialize object:
     init_TYP init(&params, argc, argv);
 
-    // Initialize simulation objects:
     // =========================================================================
-    // Load data from input file:
-    init.readInputFile(&params);
+    // - Read "input_file.input" into "params"
+    init.read_inputFile(&params);
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << "params->fields_IC.fileName = " << params.fields_IC.fileName << endl;
+    cout << "fileName = " << params.electrons_IC.fileName << endl;
+    MPI_Barrier(MPI_COMM_WORLD);
 
-    // Read "ions_properties.ion" and populate "IONS" vector
-    init.readIonPropertiesFile(&params, &IONS);
+    // - Read "ions_properties.ion" into "params":
+    //init.read_ionsPropertiesFile(&params);
 
-    // Read IC profiles from external files:
-    init.readInitialConditionProfiles(&params, &electrons, &IONS);
-
-    // Calculate derived quantities from input data:
-    init.calculateDerivedQuantities(&params, &IONS);
-
-    // Define mesh geometry and populate "params":
-    init.calculateMeshParams(&params);
+    // - Create mesh using input parameters:
+    // init.create_mesh(&params,&mesh);
+    // cout << "hello" << endl;
 
     // Create MPI topology:
-    mpi_main.createMPITopology(&params);
+    // mpi_main.createMPITopology(&params);
+
+    // Read IC profiles from external files:
+    // init.readInitialConditionProfiles(&params, &electrons, &IONS);
+
+    // Calculate derived quantities from input data:
+    // init.calculateDerivedQuantities(&params, &IONS);
+
+    // Define mesh geometry and populate "params":
+    // init.calculateMeshParams(&params);
 
     // Allocate memory to particle and mesh-defined quantities in IONS:
-    init.allocateMemoryIons(&params, &IONS);
+    // init.allocateMemoryIons(&params, &IONS);
 
     // Initialize IONS: scalar, bulk and particle arrays
-    init.initializeIons(&params, &CS, &fields, &IONS);
+    // init.initializeIons(&params, &CS, &fields, &IONS);
 
     // Initialize electrons fluid:
-    init.initializeElectrons(&params, &CS, &electrons);
+    // init.initializeElectrons(&params, &CS, &electrons);
 
     // Initialize electromagnetic field variable:
-    init.initializeFields(&params, &fields);
+    // init.initializeFields(&params, &fields);
 
     // Define characteristic scales and broadcast them to all processes in COMM_WORLD:
-    units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
+    // units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
     // =========================================================================
     //  CONSIDER REMOVING FS
     // This will require that FS be removed from outputHDF5 source codes
     // =========================================================================
     // Create object and allocate memory according to "params":
-    FS_TYP FS(&params);
+    // FS_TYP FS(&params);
 
     // Define fundamental scales and broadcast them to all processes in COMM_WORLD:
-    units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS);
+    // units.calculateFundamentalScalesAndBcast(&params, &IONS, &FS);
 
     // Check that mesh size is consistent with hybrid approximation:
-    units.spatialScalesSanityCheck(&params, &FS);
+    // units.spatialScalesSanityCheck(&params, &FS);
     // =========================================================================
 
     // HDF object constructor and create "main.h5"
-    HDF_TYP HDF(&params, &FS, &IONS);
+    // HDF_TYP HDF(&params, &FS, &IONS);
 
     // Define time step based on ion CFL condition:
-    units.defineTimeStep(&params, &IONS);
+    // units.defineTimeStep(&params, &IONS);
 
     // Normalize "params", "IONS", "electrons", "fields" using "CS"
-    units.normalizeVariables(&params, &IONS, &electrons, &fields, &CS);
+    // units.normalizeVariables(&params, &IONS, &electrons, &fields, &CS);
 
     // #########################################################################
     /**************** All the quantities below are dimensionless ****************/
@@ -139,78 +149,78 @@ int main(int argc, char* argv[])
 
     // Create EM solver:
     // =========================================================================
-    fields_solver_TYP fields_solver(&params, &CS);
+    // fields_solver_TYP fields_solver(&params, &CS);
 
     // Create PIC solver:
     // =========================================================================
-    PIC_TYP PIC(&params, &CS, &fields, &IONS, &electrons);
+    // PIC_TYP PIC(&params, &CS, &fields, &IONS, &electrons);
 
     // Create RF operator object:
     // =========================================================================
-    RF_Operator_TYP RF_operator(&params,&CS,&fields,&IONS);
+    // RF_Operator_TYP RF_operator(&params,&CS,&fields,&IONS);
 
     // Save 1st output:
     // =========================================================================
-    HDF.saveOutputs(&params, &IONS, &electrons, &fields, &CS, 0, 0);
+    // HDF.saveOutputs(&params, &IONS, &electrons, &fields, &CS, 0, 0);
 
     // Start timing simulations:
     // =========================================================================
-    t1 = MPI_Wtime();
+    // t1 = MPI_Wtime();
 
     // #########################################################################
     // Start time iterations:
     // #########################################################################
+
+    /*
     for(int tt=0; tt<params.timeIterations; tt++)
     {
 
-        if (params.mpi.IS_PARTICLES_ROOT)
-        {
-            /*
-            if (fmod((double)(tt + 1), 100) == 0)
-            {
-                cout << "time = " << tt*params.DT*CS.time*1E3 << " [ms] "<< endl;
-
-
-                //cout << "N1_dot = " << particleBC.N1_dot/CS.time << " [1/s]" << endl;
-                //cout << "N2_dot = " << particleBC.N2_dot/CS.time << " [1/s]" << endl;
-                //cout << "E1_dot = " << (particleBC.E1_dot*CS.energy/CS.time)/1000 << " [kW]" << endl;
-                //cout << "E2_dot = " << (particleBC.E2_dot*CS.energy/CS.time)/1000 << " [kW]" << endl;
-                //cout << "E5_dot = " << (particleBC.E5_dot*CS.energy/CS.time)/1000 << " [kW]" << endl;
-                //cout << "N5_dot = " << particleBC.N5_dot/CS.time << " [1/s]" << endl;
-
-            }
-            */
-        }
+        // if (params.mpi.IS_PARTICLES_ROOT)
+        // {
+        //   if (fmod((double)(tt + 1), 100) == 0)
+        //   {
+        //       cout << "time = " << tt*params.DT*CS.time*1E3 << " [ms] "<< endl;
+        //
+        //
+        //       //cout << "N1_dot = " << particleBC.N1_dot/CS.time << " [1/s]" << endl;
+        //       //cout << "N2_dot = " << particleBC.N2_dot/CS.time << " [1/s]" << endl;
+        //       //cout << "E1_dot = " << (particleBC.E1_dot*CS.energy/CS.time)/1000 << " [kW]" << endl;
+        //       //cout << "E2_dot = " << (particleBC.E2_dot*CS.energy/CS.time)/1000 << " [kW]" << endl;
+        //       //cout << "E5_dot = " << (particleBC.E5_dot*CS.energy/CS.time)/1000 << " [kW]" << endl;
+        //       //cout << "N5_dot = " << particleBC.N5_dot/CS.time << " [1/s]" << endl;
+        //
+        //   }
+        // }
 
         // Advance particles and re-inject:
         // =====================================================================
         if (params.SW.advancePos == 1)
         {
             // Advance particle position and velocity to level X^(N+1):
-            PIC.advanceParticles(&params, &fields, &IONS);
+            // PIC.advanceParticles(&params, &fields, &IONS);
 
             // Re-inject particles that leave computational domain:
-            particleBC.applyParticleReinjection(&params,&CS,&fields,&IONS);
+            // particleBC.applyParticleReinjection(&params,&CS,&fields,&IONS);
 
             // Assign cell:
-            PIC.assignCell_AllSpecies(&params,&IONS);
+            // PIC.assignCell_AllSpecies(&params,&IONS);
 
             // Interpolate all fields:
-            PIC.interpolateFields_AllSpecies(&params,&IONS,&fields);
+            // PIC.interpolateFields_AllSpecies(&params,&IONS,&fields);
 
             // Interpolate electron temperature:
-        	PIC.interpolateElectrons_AllSpecies(&params,&IONS,&electrons);
+        	   // PIC.interpolateElectrons_AllSpecies(&params,&IONS,&electrons);
         }
 
         // Calculate ion moments:
         // =====================================================================
-        PIC.extrapolateMoments_AllSpecies(&params,&CS,&fields,&IONS);
+        // PIC.extrapolateMoments_AllSpecies(&params,&CS,&fields,&IONS);
 
         // Apply collision operator:
         // =====================================================================
         if (params.SW.Collisions == 1)
         {
-            coll_operator.ApplyCollisions_AllSpecies(&params,&CS,&IONS,&electrons);
+            // coll_operator.ApplyCollisions_AllSpecies(&params,&CS,&IONS,&electrons);
         }
 
         // Apply RF operator:
@@ -219,7 +229,7 @@ int main(int argc, char* argv[])
         {
             if (params.currentTime >= params.RF.t_ON*CS.time && params.currentTime <= params.RF.t_OFF*CS.time)
             {
-                RF_operator.ApplyRfHeating_AllSpecies(&params,&CS,&fields,&IONS);
+                // RF_operator.ApplyRfHeating_AllSpecies(&params,&CS,&fields,&IONS);
             }
         }
 
@@ -243,7 +253,7 @@ int main(int argc, char* argv[])
         if (params.SW.EfieldSolve == 1)
         {
             // Use Ohm's law to advance the electric field:
-            fields_solver.advanceEfield(&params,&fields,&CS,&IONS,&electrons);
+            // fields_solver.advanceEfield(&params,&fields,&CS,&IONS,&electrons);
         }
 
         // Advance time:
@@ -254,9 +264,9 @@ int main(int argc, char* argv[])
         // =====================================================================
         if(fmod((double)(tt + 1), params.outputCadenceIterations) == 0)
         {
-            vector<ionSpecies_TYP> IONS_OUT = IONS;
+            vector<ions_TYP> IONS_OUT = IONS;
 
-            HDF.saveOutputs(&params, &IONS_OUT, &electrons, &fields, &CS, outputIterator+1, params.currentTime);
+            // HDF.saveOutputs(&params, &IONS_OUT, &electrons, &fields, &CS, outputIterator+1, params.currentTime);
 
             outputIterator++;
         }
@@ -276,6 +286,8 @@ int main(int argc, char* argv[])
         }
 
     }
+    */
+
     // #########################################################################
     // End time iterations.
     // #########################################################################

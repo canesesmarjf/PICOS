@@ -195,7 +195,7 @@ PIC_TYP::PIC_TYP(const params_TYP * params, CS_TYP * CS, fields_TYP * fields, ve
 void PIC_TYP::interpolateScalarField(const params_TYP * params, ionSpecies_TYP * IONS, const arma::vec * F_m, arma::vec * F_p)
 {
     int NX =  params->mesh.NX_IN_SIM + 4; //Mesh size along the X axis (considering the gosht cell)
-    int NSP(IONS->NSP);
+    int N_CP(IONS->N_CP);
 
     // Allocate memory and initialize to zero:
     arma::vec F = zeros(NX);
@@ -206,8 +206,8 @@ void PIC_TYP::interpolateScalarField(const params_TYP * params, ionSpecies_TYP *
     // Take care of ghost cells:
     fill4Ghosts(&F);
 
-    #pragma omp parallel for default(none) shared(params, IONS, F_p, F) firstprivate(NSP)
-    for(int ii=0; ii<NSP; ii++)
+    #pragma omp parallel for default(none) shared(params, IONS, F_p, F) firstprivate(N_CP)
+    for(int ii=0; ii<N_CP; ii++)
     {
         int ix = IONS->mn(ii) + 2;
 
@@ -223,9 +223,9 @@ void PIC_TYP::interpolateFields(const params_TYP * params, ionSpecies_TYP * IONS
 	// Need to use SW in order to enable/disable ddBX interpolation
 
 	// Allocate memory for field variables:
-	arma::vec EX_p   = zeros(IONS->NSP, 1);
-	arma::vec BX_p   = zeros(IONS->NSP, 1);
-	arma::vec dBX_p  = zeros(IONS->NSP, 1);
+	arma::vec EX_p   = zeros(IONS->N_CP, 1);
+	arma::vec BX_p   = zeros(IONS->N_CP, 1);
+	arma::vec dBX_p  = zeros(IONS->N_CP, 1);
 
 	// Interpolate mesh-defined fields into particles:
 	interpolateScalarField(params, IONS, &fields->EX_m , &EX_p );
@@ -239,7 +239,7 @@ void PIC_TYP::interpolateFields(const params_TYP * params, ionSpecies_TYP * IONS
 
 	if (params->SW.RFheating == 1)
 	{
-		arma::vec ddBX_p = zeros(IONS->NSP, 1);
+		arma::vec ddBX_p = zeros(IONS->N_CP, 1);
 		interpolateScalarField(params, IONS, &fields->ddBX_m, &ddBX_p);
 		IONS->ddBX_p = ddBX_p;
 	}
@@ -262,7 +262,7 @@ void PIC_TYP::interpolateFields_AllSpecies(const params_TYP * params, vector<ion
 void PIC_TYP::interpolateElectrons(const params_TYP * params, ionSpecies_TYP * IONS, const electrons_TYP * electrons)
 {
 	// Allocate memory:
-	arma::vec Te_p   = zeros(IONS->NSP, 1);
+	arma::vec Te_p   = zeros(IONS->N_CP, 1);
 
 	// Interpolate mesh-defined fields into particles:
 	interpolateScalarField(params, IONS, &electrons->Te_m , &Te_p );
@@ -388,7 +388,7 @@ void PIC_TYP::advanceParticles(const params_TYP * params, fields_TYP * fields, v
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
 		{
 			// Number of particles:
-			int NSP = IONS->at(ss).NSP;
+			int N_CP = IONS->at(ss).N_CP;
 
             // Time step:
             double DT = params->DT;
@@ -396,8 +396,8 @@ void PIC_TYP::advanceParticles(const params_TYP * params, fields_TYP * fields, v
 			// Ion mass:
 			double Ma = IONS->at(ss).M;
 
-			#pragma omp parallel for default(none) shared(IONS, params, fields, DT, ss, Ma, std::cout) firstprivate(NSP, F_C_DS)
-            for(int ii=0;ii<NSP;ii++)
+			#pragma omp parallel for default(none) shared(IONS, params, fields, DT, ss, Ma, std::cout) firstprivate(N_CP, F_C_DS)
+            for(int ii=0;ii<N_CP;ii++)
 			{
                 // Start RK4 solution:
                 //==============================================================
@@ -417,24 +417,24 @@ void PIC_TYP::advanceParticles(const params_TYP * params, fields_TYP * fields, v
 
 				// Assemble vectors to use in RK4 method:
 				arma::rowvec Z0  = zeros<rowvec>(3);
-                arma::rowvec ZN  = zeros<rowvec>(3);
+        arma::rowvec ZN  = zeros<rowvec>(3);
 				arma::rowvec Z1  = zeros<rowvec>(3);
 				arma::rowvec EM  = zeros<rowvec>(3);
-                arma::rowvec F   = zeros<rowvec>(3);
-                arma::rowvec dZ1 = zeros<rowvec>(3);
-                arma::rowvec dZ2 = zeros<rowvec>(3);
-                arma::rowvec dZ3 = zeros<rowvec>(3);
-                arma::rowvec dZ4 = zeros<rowvec>(3);
+        arma::rowvec F   = zeros<rowvec>(3);
+        arma::rowvec dZ1 = zeros<rowvec>(3);
+        arma::rowvec dZ2 = zeros<rowvec>(3);
+        arma::rowvec dZ3 = zeros<rowvec>(3);
+        arma::rowvec dZ4 = zeros<rowvec>(3);
 
 				// Extract particle states:
-				double x    = IONS->at(ss).X_p(ii);
-				double vpar = IONS->at(ss).V_p(ii,0);
-				double vper = IONS->at(ss).V_p(ii,1);
+				double x    = IONS->at(ss).v_p(ii);
+				double vpar = IONS->at(ss).v_p(ii,0);
+				double vper = IONS->at(ss).v_p(ii,1);
 
 				// Extract particle-defined fields:
-				double E  = IONS->at(ss).EX_p(ii);
-				double B  = IONS->at(ss).BX_p(ii);
-				double dB = IONS->at(ss).dBX_p(ii);
+				double E  = IONS->at(ss).Ex_p(ii);
+				double B  = IONS->at(ss).Bx_p(ii);
+				double dB = IONS->at(ss).dBx_p(ii);
 
 				// Initialize initial particle state Z0:
 				Z0 = {x, vpar, vper};
@@ -514,13 +514,13 @@ void PIC_TYP::advanceParticles(const params_TYP * params, fields_TYP * fields, v
 					Z1(2)  = vper;
 					break;
 				}
-                // End of RK solution:
-                //==============================================================
+        // End of RK solution:
+        //==============================================================
 
-                // Update new particle states:
-                IONS->at(ss).X_p(ii)   = Z1(0);
-                IONS->at(ss).V_p(ii,0) = Z1(1); // vpar
-                IONS->at(ss).V_p(ii,1) = Z1(2); // vper
+        // Update new particle states:
+        IONS->at(ss).x_p(ii)   = Z1(0);
+        IONS->at(ss).v_p(ii,0) = Z1(1); // vpar
+        IONS->at(ss).v_p(ii,1) = Z1(2); // vper
 				IONS->at(ss).mu_p(ii)  = 0.5*Ma*pow(Z1(2),2)/EM(1) ; // mu
 
 			} // End of parallel region
@@ -531,21 +531,21 @@ void PIC_TYP::advanceParticles(const params_TYP * params, fields_TYP * fields, v
 void PIC_TYP::assignCell(const params_TYP * params, ionSpecies_TYP * IONS)
 {
 	// Total number of computational particles:
-	int NSP(IONS->NSP);
+	int N_CP(IONS->N_CP);
 
 	// Clear assignment function:
     IONS->wxc.zeros();
     IONS->wxl.zeros();
     IONS->wxr.zeros();
 
-	#pragma omp parallel for default(none) shared(IONS, params, std::cout) firstprivate(NSP)
-    for(int ii=0; ii<NSP; ii++)
+	#pragma omp parallel for default(none) shared(IONS, params, std::cout) firstprivate(N_CP)
+    for(int ii=0; ii<N_CP; ii++)
     {
 		// Calculate nearest grid point:
-		double X_p     = IONS->X_p(ii);
+		double x_p     = IONS->x_p(ii);
 		double X_p_min = params->geometry.LX_min;
 		double DX      = params->mesh.DX;
-		signed int m = round( 0.5 + (X_p - X_p_min)/DX ) - 1;
+		signed int m = round( 0.5 + (x_p - X_p_min)/DX ) - 1;
 
 		// Correct "m" near boundaries if out of bound:
 		if ( m >= params->mesh.NX_IN_SIM)
@@ -563,7 +563,7 @@ void PIC_TYP::assignCell(const params_TYP * params, ionSpecies_TYP * IONS)
 		IONS->mn(ii) = m;
 
 		// Distance to nearest grid point:
-		double X = params->mesh.nodesX(m) - X_p;
+		double X = params->mesh.nodesX(m) - x_p;
 
 		// Assignment function:
 		IONS->wxl(ii) = 0.5*pow(1.5 + ((X - DX)/DX),2); // Left:
@@ -663,7 +663,7 @@ void PIC_TYP::calculateIonMoments(const params_TYP * params, CS_TYP * CS, fields
 void PIC_TYP::eim(const params_TYP * params, CS_TYP * CS, fields_TYP * fields, ionSpecies_TYP * IONS)
 {
 	// Number of particles:
-	int NSP(IONS->NSP);
+	int N_CP(IONS->N_CP);
 
 	// Ion mass:
 	double Ma = IONS->M;
@@ -678,7 +678,7 @@ void PIC_TYP::eim(const params_TYP * params, CS_TYP * CS, fields_TYP * fields, i
 	IONS->P11_m.zeros();
 	IONS->P22_m.zeros();
 
-	#pragma omp parallel default(none) shared(params, IONS, B0, Ma) firstprivate(NSP)
+	#pragma omp parallel default(none) shared(params, IONS, B0, Ma) firstprivate(N_CP)
 	{
 		// Create private moments:
 		// ======================
@@ -690,14 +690,14 @@ void PIC_TYP::eim(const params_TYP * params, CS_TYP * CS, fields_TYP * fields, i
 		// Assemble moments:
 		// =================
 		#pragma omp for
-		for(int ii=0; ii<NSP; ii++)
+		for(int ii=0; ii<N_CP; ii++)
 		{
 			// Nearest grid point:
 			int ix = IONS->mn(ii) + 2;
 
 			// Particle velocity:
-			double vpar = IONS->V_p(ii,0);
-			double vper = IONS->V_p(ii,1);
+			double vpar = IONS->v_p(ii,0);
+			double vper = IONS->v_p(ii,1);
 
 			// vx component:
 			arma::vec phi = 2*M_PI*randu<vec>(1);

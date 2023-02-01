@@ -20,8 +20,6 @@
 // User-defined headers:
 // =====================
 #include "types.h"
-//#include "quietStart.h"
-//#include "PIC.h"
 #include "mpi_main.h"
 
 using namespace std;
@@ -33,31 +31,36 @@ class init_TYP
 
 	map<string, string> readTextFile(string *  inputFile);
 
-	void allocateParticleDefinedIonArrays(const params_TYP * params, ionSpecies_TYP * IONS);
+	// void allocateParticleDefinedIonArrays(const params_TYP * params, ions_TYP * IONS);
 
-	void allocateMeshDefinedIonArrays(const params_TYP * params, ionSpecies_TYP * IONS);
+	// void allocateMeshDefinedIonArrays(const params_TYP * params, ions_TYP * IONS);
 
 public:
 
 	init_TYP(params_TYP * params, int argc, char* argv[]);
 
-	void calculateMeshParams(params_TYP * params);
+	// void calculateMeshParams(params_TYP * params);
 
-	void readInputFile(params_TYP * params);
+	void read_inputFile(params_TYP * params);
 
-  	void readIonPropertiesFile(params_TYP * params, vector<ionSpecies_TYP> * IONS);
+	void read_ionsPropertiesFile(params_TYP * params);
 
-	void calculateDerivedQuantities(params_TYP * params, vector<ionSpecies_TYP> * IONS);
+	void create_mesh(params_TYP * params, mesh_TYP * mesh);
 
-  	void readInitialConditionProfiles(params_TYP * params, electrons_TYP * electrons, vector<ionSpecies_TYP> * IONS);
 
-	void initializeIons(const params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS);
+
+
+	void calculateDerivedQuantities(params_TYP * params, vector<ions_TYP> * IONS);
+
+  void readInitialConditionProfiles(params_TYP * params, electrons_TYP * electrons, vector<ions_TYP> * IONS);
+
+	void initializeIons(const params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS);
 
 	void initializeElectrons(const params_TYP * params, const CS_TYP * CS, electrons_TYP * electrons);
 
 	void initializeFields(params_TYP * params, fields_TYP * fields);
 
-	void allocateMemoryIons(params_TYP * params, vector<ionSpecies_TYP> * IONS);
+	void allocateMemoryIons(params_TYP * params, vector<ions_TYP> * IONS);
 
 };
 

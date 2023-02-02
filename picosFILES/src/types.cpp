@@ -39,6 +39,9 @@ void params_TYP::get_Nx_dx(double ionSkinDepth)
   }
   this->mesh_params.Nx = Nx;
 
+  // Get Nx per MPIs (field MPIs):
+  this->mesh_params.Nx_PER_MPI = Nx/this->mpi.MPIS_FIELDS;
+
   // Final value of dx:
   this->mesh_params.dx = L/Nx;
 }

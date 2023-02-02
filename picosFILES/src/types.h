@@ -290,8 +290,7 @@ public:
 	arma::vec Tpar_m;			// Ion parallel temperature
 	arma::vec Tper_m;			// Ion perpendicular temperature
 
-	arma::vec ncp_m;
-	arma::vec ncp_m_MPI; // Computational particle density in each MPI process
+	arma::vec ncp_m;     // Computational particle density in each MPI process
 
 	// Particle defined flags:
 	arma::ivec f1;             	// Flag for left boundary

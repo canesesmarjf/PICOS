@@ -57,38 +57,37 @@ protected:
 	void smooth(arma::vec * v, double as);
 
 	// PIC related:
-	void interpolateFields(const params_TYP * params, ionSpecies_TYP * IONS, const fields_TYP * fields);
+	void interpolateFields(const params_TYP * params, ions_TYP * IONS, const fields_TYP * fields);
 
-	void interpolateElectrons(const params_TYP * params, ionSpecies_TYP * IONS, const electrons_TYP * electrons);
+	void interpolateElectrons(const params_TYP * params, ions_TYP * IONS, const electrons_TYP * electrons);
 
-	void interpolateScalarField(const params_TYP * params, ionSpecies_TYP * IONS, const arma::vec * F_m, arma::vec * F_p);
+	void interpolateScalarField(const params_TYP * params, ions_TYP * IONS, const arma::vec * F_m, arma::vec * F_p);
 
-	void interpEM(const params_TYP * params, const ionSpecies_TYP * IONS, const fields_TYP * fields, arma::rowvec * ZN, arma::rowvec * EM);
+	// void interpEM(const params_TYP * params, const ions_TYP * IONS, const fields_TYP * fields, arma::rowvec * ZN, arma::rowvec * EM);
 
-	void calculateF(const params_TYP * params, const ionSpecies_TYP * IONS, arma::rowvec * ZN, arma::rowvec * EM, arma::rowvec * F);
+	// void calculateF(const params_TYP * params, const ions_TYP * IONS, arma::rowvec * ZN, arma::rowvec * EM, arma::rowvec * F);
 
-	void eim(const params_TYP * params, CS_TYP * CS, fields_TYP * fields, ionSpecies_TYP * IONS);
+	void eim(const params_TYP * params, fields_TYP * fields, ions_TYP * IONS);
 
-	void calculateIonMoments(const params_TYP * params, CS_TYP * CS, fields_TYP * fields, ionSpecies_TYP * IONS);
+	void calculateIonMoments(const params_TYP * params, fields_TYP * fields, ions_TYP * IONS);
 
-	void calculateDerivedIonMoments(const params_TYP * params, CS_TYP * CS, ionSpecies_TYP * IONS);
+	void calculateDerivedIonMoments(const params_TYP * params, ions_TYP * IONS);
 
   public:
 
-	PIC_TYP(const params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS, electrons_TYP * electrons);
+	PIC_TYP(const params_TYP * params, const mesh_TYP * mesh,fields_TYP * fields, vector<ions_TYP> * IONS, electrons_TYP * electrons);
 
-	void assignCell(const params_TYP * params, ionSpecies_TYP * IONS);
+	void assignCell(const params_TYP * params, const mesh_TYP * mesh, ions_TYP * IONS);
 
-  	void advanceParticles(const params_TYP * params, fields_TYP * fields, vector<ionSpecies_TYP> * IONS);
+  // void advanceParticles(const params_TYP * params, fields_TYP * fields, vector<ions_TYP> * IONS);
 
-	void assignCell_AllSpecies(const params_TYP * params, vector<ionSpecies_TYP> * IONS);
+	void assignCell_AllSpecies(const params_TYP * params, const mesh_TYP * mesh, vector<ions_TYP> * IONS);
 
-	void interpolateFields_AllSpecies(const params_TYP * params, vector<ionSpecies_TYP> * IONS, const fields_TYP * fields);
+	void interpolateFields_AllSpecies(const params_TYP * params, vector<ions_TYP> * IONS, const fields_TYP * fields);
 
-	void interpolateElectrons_AllSpecies(const params_TYP * params, vector<ionSpecies_TYP> * IONS, const electrons_TYP * electrons);
+	void interpolateElectrons_AllSpecies(const params_TYP * params, vector<ions_TYP> * IONS, const electrons_TYP * electrons);
 
-  	void extrapolateMoments_AllSpecies(const params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS);
-
+	void extrapolateMoments_AllSpecies(const params_TYP * params, fields_TYP * fields, vector<ions_TYP> * IONS);
 };
 
 #endif

@@ -17,7 +17,7 @@
 
 // #include "units.h"
 // #include "outputHDF5.h"
-// #include "PIC.h"
+#include "PIC.h"
 // #include "particleBC.h"
 // #include "collisionOperator.h"
 // #include "fieldSolve.h"
@@ -103,18 +103,6 @@ int main(int argc, char* argv[])
   // - Initialize ions using IC profiles:
   init.initialize_ions(&params,&IC,&mesh,&IONS);
 
-  HDF_TYP HDF;
-  if (params.mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
-  {
-    string fileName;
-    stringstream kk;
-    kk << params.mpi.MPI_DOMAIN_NUMBER;
-
-    // General:
-    fileName = "file_1_rank_" + kk.str() + ".h5";
-    HDF.saveData(fileName,&params,&fields,&IONS);
-  }
-
   // Define characteristic scales and broadcast them to all processes in COMM_WORLD:
   // units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
@@ -159,8 +147,20 @@ int main(int argc, char* argv[])
 
   // Create PIC solver:
   // =========================================================================
-  // PIC_TYP PIC(&params, &CS, &fields, &IONS, &electrons);
+  PIC_TYP PIC(&params, &mesh, &fields, &IONS, &electrons);
 
+  HDF_TYP HDF;
+  if (params.mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
+  {
+    string fileName;
+    stringstream kk;
+    kk << params.mpi.MPI_DOMAIN_NUMBER;
+
+    // General:
+    fileName = "file_1_rank_" + kk.str() + ".h5";
+    HDF.saveData(fileName,&params,&fields,&IONS);
+  }
+  
   // Create RF operator object:
   // =========================================================================
   // RF_Operator_TYP RF_operator(&params,&CS,&fields,&IONS);

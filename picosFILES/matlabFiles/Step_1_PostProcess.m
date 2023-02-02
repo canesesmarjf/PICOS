@@ -61,16 +61,36 @@ plot(d.fields.x_m,d.ions_1.ncp_m*dx,'r.-')
 plot(x_m(2:end-1),counts_0,'k','LineWidth',2)
 plot(x_m(2:end-1),counts_1,'r','LineWidth',2)
 
-% ylim([0,1.2]*max(d.ions_0.ncp_m*dx))
+ylim([0,1.2]*max(d.ions_0.ncp_m*dx))
 
 subplot(2,1,2)
 box on
 hold on
 plot(d.fields.x_m,d.ions_0.n_m,'k.-')
 plot(d.fields.x_m,d.ions_1.n_m,'r.-')
-% ylim([0,1.2]*max(d.ions_0.n_m))
+ylim([0,1.2]*max(d.ions_0.n_m))
 xlabel(['$x$ [m]'],'interpreter','latex','FontSize',18)
 title(['Real particle density $n_m^{R}$ [m$^{-3}$]'],'interpreter','latex','FontSize',18)
+
+figure('color','w')
+box on
+hold on
+plot(d.fields.x_m,d.ions_0.Tpar_m,'k.-')
+plot(d.fields.x_m,d.ions_1.Tpar_m,'r.-')
+plot(d.fields.x_m,d.ions_0.Tper_m,'k.-')
+plot(d.fields.x_m,d.ions_1.Tper_m,'r.-')
+ylim([0,+1]*1.2*max(d.ions_0.Tper_m))
+xlabel(['$x$ [m]'],'interpreter','latex','FontSize',18)
+title(['Ion temperature $T_i$ [eV]'],'interpreter','latex','FontSize',18)
+
+figure('color','w')
+box on
+hold on
+plot(d.fields.x_m,d.ions_0.upar_m,'k.-')
+plot(d.fields.x_m,d.ions_1.upar_m,'r.-')
+ylim([-1,+1]*1.2*max(d.ions_0.upar_m))
+xlabel(['$x$ [m]'],'interpreter','latex','FontSize',18)
+title(['Ion temperature $T_i$ [eV]'],'interpreter','latex','FontSize',18)
 
 figure
 plot(d.ions_0.x_p,d.ions_0.v_p(:,1),'k.');

@@ -54,10 +54,8 @@ void mesh_params_TYP::getA0()
   this->A0 = M_PI*( pow(rmax,2) - pow(rmin,2) );
 }
 
-/*
 // =============================================================================
 void fields_TYP::getAm(double A0, double B0)
 {
   this->Am = A0*B0/this->Bx_m;
 }
-*/

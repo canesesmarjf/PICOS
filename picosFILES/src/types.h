@@ -47,7 +47,7 @@ class ions_params_TYP
 {
 public:
   int SPECIES;
-  int N_CP; // Number of computational particles over entire simulation
+  int N_CP_IN_SIM; // Number of computational particles over entire simulation
   int pct_N_CP_Output; // percentage of N_CP recorded in output file
   int Z;
   double M;
@@ -152,11 +152,12 @@ public:
     arma::vec Tpar_mg;
     arma::vec Tper_mg;
     arma::vec upar_mg;
-    arma::vec ncp_pdf_mg;
+    arma::vec ncp_shape_mg;
 
     // IC profiles calculated in the code (with ghost cells included):
     arma::vec a_mg;
-    arma::vec ncp_mg;
+    arma::vec ncp_in_SIM_mg;
+		arma::vec ncp_MPI_mg;
 };
 
 // Class to hold the initial conditions PROFILES for the electrons:
@@ -215,10 +216,10 @@ class ions_TYP
 
 public:
 
-	int SPECIES;   // 0: tracer 1: GC particles
-	uint N_CP;     // Number of computational particles in ENTIRE simulation
-	uint N_CP_MPI; // Number of computational particles per MPI process
-	double K;      // Distribution function normalization constant K = N_R/N_SP
+	int SPECIES;     // 0: tracer 1: GC particles
+	uint N_CP_IN_SIM; // total number of computational particles in ENTIRE simulation
+	uint N_CP_MPI;    // Number of computational particles per MPI process
+	double K;         // Distribution function normalization constant K = N_R/N_SP
 
 	double N_R;    // Number of real particles in ENTIRE simulation (Dynamic)
 	double N_SP;   // Number of super-particles in ENTIRE simulation (Dynamic)
@@ -227,10 +228,9 @@ public:
 	double M;      // Mass
 	double Q;      // Charge
 
-	// Variables to control computational particle output:
-	double pct_N_CP_Output; // Fraction of computational particles from ENTIRE simulation to record in output file
-	int N_CP_Output;        // Number of computational particles from ENTIRE simulation to record in output file
-	int N_CP_Output_MPI;    // Number of computational particles per MPI to record in output file
+	// Variables to control computational particle output for EACH MPI:
+	double pct_N_CP_MPI_Output; // Percentage of computational particles PER MPI to record in each MPI's output file
+	int N_CP_MPI_Output;        // Number of computational particles PER MPI to record in output file
 
 	// Characteristic scales:
 	// ======================
@@ -340,25 +340,29 @@ public:
 };
 
 
-//  Define ELECTROMAGNETIC FIELDS DERIVED TYPES:
+// Class to represent electromagnetic fields in the simulation:
 // =============================================================================
 class fields_TYP
 {
 public:
 
-	arma::vec EX_m;
-	arma::vec BX_m;
-	arma::vec dBX_m;
-	arma::vec ddBX_m;
+    arma::vec x_mg;
+    arma::vec Ex_m;
+    arma::vec Bx_m;
+    arma::vec dBx_m;
+    arma::vec ddBx_m;
 
-	fields_TYP(){};
+    arma::vec Am;
 
-	fields_TYP(unsigned int N) : EX_m(N), BX_m(N), dBX_m(N), ddBX_m(N) {};
+    fields_TYP(){};
 
-	~fields_TYP(){};
+    //fields_TYP(unsigned int N) : Ex_m(N), Bx_m(N), dBx_m(N), ddBx_m(N) {};
 
-	void zeros(unsigned int N);
-	void fill(double A);
+    ~fields_TYP(){};
+
+    //void zeros(unsigned int N);
+    //void fill(double A);
+    void getAm(double A0, double B0);
 };
 
 //  Define structure to store characteristic values for the normalization:
@@ -646,7 +650,7 @@ struct params_TYP
 	//  Methods:
 	void getCharacteristicIonSkinDepth();
 	void get_Nx_dx(double ionSkinDepth);
-	
+
 	// Constructor
 	params_TYP(){};
 };

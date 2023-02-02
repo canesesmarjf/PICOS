@@ -37,17 +37,29 @@ class init_TYP
 
 public:
 
-	init_TYP(params_TYP * params, int argc, char* argv[]);
+  init_TYP(params_TYP * params, int argc, char* argv[]);
 
-	// void calculateMeshParams(params_TYP * params);
+  void read_inputFile(params_TYP * params);
 
-	void read_inputFile(params_TYP * params);
+  void read_ionsPropertiesFile(params_TYP * params);
 
-	void read_ionsPropertiesFile(params_TYP * params);
+  void create_mesh(params_TYP * params, mesh_TYP * mesh);
 
-	void create_mesh(params_TYP * params, mesh_TYP * mesh);
+  void read_IC_profiles(params_TYP * params, mesh_TYP * mesh, IC_TYP * IC);
 
+	void interpolate_IC_profiles(params_TYP * params, mesh_TYP * mesh, IC_TYP * IC);
 
+	void calculate_IC_particleWeight(params_TYP * params, IC_TYP * IC, vector<ions_TYP> * IONS);
+
+	void initialize_fields(params_TYP * params, IC_TYP * IC, fields_TYP * fields);
+
+	void initialize_electrons(params_TYP * params, IC_TYP * IC, electrons_TYP * electrons);
+
+	void initialize_ions(params_TYP * params, IC_TYP * IC, mesh_TYP * mesh, vector<ions_TYP> * IONS);
+
+	void allocate_meshDefinedIonArrays(params_TYP * params, ions_TYP * IONS);
+
+	void allocate_particleDefinedIonArrays(params_TYP * params, ions_TYP * IONS);
 
 
 	void calculateDerivedQuantities(params_TYP * params, vector<ions_TYP> * IONS);

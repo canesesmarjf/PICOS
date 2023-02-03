@@ -61,12 +61,13 @@ timeMax = double(fields.(['t',num2str(Nt-1)]).time);
 % fields:
 vars.fields = fieldnames(fields.t0.fields);
 
-% IONS:
+% plasma:
 fileName  = ['../outputFiles/HDF5/PARTICLES_FILE_0.h5'];
-IONS      = HDF2Struct_v2(fileName);
-vars.IONS = fieldnames(IONS.t0.ions.species_1);
+plasma      = HDF2Struct_v2(fileName);
+vars.ions      = fieldnames(plasma.t0.ions.species_1);
+vars.electrons = fieldnames(plasma.t0.electrons);
 
-vars.output = [vars.fields;vars.IONS];
+vars.output = [vars.fields;vars.ions;vars.electrons];
 
 % Display to terminal:
 % =========================================================================
@@ -161,7 +162,7 @@ for ss = 1:numIonSpecies
         x_p{ss}    = zeros(N_CP,Nt);
     end
     
-    if sum(strcmpi('V_p',vars.output))
+    if sum(strcmpi('v_p',vars.output))
         vpar_p{ss} = zeros(N_CP,Nt);
         vper_p{ss} = zeros(N_CP,Nt);  
     end
@@ -216,7 +217,7 @@ for ss = 1:numIonSpecies
     end
     
     if sum(strcmpi('Te_m',vars.output))
-        Te_m{ss} = zeros(Nx,Nt);
+        Te_m = zeros(Nx,Nt);
     end
     
     if sum(strcmpi('u_m',vars.output))
@@ -249,19 +250,19 @@ for rr = 1:ranksParticles
     disp(['Particle rank #', num2str(rr),' out of ',num2str(ranksParticles)]);
     
     % File name:
-    fileName = ['PARTICLES_FILE_',num2str(rr-1),'.h5'];
+    fileName = ['../outputFiles/HDF5/PARTICLES_FILE_',num2str(rr-1),'.h5'];
     
     % Get data:
-    IONS = HDF2Struct_v2(fileName);
+    plasma = HDF2Struct_v2(fileName);
     
     % Loop over all ion species:
     for ss = 1:numIonSpecies
         
         % Species field:
-        speciesField = ['spp_',num2str(ss)];
+        speciesField = ['species_',num2str(ss)];
               
         % Number of particles per rank:
-        N_CP_MPI = double(ionParameters{ss}.NSP_OUT);
+        N_CP_MPI = double(ionParameters{ss}.N_CP_MPI_Output);
                         
         % Data range:
         rng_p = 1 + N_CP_MPI*(rr-1) : 1 : N_CP_MPI*rr;
@@ -272,93 +273,97 @@ for rr = 1:ranksParticles
             kk = str2double(timeSteps{tt}(2:end)) + 1;
             
             % Time:
-            t_p(kk) = IONS.(timeSteps{tt}).time;
+            t_p(kk) = plasma.(timeSteps{tt}).time;
             
            % Particle states:
             if sum(strcmpi('x_p',vars.output))
-                x_p{ss}(rng_p,kk)    = IONS.(timeSteps{tt}).ions.(speciesField).x_p;
+                x_p{ss}(rng_p,kk)    = plasma.(timeSteps{tt}).ions.(speciesField).x_p;
             end
             
-            if sum(strcmpi('V_p',vars.output))
-                vpar_p{ss}(rng_p,kk) = IONS.(timeSteps{tt}).ions.(speciesField).V_p(:,1);
-                vper_p{ss}(rng_p,kk) = IONS.(timeSteps{tt}).ions.(speciesField).V_p(:,2);   
+            if sum(strcmpi('v_p',vars.output))
+                vpar_p{ss}(rng_p,kk) = plasma.(timeSteps{tt}).ions.(speciesField).v_p(:,1);
+                vper_p{ss}(rng_p,kk) = plasma.(timeSteps{tt}).ions.(speciesField).v_p(:,2);   
             end
             
             if sum(strcmpi('a_p',vars.output))
-                a_p{ss}(rng_p,kk)    = IONS.(timeSteps{tt}).ions.(speciesField).a_p;
+                a_p{ss}(rng_p,kk)    = plasma.(timeSteps{tt}).ions.(speciesField).a_p;
             end
             
             if sum(strcmpi('mu_p',vars.output))
-                mu_p{ss}(rng_p,kk)   = IONS.(timeSteps{tt}).ions.(speciesField).mu_p;
+                mu_p{ss}(rng_p,kk)   = plasma.(timeSteps{tt}).ions.(speciesField).mu_p;
             end        
         
             % Particle-defined moments:
             if sum(strcmpi('n_p',vars.output))
-                n_p{ss}(rng_p,kk)    = IONS.(timeSteps{tt}).ions.(speciesField).n_p;
+                n_p{ss}(rng_p,kk)    = plasma.(timeSteps{tt}).ions.(speciesField).n_p;
             end
             
             if sum(strcmpi('nv_p',vars.output))
-                nv_p{ss}(rng_p,kk)   = IONS.(timeSteps{tt}).ions.(speciesField).nv_p;
+                nv_p{ss}(rng_p,kk)   = plasma.(timeSteps{tt}).ions.(speciesField).nv_p;
             end
             
             if sum(strcmpi('Tpar_p',vars.output))
-                Tpar_p{ss}(rng_p,kk) = IONS.(timeSteps{tt}).ions.(speciesField).Tpar_p;
+                Tpar_p{ss}(rng_p,kk) = plasma.(timeSteps{tt}).ions.(speciesField).Tpar_p;
             end
             
             if sum(strcmpi('Tper_p',vars.output))
-                Tper_p{ss}(rng_p,kk) = IONS.(timeSteps{tt}).ions.(speciesField).Tper_p;
+                Tper_p{ss}(rng_p,kk) = plasma.(timeSteps{tt}).ions.(speciesField).Tper_p;
             end
             
             if sum(strcmpi('Te_p',vars.output))
-                Te_p{ss}(rng_p,kk) = IONS.(timeSteps{tt}).ions.(speciesField).Te_p;
+                Te_p{ss}(rng_p,kk) = plasma.(timeSteps{tt}).ions.(speciesField).Te_p;
             end
             
             if sum(strcmpi('u_p',vars.output))
-                ux_p{ss}(rng_p,kk)    = IONS.(timeSteps{tt}).ions.(speciesField).u_p.x;               
+                ux_p{ss}(rng_p,kk)    = plasma.(timeSteps{tt}).ions.(speciesField).u_p.x;               
             end
     
             % Mesh-defined moments:
             if rr == 1
                 if sum(strcmpi('n_m',vars.output))
-                    n_m{ss}(:,kk)    = IONS.(timeSteps{tt}).ions.spp_1.n_m;
+                    n_m{ss}(:,kk)    = plasma.(timeSteps{tt}).ions.(speciesField).n_m;
+                end
+
+                if sum(strcmpi('ncp_m',vars.output))
+                    ncp_m{ss}(:,kk)    = plasma.(timeSteps{tt}).ions.(speciesField).ncp_m;
                 end
                 
                 if sum(strcmpi('nv_m',vars.output))
-                    nv_m{ss}   = IONS.(timeSteps{tt}).ions.spp_1.nv_m;
+                    nv_m{ss}   = plasma.(timeSteps{tt}).ions.(speciesField).nv_m;
                 end
                 
                 if sum(strcmpi('Tpar_m',vars.output))
-                    Tpar_m{ss}(:,kk) = IONS.(timeSteps{tt}).ions.spp_1.Tpar_m;
+                    Tpar_m{ss}(:,kk) = plasma.(timeSteps{tt}).ions.(speciesField).Tpar_m;
                 end
                 
                 if sum(strcmpi('Tper_m',vars.output))
-                    Tper_m{ss}(:,kk) = IONS.(timeSteps{tt}).ions.spp_1.Tper_m;
+                    Tper_m{ss}(:,kk) = plasma.(timeSteps{tt}).ions.(speciesField).Tper_m;
                 end
                 
                 if sum(strcmpi('Te_m',vars.output))
-                    Te_m{ss}(:,kk) = IONS.(timeSteps{tt}).ions.spp_1.Te_m;
+                    Te_m(:,kk) = plasma.(timeSteps{tt}).electrons.Te_m;
                 end
                 
                 if sum(strcmpi('u_m',vars.output))
-                    ux_m{ss}(:,kk)   = IONS.(timeSteps{tt}).ions.spp_1.u_m.x;                
+                    ux_m{ss}(:,kk)   = plasma.(timeSteps{tt}).ions.(speciesField).u_m.x;                
                 end
             end
                 
             % Particle-defined fields:
             if sum(strcmpi('Bx_p',vars.output))
-                Bx_p{ss}(rng_p,kk)   = IONS.(timeSteps{tt}).ions.(speciesField).Bx_p;
+                Bx_p{ss}(rng_p,kk)   = plasma.(timeSteps{tt}).ions.(speciesField).Bx_p;
             end
             
             if sum(strcmpi('dBx_p',vars.output))
-                dBx_p{ss}(rng_p,kk)  = IONS.(timeSteps{tt}).ions.(speciesField).dBx_p;
+                dBx_p{ss}(rng_p,kk)  = plasma.(timeSteps{tt}).ions.(speciesField).dBx_p;
             end
             
             if sum(strcmpi('ddBx_p',vars.output))
-                ddBx_p{ss}(rng_p,kk) = IONS.(timeSteps{tt}).ions.(speciesField).ddBx_p;
+                ddBx_p{ss}(rng_p,kk) = plasma.(timeSteps{tt}).ions.(speciesField).ddBx_p;
             end
             
             if sum(strcmpi('Ex_p',vars.output))
-                Ex_p{ss}(rng_p,kk)   = IONS.(timeSteps{tt}).ions.(speciesField).Ex_p;
+                Ex_p{ss}(rng_p,kk)   = plasma.(timeSteps{tt}).ions.(speciesField).Ex_p;
             end         
                                     
         end
@@ -382,7 +387,7 @@ if 0
 
 
     % Kinetic energy:
-    Ma   = m.ions.spp_1.M;
+    Ma   = m.ions.species_1.M;
     KE_p = 0.5*Ma*(vpar_p{1}.^2 + vper_p{1}.^2)/e_c;
     
     % Magnetic moment:
@@ -477,17 +482,24 @@ if find(strcmpi('n_m',vars.output) == 1)
     title('n')
 end
 
+if find(strcmpi('n_cpm',vars.output) == 1)
+    figure
+    mesh(t_p,x_m,movmean(ncp_m{1},10,1));
+%     zlim([0,2e20])
+    caxis([0,2e20])
+    title('n_cp')
+end
+
 if find(strcmpi('Ex_m',vars.output) == 1)
     figure
-    Te = double(m.Te);
-    mesh(t_p,x_m,movmean(movmean(Ex_m/Te,10,1),4,2));
+    mesh(t_p,x_m,movmean(movmean(Ex_m./Te_m,10,1),4,2));
     zlim([-1,1]*8)
     caxis([-1,1]*8)
     title('Ex')
 end
 
 if find(strcmpi('u_m',vars.output) == 1)
-    Cs = sqrt( e_c*(Te_m{1} + 3*Tpar_m{1})/m.ions.spp_1.M);
+    Cs = sqrt( e_c*(Te_m + 3*Tpar_m{1})/m.ions.species_1.M);
     figure
     mesh(t_p,x_m,movmean(ux_m{1}./Cs,10,1));
     title('u_x/{v_T}')
@@ -504,18 +516,18 @@ end
 if find(strcmpi('Tper_m',vars.output) == 1)
     figure
     mesh(t_p,x_m,movmean(Tper_m{1},10,1));
-    zlim([0,1000])
+    zlim([0,1.2]*max(max(Tper_m{1})))
     title('T_per')
 end
 
 % Cross sectional area:
-A0 = pi*(5/100).^2;
-B0 = 0.2;
-A  = A0*B0./Bx_m;
+A0  = m.mesh.A0;
+B0  = m.mesh.B0;
+A_m = A0*B0./Bx_m;
 
 if find(strcmpi('u_m',vars.output) == 1)
     % Plasma integrated flux:
-    F = n_m{1}.*ux_m{1}.*A;
+    F = n_m{1}.*ux_m{1}.*A_m;
 
     figure
     mesh(t_p,x_m,movmean(F,10,1));
@@ -523,15 +535,17 @@ if find(strcmpi('u_m',vars.output) == 1)
 end
 
 % Temperature during and before RF
-figure('color','w')
-hold on
-rng = 18:20; 
-hT(1) = plot(x_m,movmean(mean(Tpar_m{1}(:,rng),2),9,1)); 
-hT(2) = plot(x_m,movmean(mean(Tper_m{1}(:,rng),2),9,1));
-rng = 30:40; 
-hT(3) = plot(x_m,movmean(mean(Tpar_m{1}(:,rng),2),9,1)); 
-hT(4) = plot(x_m,movmean(mean(Tper_m{1}(:,rng),2),9,1));
-plot(x_m,Bx_m(:,1)*200)
+try
+    figure('color','w')
+    hold on
+    rng = 18:20; 
+    hT(1) = plot(x_m,movmean(mean(Tpar_m{1}(:,rng),2),9,1)); 
+    hT(2) = plot(x_m,movmean(mean(Tper_m{1}(:,rng),2),9,1));
+    rng = 30:40; 
+    hT(3) = plot(x_m,movmean(mean(Tpar_m{1}(:,rng),2),9,1)); 
+    hT(4) = plot(x_m,movmean(mean(Tper_m{1}(:,rng),2),9,1));
+    plot(x_m,Bx_m(:,1)*200)
+end
 
 
 %% Force balance:
@@ -541,16 +555,16 @@ plot(x_m,Bx_m(:,1)*200)
 rng_x = find(x_m >= -2 & x_m <= 10);
 
 % Plasma quantities:
-M      = m.ions.spp_1.M;
+M      = m.ions.species_1.M;
 A0     = pi*(5/100)^2;
 B0     = 0.2;
-Te     = Te_m{1}(rng_x,:);
+Te     = Te_m(rng_x,:);
 Ti_par = Tpar_m{1}(rng_x,:);
 Ti_per = Tper_m{1}(rng_x,:);
 ne     = n_m{1}(rng_x,:);
 U      = ux_m{1}(rng_x,:);
 B      = Bx_m(rng_x,:);
-A      = A0*B0./B;
+A_m    = A0*B0./B;
 x      = x_m(rng_x,:);
 t      = t_p;
 dx     = diff(x(1:2));
@@ -558,10 +572,10 @@ dt     = diff(t(1:2));
 
 % Derived:
 flux_density  = ne.*U;
-flux          = flux_density.*A;
+flux          = flux_density.*A_m;
 E_mean        = e_c*(Te + Ti_par + Ti_per);
 power_density = flux_density.*E_mean;
-power         = power_density.*A;
+power         = power_density.*A_m;
 powerFlux_par = e_c*(Te + Ti_par + Ti_per + 13.6).*flux_density;
 
 % Smooth in space:
@@ -612,8 +626,9 @@ F_par  = movmean(F_par ,fr,2);
 F_mag  = movmean(F_mag ,fr,2);
 
 figure; 
-rng = 26:41;
+% rng = 26:41;
 % rng = 50:60;
+rng = 1:6;
 plot(x,mean(P_KE(:,rng),2))
 
 figure; 
@@ -632,7 +647,9 @@ ylim(3*[-1,1]*max(mean(F_KE_x(:,rng),2)))
 xlabel('x [m]','interpreter','latex','fontSize',14)
 ylabel('[Nm$^{-3}$]','interpreter','latex','fontSize',14)
 grid on
+try
 title(['ICRF ',myDir(6:(end-7)),' [kW]'],'interpreter','latex','fontSize',14)
+end
 
 figure('color','w'); 
 hold on
@@ -654,7 +671,7 @@ set(hLeg,'interpreter','latex','fontSize',14)
 figure('color','w')
 hold on
 box on
-g = n_m{1}(:,end-30:end);
+g = n_m{1}(:,end-3:end);
 f = mean(g,2);
 fmax = max(f);
 Bmax = max(Bx_m(:,1));
@@ -664,18 +681,31 @@ ylim([0,1e20])
 title('Plasma density [m$^{-3}]$','interpreter','latex','fontSize',14)
 xlabel('x [m]','interpreter','latex','fontSize',14)
 
-
-% Electron tempeture:
+% Computational particle density:
 figure('color','w')
 hold on
 box on
-g = Te_m{1}(:,end-10:end);
+g = ncp_m{1}(:,end-3:end);
 f = mean(g,2);
 fmax = max(f);
 Bmax = max(Bx_m(:,1));
 plot(x_m,movmean(f,10,1),'k','lineWidth',2);
 plot(x_m,Bx_m(:,1)*fmax/Bmax)
-ylim([0,6])
+% ylim([0,1e20])
+title('$n_m^{cp}$ [m$^{-1}]$','interpreter','latex','fontSize',14)
+xlabel('x [m]','interpreter','latex','fontSize',14)
+
+% Electron tempeture:
+figure('color','w')
+hold on
+box on
+g = Te_m(:,end-3:end);
+f = mean(g,2);
+fmax = max(f);
+Bmax = max(Bx_m(:,1));
+plot(x_m,movmean(f,10,1),'k','lineWidth',2);
+plot(x_m,Bx_m(:,1)*fmax/Bmax)
+ylim([0,1.2]*fmax)
 title('Electron temperature [eV]','interpreter','latex','fontSize',14)
 xlabel('x [m]','interpreter','latex','fontSize',14)
 
@@ -683,9 +713,9 @@ xlabel('x [m]','interpreter','latex','fontSize',14)
 figure('color','w')
 hold on
 box on
-Cs = sqrt( e_c*(Te_m{1} + 3*Tpar_m{1})/m.ions.spp_1.M);
+Cs = sqrt( e_c*(Te_m + 3*Tpar_m{1})/m.ions.species_1.M);
 f = ux_m{1}./Cs;
-Mach = mean(f(:,end-30:end),2);
+Mach = mean(f(:,end-3:end),2);
 fmax = max(Mach);
 Bmax = max(Bx_m(:,1));
 plot(x_m,Mach,'k','lineWidth',2);
@@ -698,13 +728,13 @@ xlabel('x [m]','interpreter','latex','fontSize',14)
 figure('color','w')
 hold on
 box on
-g = n_m{1}(:,end-30:end).*Te_m{1}(:,1)*e_c;
+g = n_m{1}(:,end-3:end).*Te_m(:,1)*e_c;
 f = mean(g,2);
 fmax = max(f);
 Bmax = max(Bx_m(:,1));
 plot(x_m,movmean(f,10,1),'k','lineWidth',2);
 plot(x_m,Bx_m(:,1)*fmax/Bmax)
-ylim([0,1]*50)
+ylim([0,1.2]*fmax)
 title('Electron pressure [Pa]','interpreter','latex','fontSize',14)
 xlabel('x [m]','interpreter','latex','fontSize',14)
 
@@ -718,7 +748,7 @@ fmax = max(f);
 Bmax = max(Bx_m(:,1));
 plot(x_m,movmean(f,10,1),'k','lineWidth',2);
 plot(x_m,Bx_m(:,1)*fmax/Bmax)
-ylim([-3,3])
+ylim([-3,3]*1000)
 title('Parallel Energy flux [MWm$^{-2}$]','interpreter','latex','fontSize',14)
 xlabel('x [m]','interpreter','latex','fontSize',14)
 
@@ -726,13 +756,13 @@ xlabel('x [m]','interpreter','latex','fontSize',14)
 figure('color','w')
 hold on
 box on
-g = powerFlux_par.*A;
+g = powerFlux_par.*A_m;
 f = mean(g,2);
 fmax = max(f);
 Bmax = max(Bx_m(:,1));
 plot(x_m,movmean(f,10,1),'k','lineWidth',2);
 plot(x_m,Bx_m(:,1)*fmax/Bmax)
-ylim([-1,1]*6e3)
+ylim([-1,1]*6e6)
 title('Parallel power flow [W]','interpreter','latex','fontSize',14)
 xlabel('x [m]','interpreter','latex','fontSize',14)
 
@@ -746,7 +776,7 @@ fmax = max(f);
 Bmax = max(Bx_m(:,1));
 plot(x_m,movmean(f,10,1),'k','lineWidth',2);
 plot(x_m,Bx_m(:,1)*fmax/Bmax)
-ylim([-1,1]*0.8)
+ylim([-1,1]*0.8*1e3)
 title('Parallel convective heat flux [MWm$^{-2}$]','interpreter','latex','fontSize',14)
 xlabel('x [m]','interpreter','latex','fontSize',14)
 
@@ -760,8 +790,8 @@ switch rangeType
     case 1
         % mirror region:
         % % ===============
-        x_center = 1.6;
-        x_delta  = 0.8;
+        x_center = -1;
+        x_delta  = +1;
         z1 = x_center - x_delta;
         z2 = x_center + x_delta;
     case 2
@@ -788,14 +818,15 @@ end
 
 % Ion parameters:
 beam.E = 1.5e3;
-Ma = m.ions.spp_1.M;
+Ma = m.ions.species_1.M;
 
 % Ion derived quantities:
-vT = double(sqrt(m.Te*e_c/Ma));
+Te_mean = mean(mean(Te_m));
+vT = double(sqrt(Te_mean*e_c/Ma));
 
 % Create mesh with ghost cells"
-Nx = double(m.geometry.NX_IN_SIM);
-dx = double(m.geometry.DX);
+Nx = double(m.mesh.Nx_IN_SIM);
+dx = double(m.mesh.dx);
 x_m_g = ((1:(Nx+4))-1)*dx + 0.5*dx - 2*dx;
 
 % Select range of velocity grid:
@@ -823,7 +854,7 @@ fv = zeros(NV+4,NV+4,NS);
 % B = interp1(x_m,Bx_m(:,1),x_m_g,'spline','extrap')';
 B0 = Bx_m(round(numel(Bx_m(:,1))/2),1);
 A0 = pi*(0.1^2);
-% A = B0*A0./B;
+% A_m = B0*A0./B;
 
 Phi0 = B0*A0;
 for jj = 1:NS
@@ -887,17 +918,17 @@ gg = Bx_m(:,jj);
 plot(x_m(:),ff,'k');hold on;
 plot(x_m(rng),ff(rng),'g');
 plot(x_m(:),gg*max(ff)/max(gg),'r');
-ylim([-20 20]*m.Te);
+ylim([-10 10]*Te_mean);
 hold off;
 
 % Calculating the hyperbola that defines the trapped region:
 vvpar = vxGrid/vT;
-vvper = sqrt((vvpar.^2 + 1*delta_V/(m.Te))/(R_m - 1));
+vvper = sqrt((vvpar.^2 + 1*delta_V/(Te_mean))/(R_m - 1));
 
 figure('color','w'); 
 rngx = 3:(NV+4-2);
 rngy = 3:(NV+4-2);
-Limit=10;
+Limit=5;
 fmax = max(max(fv(:,:,end)));
 for jj = 1:1:size(fv,3)-5
     contourf(vxGrid/vT,vyGrid/vT,mean(fv(rngx,rngy,jj:jj+5),3)',10,'LineStyle','none');
@@ -1024,13 +1055,13 @@ for jj = 1:numel(t_p)
     hT(2) = plot(x_m,movmean(Tper_m{1}(:,jj),10,1));
     plot(x_m,Bx_m(:,1)*10);
     hold off
-    ylim([0,20]);
+    ylim([0,1.2]*2e3);
     title(['frame = ',num2str(jj)])
     grid on
     drawnow
     pause(0.1)
 end
-legend(hT,'T_{\perp}','T_{\perp}')
+% legend(hT,'T$_{\perp}$','T$_{\perp}$','interpreter','latex')
 
 
 %% Calculate moments:
@@ -1049,20 +1080,20 @@ for ss = 1:numIonSpecies
     K = ionParameters{ss}.K;
 
     % Total number of computational particles:
-    N_CP = ionParameters{ss}.N_CP*ranksParticles;
+    N_CP = ionParameters{ss}.N_CP_IN_SIM*ranksParticles;
 
     % Total number of real particles represented:
     NR = N_CP*K;
         
     % Characteristic temperatures:
-    Tpar = ionParameters{ss}.Tpar;
-    Tper = ionParameters{ss}.Tper;
+    Tpar = 2e3;%ionParameters{ss}.Tpar;
+    Tper = 2e3; %ionParameters{ss}.Tper;
 
     % Loop over all time:
     for tt = 1:Nt
         
         % "x" grid:
-        x_max = double(m.geometry.LX);
+        x_max = double(m.mesh.Lx_max);
         xbin = linspace(0,x_max,Nx_pdf);
 
         % "vx" grid:
@@ -1084,7 +1115,7 @@ for ss = 1:numIonSpecies
         vz = vybin(1:end-1);
 
         % Calculate compression factor:
-        Bx = interp1(x_m,Bx_m.x(:,tt),x)'; 
+        Bx = interp1(x_m,Bx_m(:,tt),x)'; 
         % Select model:
         modelType = 2;
         switch modelType

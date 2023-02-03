@@ -667,8 +667,8 @@ void init_TYP::read_IC_profiles(params_TYP * params, mesh_TYP * mesh, IC_TYP * I
   for (int ss = 0; ss < totalNumSpecies; ss++)
   {
     y.load(arma::hdf5_name(fullPath,"n_pdf"));
-    offset = 0;
-    scale  = 1;
+    offset = 1;
+    scale  = 0;
     IC->ions.at(ss).ncp_pdf = offset + scale*y;
   }
 

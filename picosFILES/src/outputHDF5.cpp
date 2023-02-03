@@ -370,8 +370,33 @@ HDF_TYP::HDF_TYP(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS)
 			{
       Group * group_mesh = new Group( outputFile->createGroup( "/mesh" ) );
 
+			name = "A0";
+      cpp_type_value = params->mesh_params.A0;
+      saveToHDF5(group_mesh, name, &cpp_type_value);
+      name.clear();
+
+			name = "B0";
+      cpp_type_value = params->mesh_params.B0;
+      saveToHDF5(group_mesh, name, &cpp_type_value);
+      name.clear();
+
+			name = "r0_min";
+			cpp_type_value = params->mesh_params.r0_min;
+			saveToHDF5(group_mesh, name, &cpp_type_value);
+			name.clear();
+
+			name = "r0_max";
+			cpp_type_value = params->mesh_params.r0_max;
+			saveToHDF5(group_mesh, name, &cpp_type_value);
+			name.clear();
+
       name = "dx";
       cpp_type_value = params->mesh_params.dx;
+      saveToHDF5(group_mesh, name, &cpp_type_value);
+      name.clear();
+
+			name = "ionSkinDepth";
+      cpp_type_value = params->mesh_params.ionSkinDepth;
       saveToHDF5(group_mesh, name, &cpp_type_value);
       name.clear();
 
@@ -476,6 +501,71 @@ HDF_TYP::HDF_TYP(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS)
 
       delete group_ions;
 			}
+
+			/*
+			//electrons
+			{
+      Group * group_ions = new Group( outputFile->createGroup( "/electrons" ) );
+
+      name = "numberOfParticleSpecies";
+      int_value = params->numberOfParticleSpecies;
+      saveToHDF5(group_ions, name, &int_value);
+      name.clear();
+
+      for(int ii=0;ii<params->numberOfParticleSpecies;ii++)
+      {
+        stringstream ionSpec;
+        ionSpec << (ii+1);
+        name = "/ions/species_" + ionSpec.str();
+        Group * group_ionSpecies = new Group( outputFile->createGroup( name ) );
+        name.clear();
+
+				name = "speciesType";
+				cpp_type_value = (CPP_TYPE)IONS->at(ii).SPECIES;
+				saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+				name.clear();
+
+        name = "N_CP_IN_SIM";
+        cpp_type_value = (CPP_TYPE)IONS->at(ii).N_CP_IN_SIM;
+        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+        name.clear();
+
+        name = "N_CP_MPI";
+        cpp_type_value = (CPP_TYPE)IONS->at(ii).N_CP_MPI;
+        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+        name.clear();
+
+        name = "N_CP_MPI_Output";
+        cpp_type_value = (CPP_TYPE)IONS->at(ii).N_CP_MPI_Output;
+        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+        name.clear();
+
+        name = "K";
+        cpp_type_value = (CPP_TYPE)IONS->at(ii).K;
+        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+        name.clear();
+
+        name = "M";
+        cpp_type_value = (CPP_TYPE)IONS->at(ii).M;
+        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+        name.clear();
+
+        name = "Q";
+        cpp_type_value = (CPP_TYPE)IONS->at(ii).Q;
+        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+        name.clear();
+
+        name = "Z";
+        cpp_type_value = (CPP_TYPE)IONS->at(ii).Z;
+        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+        name.clear();
+
+        delete group_ionSpecies;
+      }
+
+      delete group_ions;
+			}
+			*/
 
       delete outputFile;
 
@@ -613,240 +703,305 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 		arma::mat mat_values;
 		arma::fmat fmat_values;
 
-		//Ions
-		name = "ions";
-		Group * group_ions = new Group( group_iteration->createGroup( "ions" ) );
-		name.clear();
-
-		//Iterations over the ion species.
-		for(int ii=0; ii<IONS->size(); ii++)
+		// Ions:
 		{
-			// Determine total number of particles to record:
-			unsigned int N = IONS->at(ii).N_CP_MPI;
+			name = "ions";
+			Group * group_ions = new Group( group_iteration->createGroup( "ions" ) );
+			name.clear();
 
-			stringstream ionSpec;
-			ionSpec << (ii+1);
-			name = "species_" + ionSpec.str();
-			Group * group_ionSpecies = new Group( group_ions->createGroup( name ) );
+			//Iterations over the ion species.
+			for(int ii=0; ii<IONS->size(); ii++)
+			{
+				// Determine total number of particles to record:
+				unsigned int N = IONS->at(ii).N_CP_MPI;
+
+				stringstream ionSpec;
+				ionSpec << (ii+1);
+				name = "species_" + ionSpec.str();
+				Group * group_ionSpecies = new Group( group_ions->createGroup( name ) );
+				name.clear();
+
+				// Loop over all output variables:
+				for(int ov=0; ov<params->outputs_variables.size(); ov++)
+				{
+					if(params->outputs_variables.at(ov) == "x_p")
+					{
+						// Particle position:
+						name = "x_p";
+
+						#ifdef HDF5_DOUBLE
+						vec_values = CS->length*IONS->at(ii).x_p.subvec(0,N-1);
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(CS->length*IONS->at(ii).x_p.subvec(0,N-1));
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+
+					 }
+					if(params->outputs_variables.at(ov) == "v_p")
+					{
+						// Velocity vector:
+						name = "v_p";
+
+						#ifdef HDF5_DOUBLE
+						mat_values = CS->velocity*IONS->at(ii).v_p.submat(0,0,N-1,1);
+						saveToHDF5(group_ionSpecies, name, &mat_values);
+						#elif defined HDF5_FLOAT
+						fmat_values = conv_to<fmat>::from(CS->velocity*IONS->at(ii).v_p.submat(0,0,N-1,1));
+						saveToHDF5(group_ionSpecies, name, &fmat_values);
+						#endif
+						name.clear();
+					}
+					if(params->outputs_variables.at(ov) == "mu_p")
+					{
+						// Particle magnetic moment
+						name = "mu_p";
+
+						#ifdef HDF5_DOUBLE
+						vec_values = IONS->at(ii).mu_p.subvec(0,N-1)*CS->magneticMoment;
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).mu_p.subvec(0,N-1)*CS->magneticMoment);
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+					 }
+					if(params->outputs_variables.at(ov) == "a_p")
+					{
+						//Particle weight
+						name = "a_p";
+
+						#ifdef HDF5_DOUBLE
+						vec_values = IONS->at(ii).a_p.subvec(0,N-1);
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).a_p.subvec(0,N-1));
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+					}
+					if(params->outputs_variables.at(ov) == "Ex_p")
+					{
+						// Particle-defined electric field:
+						name = "Ex_p";
+
+						#ifdef HDF5_DOUBLE
+						vec_values = CS->eField*IONS->at(ii).Ex_p.subvec(0,N-1);
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from( CS->eField*IONS->at(ii).Ex_p.subvec(0,N-1));
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+					}
+					if(params->outputs_variables.at(ov) == "Bx_p")
+					{
+						// Particle-defined magnetic field:
+						name = "Bx_p";
+
+						#ifdef HDF5_DOUBLE
+						vec_values = CS->bField*IONS->at(ii).Bx_p.subvec(0,N-1);
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from( CS->bField*IONS->at(ii).Bx_p.subvec(0,N-1));
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+					}
+					if(params->outputs_variables.at(ov) == "n_p")
+					{
+						// Particle-defined ion density:
+						name = "n_p";
+
+						#ifdef HDF5_DOUBLE
+						vec_values = IONS->at(ii).n_p.subvec(0,N-1)/CS->volume;
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).n_p.subvec(0,N-1))/CS->volume;
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+					 }
+					if(params->outputs_variables.at(ov) == "nv_p")
+					{
+						 // Particle-defined ion flux:
+						 name = "nv_p";
+
+						 #ifdef HDF5_DOUBLE
+						 vec_values = IONS->at(ii).nv_p.subvec(0,N-1)*CS->velocity/CS->volume;
+						 saveToHDF5(group_ionSpecies, name, &vec_values);
+						 #elif defined HDF5_FLOAT
+						 fvec_values = conv_to<fvec>::from(IONS->at(ii).nv_p.subvec(0,N-1))*CS->velocity/CS->volume;
+						 saveToHDF5(group_ionSpecies, name, &fvec_values);
+						 #endif
+						 name.clear();
+					}
+					if(params->outputs_variables.at(ov) == "Tpar_p")
+					{
+						// Particle-defined parallel ion temperature:
+						name = "Tpar_p";
+
+						#ifdef HDF5_DOUBLE
+						vec_values = IONS->at(ii).Tpar_p.subvec(0,N-1)*CS->temperature*F_KB/F_E;
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tpar_p.subvec(0,N-1))*CS->temperature*F_KB/F_E;
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+					}
+					if(params->outputs_variables.at(ov) == "Tper_p")
+					{
+						//PAticle-defined perp ion temperature:
+						name = "Tper_p";
+
+						#ifdef HDF5_DOUBLE
+						vec_values = IONS->at(ii).Tper_p.subvec(0,N-1)*CS->temperature*F_KB/F_E;
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tper_p.subvec(0,N-1))*CS->temperature*F_KB/F_E;
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+					}
+					if(params->outputs_variables.at(ov) == "Te_p")
+					{
+						// Particle-defined electron temperature:
+						name = "Te_p";
+
+						#ifdef HDF5_DOUBLE
+						vec_values = IONS->at(ii).Te_p.subvec(0,N-1)*CS->temperature*F_KB/F_E; // [eV]
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).Te_p.subvec(0,N-1))*CS->temperature*F_KB/F_E; // [eV]
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+					}
+					if(params->outputs_variables.at(ov) == "n_m")
+					{
+						if (params->mpi.IS_PARTICLES_ROOT)
+						{
+							//Saving ions species density
+							name = "n_m";
+							#ifdef HDF5_DOUBLE
+							vec_values = IONS->at(ii).n_m.subvec(1,params->mesh_params.Nx)/CS->volume;
+							saveToHDF5(group_ionSpecies, name, &vec_values);
+							#elif defined HDF5_FLOAT
+							fvec_values = conv_to<fvec>::from(IONS->at(ii).n_m.subvec(1,params->mesh_params.Nx)/CS->volume);
+							saveToHDF5(group_ionSpecies, name, &fvec_values);
+							#endif
+							name.clear();
+
+							//Saving ions computational particle density
+							name = "ncp_m";
+							#ifdef HDF5_DOUBLE
+							vec_values = IONS->at(ii).ncp_m.subvec(1,params->mesh_params.Nx)/CS->length;
+							saveToHDF5(group_ionSpecies, name, &vec_values);
+							#elif defined HDF5_FLOAT
+							fvec_values = conv_to<fvec>::from(IONS->at(ii).ncp_m.subvec(1,params->mesh_params.Nx)/CS->length);
+							saveToHDF5(group_ionSpecies, name, &fvec_values);
+							#endif
+							name.clear();
+						}
+					}
+					if(params->outputs_variables.at(ov) == "Tpar_m")
+					{
+						if (params->mpi.IS_PARTICLES_ROOT)
+						{
+							//Saving ions species density
+							name = "Tpar_m";
+							#ifdef HDF5_DOUBLE
+							vec_values = IONS->at(ii).Tpar_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E; // [eV]
+							saveToHDF5(group_ionSpecies, name, &vec_values);
+							#elif defined HDF5_FLOAT
+							fvec_values = conv_to<fvec>::from(IONS->at(ii).Tpar_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E); // [eV]
+							saveToHDF5(group_ionSpecies, name, &fvec_values);
+							#endif
+							name.clear();
+						}
+					}
+					if(params->outputs_variables.at(ov) == "Tper_m")
+					{
+						if (params->mpi.IS_PARTICLES_ROOT)
+						{
+							//Saving ions species density
+							name = "Tper_m";
+							#ifdef HDF5_DOUBLE
+							vec_values = IONS->at(ii).Tper_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E; // [eV]
+							saveToHDF5(group_ionSpecies, name, &vec_values);
+							#elif defined HDF5_FLOAT
+							fvec_values = conv_to<fvec>::from(IONS->at(ii).Tper_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E); // [K]
+							saveToHDF5(group_ionSpecies, name, &fvec_values);
+							#endif
+							name.clear();
+						}
+					}
+					/*
+					if(params->outputs_variables.at(ov) == "Te_m")
+					{
+						if (params->mpi.IS_PARTICLES_ROOT)
+						{
+							//Saving electron temperature values on the grid:
+							name = "Te_m";
+							#ifdef HDF5_DOUBLE
+							vec_values = electrons->Te_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E; // [eV]
+							saveToHDF5(group_ionSpecies, name, &vec_values);
+							#elif defined HDF5_FLOAT
+							fvec_values = conv_to<fvec>::from(electrons->Te_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E); // [eV]
+							saveToHDF5(group_ionSpecies, name, &fvec_values);
+							#endif
+							name.clear();
+						}
+					}
+					*/
+					if(params->outputs_variables.at(ov) == "mn")
+					{
+						//Saving ions species density
+						name = "mn";
+						ivec_values = IONS->at(ii).mn;
+						saveToHDF5(group_ionSpecies, name, &ivec_values);
+						name.clear();
+
+					}
+					if(params->outputs_variables.at(ov) == "u_m")
+					{
+						if (params->mpi.IS_PARTICLES_ROOT)
+						{
+							Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "u_m" ) );
+
+							//x-component species bulk velocity
+							name = "x";
+							#ifdef HDF5_DOUBLE
+							vec_values = CS->velocity*IONS->at(ii).nv_m.subvec(1,params->mesh_params.Nx)/IONS->at(ii).n_m.subvec(1,params->mesh_params.Nx);
+							saveToHDF5(group_ionSpecies, name, &vec_values);
+							#elif defined HDF5_FLOAT
+							fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv_m.subvec(1,params->mesh_params.Nx)/IONS->at(ii).n_m.subvec(1,params->mesh_params.Nx));
+							saveToHDF5(group_bulkVelocity, name, &fvec_values);
+							#endif
+							name.clear();
+
+							delete group_bulkVelocity;
+						}
+					}
+				}
+
+				delete group_ionSpecies;
+			}//Iterations over the ion species.
+
+			delete group_ions;
+		}
+
+		// Electrons
+		{
+			name = "electrons";
+			Group * group_electrons = new Group( group_iteration->createGroup( "electrons" ) );
 			name.clear();
 
 			// Loop over all output variables:
 			for(int ov=0; ov<params->outputs_variables.size(); ov++)
 			{
-				if(params->outputs_variables.at(ov) == "x_p")
-				{
-					// Particle position:
-					name = "x_p";
-
-					#ifdef HDF5_DOUBLE
-					vec_values = CS->length*IONS->at(ii).x_p.subvec(0,N-1);
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(CS->length*IONS->at(ii).x_p.subvec(0,N-1));
-					saveToHDF5(group_ionSpecies, name, &fvec_values);
-					#endif
-					name.clear();
-
-				 }
-				if(params->outputs_variables.at(ov) == "v_p")
-				{
-					// Velocity vector:
-					name = "v_p";
-
-					#ifdef HDF5_DOUBLE
-					mat_values = CS->velocity*IONS->at(ii).v_p.submat(0,0,N-1,1);
-					saveToHDF5(group_ionSpecies, name, &mat_values);
-					#elif defined HDF5_FLOAT
-					fmat_values = conv_to<fmat>::from(CS->velocity*IONS->at(ii).v_p.submat(0,0,N-1,1));
-					saveToHDF5(group_ionSpecies, name, &fmat_values);
-					#endif
-					name.clear();
-				}
-				if(params->outputs_variables.at(ov) == "mu_p")
-				{
-					// Particle magnetic moment
-					name = "mu_p";
-
-					#ifdef HDF5_DOUBLE
-					vec_values = IONS->at(ii).mu_p.subvec(0,N-1)*CS->magneticMoment;
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(IONS->at(ii).mu_p.subvec(0,N-1)*CS->magneticMoment);
-					saveToHDF5(group_ionSpecies, name, &fvec_values);
-					#endif
-					name.clear();
-				 }
-				if(params->outputs_variables.at(ov) == "a_p")
-				{
-					//Particle weight
-					name = "a_p";
-
-					#ifdef HDF5_DOUBLE
-					vec_values = IONS->at(ii).a_p.subvec(0,N-1);
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(IONS->at(ii).a_p.subvec(0,N-1));
-					saveToHDF5(group_ionSpecies, name, &fvec_values);
-					#endif
-					name.clear();
-				}
-				if(params->outputs_variables.at(ov) == "Ex_p")
-				{
-					// Particle-defined electric field:
-					name = "Ex_p";
-
-					#ifdef HDF5_DOUBLE
-					vec_values = CS->eField*IONS->at(ii).Ex_p.subvec(0,N-1);
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from( CS->eField*IONS->at(ii).Ex_p.subvec(0,N-1));
-					saveToHDF5(group_ionSpecies, name, &fvec_values);
-					#endif
-					name.clear();
-				}
-				if(params->outputs_variables.at(ov) == "Bx_p")
-				{
-					// Particle-defined magnetic field:
-					name = "Bx_p";
-
-					#ifdef HDF5_DOUBLE
-					vec_values = CS->bField*IONS->at(ii).Bx_p.subvec(0,N-1);
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from( CS->bField*IONS->at(ii).Bx_p.subvec(0,N-1));
-					saveToHDF5(group_ionSpecies, name, &fvec_values);
-					#endif
-					name.clear();
-				}
-				if(params->outputs_variables.at(ov) == "n_p")
-				{
-					// Particle-defined ion density:
-					name = "n_p";
-
-					#ifdef HDF5_DOUBLE
-					vec_values = IONS->at(ii).n_p.subvec(0,N-1)/CS->volume;
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(IONS->at(ii).n_p.subvec(0,N-1))/CS->volume;
-					saveToHDF5(group_ionSpecies, name, &fvec_values);
-					#endif
-					name.clear();
-				 }
-				if(params->outputs_variables.at(ov) == "nv_p")
-				{
-					 // Particle-defined ion flux:
-					 name = "nv_p";
-
-					 #ifdef HDF5_DOUBLE
-					 vec_values = IONS->at(ii).nv_p.subvec(0,N-1)*CS->velocity/CS->volume;
-					 saveToHDF5(group_ionSpecies, name, &vec_values);
-					 #elif defined HDF5_FLOAT
-					 fvec_values = conv_to<fvec>::from(IONS->at(ii).nv_p.subvec(0,N-1))*CS->velocity/CS->volume;
-					 saveToHDF5(group_ionSpecies, name, &fvec_values);
-					 #endif
-					 name.clear();
-				}
-				if(params->outputs_variables.at(ov) == "Tpar_p")
-				{
-					// Particle-defined parallel ion temperature:
-					name = "Tpar_p";
-
-					#ifdef HDF5_DOUBLE
-					vec_values = IONS->at(ii).Tpar_p.subvec(0,N-1)*CS->temperature*F_KB/F_E;
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(IONS->at(ii).Tpar_p.subvec(0,N-1))*CS->temperature*F_KB/F_E;
-					saveToHDF5(group_ionSpecies, name, &fvec_values);
-					#endif
-					name.clear();
-				}
-				if(params->outputs_variables.at(ov) == "Tper_p")
-				{
-					//PAticle-defined perp ion temperature:
-					name = "Tper_p";
-
-					#ifdef HDF5_DOUBLE
-					vec_values = IONS->at(ii).Tper_p.subvec(0,N-1)*CS->temperature*F_KB/F_E;
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(IONS->at(ii).Tper_p.subvec(0,N-1))*CS->temperature*F_KB/F_E;
-					saveToHDF5(group_ionSpecies, name, &fvec_values);
-					#endif
-					name.clear();
-				}
-				if(params->outputs_variables.at(ov) == "Te_p")
-				{
-					// Particle-defined electron temperature:
-					name = "Te_p";
-
-					#ifdef HDF5_DOUBLE
-					vec_values = IONS->at(ii).Te_p.subvec(0,N-1)*CS->temperature*F_KB/F_E; // [eV]
-					saveToHDF5(group_ionSpecies, name, &vec_values);
-					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(IONS->at(ii).Te_p.subvec(0,N-1))*CS->temperature*F_KB/F_E; // [eV]
-					saveToHDF5(group_ionSpecies, name, &fvec_values);
-					#endif
-					name.clear();
-				}
-				if(params->outputs_variables.at(ov) == "n_m")
-				{
-					if (params->mpi.IS_PARTICLES_ROOT)
-					{
-						//Saving ions species density
-						name = "n_m";
-						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).n_m.subvec(1,params->mesh_params.Nx)/CS->volume;
-						saveToHDF5(group_ionSpecies, name, &vec_values);
-						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).n_m.subvec(1,params->mesh_params.Nx)/CS->volume);
-						saveToHDF5(group_ionSpecies, name, &fvec_values);
-						#endif
-						name.clear();
-
-						//Saving ions computational particle density
-						name = "ncp_m";
-						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).ncp_m.subvec(1,params->mesh_params.Nx)/CS->length;
-						saveToHDF5(group_ionSpecies, name, &vec_values);
-						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).ncp_m.subvec(1,params->mesh_params.Nx)/CS->length);
-						saveToHDF5(group_ionSpecies, name, &fvec_values);
-						#endif
-						name.clear();
-					}
-				}
-				if(params->outputs_variables.at(ov) == "Tpar_m")
-				{
-					if (params->mpi.IS_PARTICLES_ROOT)
-					{
-						//Saving ions species density
-						name = "Tpar_m";
-						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).Tpar_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E; // [eV]
-						saveToHDF5(group_ionSpecies, name, &vec_values);
-						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tpar_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E); // [eV]
-						saveToHDF5(group_ionSpecies, name, &fvec_values);
-						#endif
-						name.clear();
-					}
-				}
-				if(params->outputs_variables.at(ov) == "Tper_m")
-				{
-					if (params->mpi.IS_PARTICLES_ROOT)
-					{
-						//Saving ions species density
-						name = "Tper_m";
-						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).Tper_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E; // [eV]
-						saveToHDF5(group_ionSpecies, name, &vec_values);
-						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tper_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E); // [K]
-						saveToHDF5(group_ionSpecies, name, &fvec_values);
-						#endif
-						name.clear();
-					}
-				}
 				if(params->outputs_variables.at(ov) == "Te_m")
 				{
 					if (params->mpi.IS_PARTICLES_ROOT)
@@ -855,49 +1010,20 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 						name = "Te_m";
 						#ifdef HDF5_DOUBLE
 						vec_values = electrons->Te_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E; // [eV]
-						saveToHDF5(group_ionSpecies, name, &vec_values);
+						saveToHDF5(group_electrons, name, &vec_values);
 						#elif defined HDF5_FLOAT
 						fvec_values = conv_to<fvec>::from(electrons->Te_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E); // [eV]
-						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						saveToHDF5(group_electrons, name, &fvec_values);
 						#endif
 						name.clear();
-					}
-				}
-				if(params->outputs_variables.at(ov) == "mn")
-				{
-					//Saving ions species density
-					name = "mn";
-					ivec_values = IONS->at(ii).mn;
-					saveToHDF5(group_ionSpecies, name, &ivec_values);
-					name.clear();
-
-				}
-				if(params->outputs_variables.at(ov) == "u_m")
-				{
-					if (params->mpi.IS_PARTICLES_ROOT)
-					{
-						Group * group_bulkVelocity = new Group( group_ionSpecies->createGroup( "u_m" ) );
-
-						//x-component species bulk velocity
-						name = "x";
-						#ifdef HDF5_DOUBLE
-						vec_values = CS->velocity*IONS->at(ii).nv_m.subvec(1,params->mesh_params.Nx)/IONS->at(ii).n_m.subvec(1,params->mesh_params.Nx);
-						saveToHDF5(group_ionSpecies, name, &vec_values);
-						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv_m.subvec(1,params->mesh_params.Nx)/IONS->at(ii).n_m.subvec(1,params->mesh_params.Nx));
-						saveToHDF5(group_bulkVelocity, name, &fvec_values);
-						#endif
-						name.clear();
-
-						delete group_bulkVelocity;
 					}
 				}
 			}
 
-			delete group_ionSpecies;
-		}//Iterations over the ion species.
+			delete group_electrons;
+		}
 
-		delete group_ions;
+
 	}//End of try block
 
   catch( FileIException error ){// catch failure caused by the H5File operations

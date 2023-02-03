@@ -1,1 +1,1 @@
-1b0a760 Improved template Makefile to detect if we are using gnu or another toolchain, it then selects the appropriate openMP flag
+6df6553 Developed PIC_TYP to take in mesh_TYP * mesh and postprocessed data in MATLAB where we proved that the IC produces the correct computational particle density profile, ion densities, ion temperatures and bulk flows in both shape and magnitude

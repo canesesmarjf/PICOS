@@ -14,13 +14,12 @@
 #include "types.h"
 #include "initialize.h"
 #include "simple_output_H5.h"
-
-// #include "units.h"
-// #include "outputHDF5.h"
+#include "units.h"
+#include "outputHDF5.h"
 #include "PIC.h"
+#include "fieldSolve.h"
 // #include "particleBC.h"
 // #include "collisionOperator.h"
-// #include "fieldSolve.h"
 // #include "rfOperator.h"
 
 // Include headers for parallelization:
@@ -60,14 +59,14 @@ int main(int argc, char* argv[])
   // Object to hold IC condition profiles:
   IC_TYP IC;
 
+  // UNITS object:
+  units_TYP units;
+
   // Collision operator object:
   // coll_operator_TYP coll_operator;
 
   // Particle boundary condition operator:
   // particleBC_TYP particleBC;
-
-  // UNITS object:
-  // units_TYP units;
 
   // Initialize object:
   init_TYP init(&params, argc, argv);
@@ -104,7 +103,7 @@ int main(int argc, char* argv[])
   init.initialize_ions(&params,&IC,&mesh,&IONS);
 
   // Define characteristic scales and broadcast them to all processes in COMM_WORLD:
-  // units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
+  units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
   // =========================================================================
   //  CONSIDER REMOVING FS
@@ -121,13 +120,13 @@ int main(int argc, char* argv[])
   // =========================================================================
 
   // HDF object constructor and create "main.h5"
-  // HDF_TYP HDF(&params, &FS, &IONS);
+  HDF_TYP HDF(&params, &mesh, &IONS);
 
   // Define time step based on ion CFL condition:
-  // units.defineTimeStep(&params, &IONS);
+  units.defineTimeStep(&params, &IONS);
 
   // Normalize "params", "IONS", "electrons", "fields" using "CS"
-  // units.normalizeVariables(&params, &IONS, &electrons, &fields, &CS);
+  units.normalizeVariables(&params, &mesh, &IONS, &electrons, &fields, &CS);
 
   // #########################################################################
   /**************** All the quantities below are dimensionless ****************/
@@ -143,13 +142,13 @@ int main(int argc, char* argv[])
 
   // Create EM solver:
   // =========================================================================
-  // fields_solver_TYP fields_solver(&params, &CS);
+  fields_solver_TYP fields_solver(&params, &CS);
 
   // Create PIC solver:
   // =========================================================================
   PIC_TYP PIC(&params, &mesh, &fields, &IONS, &electrons);
 
-  HDF_TYP HDF;
+  HDF_simple_TYP HDF_simple;
   if (params.mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
   {
     string fileName;
@@ -158,9 +157,9 @@ int main(int argc, char* argv[])
 
     // General:
     fileName = "file_1_rank_" + kk.str() + ".h5";
-    HDF.saveData(fileName,&params,&fields,&IONS);
+    HDF_simple.saveData(fileName,&params,&fields,&IONS);
   }
-  
+
   // Create RF operator object:
   // =========================================================================
   // RF_Operator_TYP RF_operator(&params,&CS,&fields,&IONS);

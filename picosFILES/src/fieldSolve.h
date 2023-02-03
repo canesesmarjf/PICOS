@@ -17,9 +17,9 @@ using namespace arma;
 class fields_solver_TYP
 {
 
-  	int NX_S; // Number of grid cells per subdomain, including 2 ghost cells.
-  	int NX_T; // Number of grid cells in entire simulation domain, including 2 ghost cells.
-  	int NX_R; // Number of grid cells in entire simulation domain, not including ghost cells.
+  	int Nx_S; // Number of grid cells per subdomain, including 2 ghost cells.
+  	int Nx_T; // Number of grid cells in entire simulation domain, including 2 ghost cells.
+  	int Nx_R; // Number of grid cells in entire simulation domain, not including ghost cells.
 
   	// Electron density:
   	arma::vec ne;    // Current time tt
@@ -40,7 +40,7 @@ class fields_solver_TYP
   	//arma::vec dne;
 
     // Electric field:
-    arma::vec EX_m;
+    arma::vec Ex_m;
 
   	// Grid cell increment
   	double dx;
@@ -64,9 +64,9 @@ class fields_solver_TYP
 
   	fields_solver_TYP(const params_TYP * params, CS_TYP * CS);
 
-  	//void advanceBField(const params_TYP * params, fields_TYP * fields, vector<ionSpecies_TYP> * IONS);
+  	//void advanceBField(const params_TYP * params, fields_TYP * fields, vector<ions_TYP> * IONS);
 
-  	void advanceEfield(const params_TYP * params, fields_TYP * fields, CS_TYP * CS, vector<ionSpecies_TYP> * IONS, electrons_TYP * electrons);
+  	void advanceEfield(const params_TYP * params, fields_TYP * fields, CS_TYP * CS, vector<ions_TYP> * IONS, electrons_TYP * electrons);
 };
 
 #endif

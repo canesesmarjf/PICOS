@@ -133,6 +133,24 @@ public:
   void getA0();
 };
 
+// Class to store position of mesh cell-centers:
+// =============================================================================
+class mesh_TYP
+{
+public:
+  int Nx;
+	int Nx_PER_MPI;
+  double dx;
+  arma::vec xm;
+  arma::vec xmg;
+  // arma::vec Am;
+  // arma::vec Bxm;
+
+  // Overloaded constructor:
+  // mesh_TYP(params_TYP * params);
+
+};
+
 // Class to hold initial conditon PROFILES for each ion species:
 // =============================================================================
 class ions_IC_TYP
@@ -232,15 +250,15 @@ public:
 	double pct_N_CP_MPI_Output; // Percentage of computational particles PER MPI to record in each MPI's output file
 	int N_CP_MPI_Output;        // Number of computational particles PER MPI to record in output file
 
-	// Characteristic scales:
+	// Characteristic scales based on CV ne and CV B:
 	// ======================
 	// double LarmorRadius;
-	// double GyroPeriod;
-	// double SkinDepth;
+	double GyroPeriod;
+	double SkinDepth;
 	// double VTper;
 	// double VTpar;
-	// double Wc;
-	// double Wp;
+	double Wc;
+	double Wp;
 
 	// Particle-defined quantities:
 	// ============================
@@ -545,22 +563,6 @@ struct RF_TYP
 	}
 };
 
-// Class to store position of mesh cell-centers:
-class mesh_TYP
-{
-public:
-  int Nx;
-  double dx;
-  arma::vec xm;
-  arma::vec xmg;
-  arma::vec Am;
-  arma::vec Bxm;
-
-  // Overloaded constructor:
-  // mesh_TYP(params_TYP * params);
-
-};
-
 //  Define structure to store simulation parameters:
 // =============================================================================
 struct params_TYP
@@ -630,7 +632,7 @@ struct params_TYP
 	int filtersPerIterationFields;
 	int filtersPerIterationIons;
 
-	double ionLarmorRadius;
+	// double ionLarmorRadius;
 	double ionSkinDepth;
 	double ionGyroPeriod;
 
@@ -678,223 +680,3 @@ struct FS_TYP
 };
 
 #endif
-
-// superseded:
-//  Define structure to store simulation geometry information:
-// =============================================================================
-// struct geometry_TYP
-/*
-{
-	double r1;
-	double r2;
-	double A_0;
-	double LX;
-	double DX;
-	int NX;
-	double LX_min;
-	double LX_max;
-
-	geometry_TYP()
-	{
-		r1  = 0;
-		r2  = 0;
-		A_0 = 0;
-		LX  = 0;
-		DX  = 0;
-		NX  = 0;
-		LX_min = 0;
-		LX_max = 0;
-	}
-};
-*/
-//  Define structure to hold mesh parameters:
-// =============================================================================
-// struct mesh_params_TYP
-/*
-{
-	arma::vec nodesX;
-
-	int NX_PER_MPI; // Number of mesh nodes along x-axis in subdomain (no ghost nodes considered)
-	int NX_IN_SIM; // Number of mesh nodes along x-axis in entire simulation domain (no ghost nodes considered)
-	double DX;
-	double LX;		// Size of simulation domain along x-axis
-};
-*/
-
-//  Define structure to store fluid species initial condition parameters:
-// =============================================================================
-// struct f_IC_TYP
-/*
-{
-	// Reference initial density:
-	double ne;
-
-	// Reference initial temperature:
-	double Te;
-
-	// Name of file containing Te profile:
-	string Te_fileName;
-
-	// Number of elements in Te_profile
-	int Te_NX;
-
-	// Profile:
-	arma::vec Te_profile;
-
-	// To be used later:
-	// ---------------------------------------------------------------------------
-	// double Tper;						// Reference perpendicular temperature:
-	// string Tper_fileName; 			// File containing normalized spatial profile of Tper
-	// int Tper_NX;						// Number of elements in Tper external file
-	//
-	// double Tpar;						// Reference parallel temperature:
-	// string Tpar_fileName; 			// File containing normalized spatial profile of Tpar
-	// int Tpar_NX;						// Number of elements in Tpar external file
-	// ---------------------------------------------------------------------------
-
-	f_IC_TYP()
-	{
-		ne 		= 0;
-		Te      = 0;
-		Te_NX   = 0;
-	}
-
-};
-*/
-
-//  Define structure to store EM field initial condition parameters:
-// =============================================================================
-// struct em_IC_TYP
-/*
-{
-	int uniformBfield;
-	double BX;
-	double BY;
-	double BZ;
-	string BX_fileName;
-	int BX_NX;
-	arma::vec Bx_profile;
-
-	double EX;
-	double EY;
-	double EZ;
-	string EX_fileName;
-	int EX_NX;
-	arma::vec Ex_profile;
-
-	em_IC_TYP()
-	{
-		uniformBfield = 0;
-		BX     = 0;
-		BY     = 0;
-		BZ     = 0;
-		BX_NX  = 0;
-
-		EX     = 0;
-		EY     = 0;
-		EZ     = 0;
-		EX_NX  = 0;
-	}
-};
-*/
-
-// //  Structure to store each ion species initial condition parameters:
-// // =============================================================================
-// struct p_IC_TYP
-/*
-{
-	int IC_type;             	   		// 1: Uniform profiles, 2: profiles from external files
-
-	// Reference values for profiles:
-	// ==============================
-	double Tper;
-	double Tpar;
-	double densityFraction;
-
-	// Name of external files:
-	// =======================
-	string Tper_fileName; 				// File containing normalized spatial profile of Tper
-	string Tpar_fileName; 				// File containing normalized spatial profile of Tpar
-	string densityFraction_fileName;	// File containing normalized spatial profile
-
-	// Number of elements of profiles:
-	// ===============================
-	int Tper_NX;
-	int Tpar_NX;
-	int densityFraction_NX;
-
-	// Variables to store profiles from external files:
-	// ================================================
-	arma::vec Tper_profile;
-	arma::vec Tpar_profile;
-	arma::vec densityFraction_profile;
-	arma::vec x_profile;
-};
-*/
-
-//  Structure to store each ion species particle boundary condition parameters:
-// =============================================================================
-// struct p_BC_TYP
-/*{
-	int BC_type;					// 1: Warm plasma source, 2: NBI, 3: periodic, 4: reflecting
-
-	// Particle source temperature:
-	// ===========================
-	double T;
-
-	// Particle source beam energy:
-	// ============================
-	double E;
-
-	// Particle source beam pitch angle:
-	// ================================
-	double eta;
-
-	// Particle source rate:
-	// =====================
-	double G;						// Fueling rate of source in particles/second
-	double sigma_x;					// Spatial spread of beam
-	double mean_x;					// Spatial location of beam injection
-
-	// Name of external file:
-	// ======================
-	string G_fileName;
-
-	// Number of elements in external file:
-	// ====================================
-	int G_NS;
-
-	// Variable to store profile from external file:
-	// =============================================
-	arma::vec G_profile;
-
-	// Computational particle accumulators:
-	// =============================================
-	double S1;
-	double S2;
-	double GSUM;
-
-	// Variable to store new particle weight based on fueling:
-	// ======================================================
-	double a_p_new;
-
-	// Constructor:
-	// ===========
-	p_BC_TYP()
-	{
-		BC_type   = 0;
-		E 	  	  = 0;
-		T     	  = 0;
-		eta   	  = 0;
-		G         = 0;
-		sigma_x   = 0;
-		mean_x    = 0;
-		G_NS      = 0;
-		GSUM      = 0;
-		S1        = 0;
-		S2        = 0;
-		a_p_new   = 0;
-	};
-
-};
-*/

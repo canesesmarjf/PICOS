@@ -2,7 +2,7 @@
 using namespace arma;
 
 // ==========================================================================================
-void HDF_TYP::H5_writeToFile(string fileName,string groupName,string datasetName,arma::vec * v,int access)
+void HDF_simple_TYP::H5_writeToFile(string fileName,string groupName,string datasetName,arma::vec * v,int access)
 {
   // Declare HDF5 objects:
     // ===========================================================================
@@ -54,7 +54,7 @@ void HDF_TYP::H5_writeToFile(string fileName,string groupName,string datasetName
 }
 
 // ==========================================================================================
-void HDF_TYP::H5_writeToFile(string fileName,string groupName,string datasetName,arma::ivec * v,int access)
+void HDF_simple_TYP::H5_writeToFile(string fileName,string groupName,string datasetName,arma::ivec * v,int access)
 {
   // Declare HDF5 objects:
     // ===========================================================================
@@ -108,7 +108,7 @@ void HDF_TYP::H5_writeToFile(string fileName,string groupName,string datasetName
 }
 
 // ==========================================================================================
-void HDF_TYP::H5_writeToFile(string fileName,string groupName,string datasetName,arma::mat * m,int access)
+void HDF_simple_TYP::H5_writeToFile(string fileName,string groupName,string datasetName,arma::mat * m,int access)
 {
   // Declare HDF5 objects:
     // ===========================================================================
@@ -159,7 +159,7 @@ void HDF_TYP::H5_writeToFile(string fileName,string groupName,string datasetName
 }
 
 // ==========================================================================================
-void HDF_TYP::saveData(string fileName, params_TYP * params, fields_TYP * fields, vector<ions_TYP> * IONS)
+void HDF_simple_TYP::saveData(string fileName, params_TYP * params, fields_TYP * fields, vector<ions_TYP> * IONS)
 {
   // Location where data is to be stored:
   string targetDir = "outputFiles/HDF5_simple/";

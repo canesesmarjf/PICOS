@@ -12,7 +12,7 @@ using namespace H5;
 using namespace arma;
 using namespace std;
 
-class HDF_TYP
+class HDF_simple_TYP
 {
 public:
   void saveData(string fileName, params_TYP * params, fields_TYP * fields, vector<ions_TYP> * IONS);

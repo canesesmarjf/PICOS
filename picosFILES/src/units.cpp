@@ -1,18 +1,18 @@
 #include "units.h"
 
-void units_TYP::defineCharacteristicScalesAndBcast(params_TYP * params, vector<ionSpecies_TYP> * IONS, CS_TYP * CS)
+void units_TYP::defineCharacteristicScalesAndBcast(params_TYP * params, vector<ions_TYP> * IONS, CS_TYP * CS)
 {
-    MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD);
 
-    if(params->mpi.MPI_DOMAIN_NUMBER == 0)
-    {
-        defineCharacteristicScales(params, IONS, CS);
-    }
+  if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+  {
+      defineCharacteristicScales(params, IONS, CS);
+  }
 
-    broadcastCharacteristicScales(params, CS);
+  broadcastCharacteristicScales(params, CS);
 }
 
-void units_TYP::defineCharacteristicScales(params_TYP * params, vector<ionSpecies_TYP> * IONS, CS_TYP * CS)
+void units_TYP::defineCharacteristicScales(params_TYP * params, vector<ions_TYP> * IONS, CS_TYP * CS)
 {
 	// The definition of the characteristic quantities is based on:
 	// D Winske and N Omidi, Hybrid codes.
@@ -44,7 +44,7 @@ void units_TYP::defineCharacteristicScales(params_TYP * params, vector<ionSpecie
 	CS->magneticMoment = CS->mass*CS->velocity*CS->velocity/CS->bField;
 	CS->vacuumPermittivity = (pow(CS->length*CS->charge,2)*CS->density)/(CS->mass*pow(CS->velocity,2));
 	CS->vacuumPermeability = CS->mass/( CS->density*pow(CS->charge*CS->velocity*CS->time,2) );
-    CS->energy = CS->mass*pow(CS->length/CS->time,2);
+  CS->energy = CS->mass*pow(CS->length/CS->time,2);
 
 	if(params->mpi.MPI_DOMAIN_NUMBER == 0)
     {
@@ -52,7 +52,7 @@ void units_TYP::defineCharacteristicScales(params_TYP * params, vector<ionSpecie
 		cout << "+ Average charge: " << scientific << CS->charge << fixed << " C" << endl;
 		cout << "+ Density: " << scientific << CS->density << fixed << " m^(-3)" << endl;
 		cout << "+ Time: " << scientific << CS->time << fixed << " s" << endl;
-		cout << "+ Plasma frequency: " << scientific << characteristicPlasmaFrequency << fixed << " s" << endl;
+		cout << "+ Plasma frequency: " << scientific << characteristicPlasmaFrequency << fixed << " 1/s" << endl;
 		cout << "+ Velocity: " << scientific << CS->velocity << fixed << " m/s" << endl;
 		cout << "+ Length: " << scientific << CS->length << fixed << " m" << endl;
 		cout << "+ Electric field intensity: " << scientific << CS->eField << fixed << " V/m" << endl;
@@ -77,7 +77,7 @@ void units_TYP::broadcastCharacteristicScales(params_TYP * params, CS_TYP * CS)
 
     MPI_Bcast(&CS->length, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-	MPI_Bcast(&CS->volume, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	  MPI_Bcast(&CS->volume, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     MPI_Bcast(&CS->mass, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
@@ -98,10 +98,10 @@ void units_TYP::broadcastCharacteristicScales(params_TYP * params, CS_TYP * CS)
     MPI_Bcast(&CS->vacuumPermittivity, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     MPI_Bcast(&CS->energy, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
 }
 
-void units_TYP::calculateFundamentalScalesAndBcast(params_TYP * params, vector<ionSpecies_TYP> * IONS, FS_TYP * FS)
+/*
+void units_TYP::calculateFundamentalScalesAndBcast(params_TYP * params, vector<ions_TYP> * IONS, FS_TYP * FS)
 {
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -112,15 +112,17 @@ void units_TYP::calculateFundamentalScalesAndBcast(params_TYP * params, vector<i
 
     broadcastFundamentalScales(params, FS);
 
-    /*
-    // It is assumed that species 0 is the majority species
-    params->ionLarmorRadius = FS->ionGyroRadius[0];
-    params->ionSkinDepth = FS->ionSkinDepth[0];
-    params->ionGyroPeriod = FS->ionGyroPeriod[0];
-    */
-}
 
-void units_TYP::calculateFundamentalScales(params_TYP * params, vector<ionSpecies_TYP> * IONS, FS_TYP * FS)
+    // It is assumed that species 0 is the majority species
+    // params->ionLarmorRadius = FS->ionGyroRadius[0];
+    // params->ionSkinDepth = FS->ionSkinDepth[0];
+    // params->ionGyroPeriod = FS->ionGyroPeriod[0];
+
+}
+*/
+
+/*
+void units_TYP::calculateFundamentalScales(params_TYP * params, vector<ions_TYP> * IONS, FS_TYP * FS)
 {
 
 	cout << endl << "* * * * * * * * * * * * CALCULATING FUNDAMENTAL SCALES IN SIMULATION * * * * * * * * * * * * * * * * * *" << endl;
@@ -149,7 +151,9 @@ void units_TYP::calculateFundamentalScales(params_TYP * params, vector<ionSpecie
 
 	cout << "* * * * * * * * * * * * FUNDAMENTAL SCALES IN SIMULATION CALCULATED  * * * * * * * * * * * * * * * * * *" << endl;
 }
+*/
 
+/*
 void units_TYP::broadcastFundamentalScales(params_TYP * params, FS_TYP * FS)
 {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -172,7 +176,9 @@ void units_TYP::broadcastFundamentalScales(params_TYP * params, FS_TYP * FS)
     // Ion gyro-radius
     MPI_Bcast(FS->ionGyroRadius, params->numberOfParticleSpecies, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
+*/
 
+/*
 void units_TYP::spatialScalesSanityCheck(params_TYP * params, FS_TYP * FS)
 {
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -190,7 +196,7 @@ void units_TYP::spatialScalesSanityCheck(params_TYP * params, FS_TYP * FS)
 
 	// Check that DX is larger than the electron skin depth, otherwise, abort simulation:
         // ==================================================================================
-	if (params->mesh.DX <= FS->electronSkinDepth)
+	if (params->mesh_params.dx <= FS->electronSkinDepth)
     {
         cout << "ERROR: Grid size violates assumptions of hybrid model for the plasma -- lenght scales smaller than the electron skind depth can not be resolved." << endl;
         cout << "ABORTING SIMULATION..." << endl;
@@ -198,20 +204,31 @@ void units_TYP::spatialScalesSanityCheck(params_TYP * params, FS_TYP * FS)
         MPI_Abort(MPI_COMM_WORLD,-103);
 	}
 }
+*/
 
-void units_TYP::defineTimeStep(params_TYP * params, vector<ionSpecies_TYP> * IONS)
+void units_TYP::defineTimeStep(params_TYP * params, vector<ions_TYP> * IONS)
 {
-    MPI_Barrier(MPI_COMM_WORLD);
+  // Note:
+  // This method will compute the time step relative to the ion gyroperiod. It will also
+  // compute the time step based on the condition that an average ion only crosses a single
+  // grid cell per time step; however it checks over all MPI ranks.
+  // Since every particle MPI contains a statisticaly equivent copy of the distribution function
+  // as every other MPI rank, we only need to assess a single MPI rank to determine the maximum
+  // velocity.
+  // Moreover, it seems to be that the most relevant time step is infact the CFL condition rather
+  // than the gyroperiod one in this GC formulation.
 
-    // Print to terminal:
-    // ==================
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  // Print to terminal:
+  // ==================
 	if (params->mpi.IS_PARTICLES_ROOT)
-    {
-        cout << endl << "* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *" << endl;
-    }
+  {
+      cout << endl << "* * * * * * * * * * * * COMPUTING SIMULATION TIME STEP * * * * * * * * * * * * * * * * * *" << endl;
+  }
 
-    // Define variables:
-    // =================
+  // Define variables:
+  // =================
 	double ionsMaxVel(0.0);	// Maximum speed of simulated ions
 	double DT(0.0); 	// Time step defined by user
 	double DT_CFL_I(0.0);	// Minimum time step defined by CFL condition for ions
@@ -224,56 +241,57 @@ void units_TYP::defineTimeStep(params_TYP * params, vector<ionSpecies_TYP> * ION
 	// CFL condition for ions:
     // =======================
 	if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
-        {
-            for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
-            {
-                    vec V = sqrt( pow(IONS->at(ss).V_p.col(0), 2.0) + pow(IONS->at(ss).V_p.col(1), 2.0) );
+  {
+    for (int ss=0; ss<params->numberOfParticleSpecies; ss++)
+    {
+      vec V = sqrt( pow(IONS->at(ss).v_p.col(0), 2.0) + pow(IONS->at(ss).v_p.col(1), 2.0) );
 
-                    ionsMaxVel = (ionsMaxVel < V.max()) ? V.max() : ionsMaxVel;
-            }
+      ionsMaxVel = (ionsMaxVel < V.max()) ? V.max() : ionsMaxVel;
+    }
 
-            // Minimum time step required by CFL condition for ions:
-            DT_CFL_I = params->mesh.DX/ionsMaxVel;
+    // Minimum time step required by CFL condition for ions:
+    double dx_factor = 2;
+    DT_CFL_I = dx_factor*params->mesh_params.dx/ionsMaxVel;
 
-            // We gather DT_CFL_I from all MPI processes in particles communicator:
-            double * DT_CFL_I_MPI;
+    // We gather DT_CFL_I from all MPI processes in particles communicator:
+    double * DT_CFL_I_MPI;
 
-            DT_CFL_I_MPI = (double*)malloc( params->mpi.MPIS_PARTICLES*sizeof(double) );
+    DT_CFL_I_MPI = (double*)malloc( params->mpi.MPIS_PARTICLES*sizeof(double) );
 
-            MPI_Allgather(&DT_CFL_I, 1, MPI_DOUBLE, DT_CFL_I_MPI, 1, MPI_DOUBLE, params->mpi.COMM);
+    MPI_Allgather(&DT_CFL_I, 1, MPI_DOUBLE, DT_CFL_I_MPI, 1, MPI_DOUBLE, params->mpi.COMM);
 
-            // Sort the DT_CFL_I_MPI values:
-            // =============================
-            if (params->mpi.IS_PARTICLES_ROOT)
-            {
-                // Find maximum value of DT_CFL_I accross all MPIs:
-                for (int ii=0; ii<params->mpi.MPIS_PARTICLES; ii++)
-                {
-                    DT_CFL_I = (DT_CFL_I > *(DT_CFL_I_MPI + ii)) ? *(DT_CFL_I_MPI + ii) : DT_CFL_I;
-                }
+    // Sort the DT_CFL_I_MPI values:
+    // =============================
+    if (params->mpi.IS_PARTICLES_ROOT)
+    {
+      // Find maximum value of DT_CFL_I accross all MPIs:
+      for (int ii=0; ii<params->mpi.MPIS_PARTICLES; ii++)
+      {
+          DT_CFL_I = (DT_CFL_I > *(DT_CFL_I_MPI + ii)) ? *(DT_CFL_I_MPI + ii) : DT_CFL_I;
+      }
 
-                // Check against user defined time step:
-                if (DT > DT_CFL_I)
-                {
-                        DT = DT_CFL_I;
-                        CFL_I = true;
-                }
+      // Check against user defined time step:
+      if (DT > DT_CFL_I)
+      {
+              DT = DT_CFL_I;
+              CFL_I = true;
+      }
 
-				//Assign final DT for the simulation
-				//==================================
-				params->DT = DT;
+      //Assign final DT for the simulation
+      //==================================
+      params->DT = DT;
 
-                params->timeIterations = (int)ceil( params->simulationTime*params->ionGyroPeriod/params->DT );
+      params->timeIterations = (int)ceil( params->simulationTime*params->ionGyroPeriod/params->DT );
 
-                params->outputCadenceIterations = (int)ceil( params->outputCadence*params->ionGyroPeriod/params->DT );
-            }
+      params->outputCadenceIterations = (int)ceil( params->outputCadence*params->ionGyroPeriod/params->DT );
+    }
 
-            // Deallocate memory:
-            free(DT_CFL_I_MPI);
-	}
+    // Deallocate memory:
+    free(DT_CFL_I_MPI);
+  }
 
 	// Broadcast correct time step, time iterations in simulation, and cadence for generating outputs:
-    // ===============================================================================================
+  // ===============================================================================================
 	MPI_Bcast(&params->DT, 1, MPI_DOUBLE, params->mpi.PARTICLES_ROOT_WORLD_RANK, MPI_COMM_WORLD);
 
 	MPI_Bcast(&params->timeIterations, 1, MPI_INT, params->mpi.PARTICLES_ROOT_WORLD_RANK, MPI_COMM_WORLD);
@@ -283,30 +301,30 @@ void units_TYP::defineTimeStep(params_TYP * params, vector<ionSpecies_TYP> * ION
 	// Print to terminal a brief summary:
     // ==================================
 	if (params->mpi.IS_PARTICLES_ROOT)
-        {
-            if (CFL_I)
-            {
-                cout << "+ Simulation time step defined by CFL condition for IONS" << endl;
-            }
-            else
-            {
-                cout << "+ Simulation time step defined by USER: " <<  scientific << DT << fixed  << endl;
-            }
+  {
+    if (CFL_I)
+    {
+        cout << "+ Simulation time step defined by CFL condition for IONS" << endl;
+    }
+    else
+    {
+        cout << "+ Simulation time step defined by USER: " <<  scientific << DT << fixed  << endl;
+    }
 
-            cout << "+ Time step defined by USER: " << scientific << DT << fixed << endl;
-            cout << "+ Time step defined by CFL condition for ions: " << scientific << DT_CFL_I << fixed << endl;
-            cout << "+ Time step used in simulation: " << scientific << params->DT << fixed << endl;
-            cout << "+ Time steps in simulation: " << params->timeIterations << endl;
-            cout << "+ Simulation time: " << scientific << params->DT*params->timeIterations << fixed << " s" << endl;
-            cout << "+ Simulation time: " << params->DT*params->timeIterations/params->ionGyroPeriod << " gyroperiods" << endl;
-            cout << "+ Cadence for saving outputs: " << params->outputCadenceIterations << endl;
-            cout << "+ Number of outputs: " << floor(params->timeIterations/params->outputCadenceIterations) + 1 << endl;
-            cout << "+ Cadence for checking stability: " << params->rateOfChecking << endl;
-            cout << "* * * * * * * * * * * * * * * TIME STEP COMPUTED * * * * * * * * * * * * * * * * * * * * *" << endl;
-	}
+    cout << "+ Time step defined by USER: " << scientific << DT << fixed << endl;
+    cout << "+ Time step defined by CFL condition for ions: " << scientific << DT_CFL_I << fixed << endl;
+    cout << "+ Time step used in simulation: " << scientific << params->DT << fixed << endl;
+    cout << "+ Time steps in simulation: " << params->timeIterations << endl;
+    cout << "+ Simulation time: " << scientific << params->DT*params->timeIterations << fixed << " s" << endl;
+    cout << "+ Simulation time: " << params->DT*params->timeIterations/params->ionGyroPeriod << " gyroperiods" << endl;
+    cout << "+ Cadence for saving outputs: " << params->outputCadenceIterations << endl;
+    cout << "+ Number of outputs: " << floor(params->timeIterations/params->outputCadenceIterations) + 1 << endl;
+    // cout << "+ Cadence for checking stability: " << params->rateOfChecking << endl;
+    cout << "* * * * * * * * * * * * * * * TIME STEP COMPUTED * * * * * * * * * * * * * * * * * * * * *" << endl;
+  }
 }
 
-void units_TYP::normalizeVariables(params_TYP * params, vector<ionSpecies_TYP> * IONS, electrons_TYP * electrons, fields_TYP * fields, const CS_TYP * CS)
+void units_TYP::normalizeVariables(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS, electrons_TYP * electrons, fields_TYP * fields, const CS_TYP * CS)
 {
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -334,66 +352,66 @@ void units_TYP::normalizeVariables(params_TYP * params, vector<ionSpecies_TYP> *
 
 	// Fluid initial conditions:
 	// -------------------------
-	params->f_IC.ne         /= CS->density;
-	params->f_IC.Te         /= CS->temperature;
-    params->f_IC.Te_profile /= CS->temperature;
+	// params->f_IC.ne         /= CS->density;
+	// params->f_IC.Te         /= CS->temperature;
+  // params->f_IC.Te_profile /= CS->temperature;
 
 	// Electromagnetic fields initial conditions:
 	// -----------------------------------------
-	params->em_IC.BX 	 	 /= CS->bField;
-	params->em_IC.BY     	 /= CS->bField;
-	params->em_IC.BZ         /= CS->bField;
-	params->em_IC.Bx_profile /= CS->bField;
-
-	params->em_IC.EX 	 	 /= CS->eField;
-	params->em_IC.EY     	 /= CS->eField;
-	params->em_IC.EZ         /= CS->eField;
-	params->em_IC.Ex_profile /= CS->eField;
-
-	// Geometry:
-	// ---------
-	params->geometry.r1 /= CS->length;
-	params->geometry.r2 /= CS->length;
-    params->geometry.A_0 /= pow(CS->length,2);
-    params->geometry.LX_min /= CS->length;
-    params->geometry.LX_max /= CS->length;
-    params->geometry.LX /= CS->length;
-    params->geometry.DX /= CS->length;
+	// params->em_IC.BX 	 	 /= CS->bField;
+	// params->em_IC.BY     	 /= CS->bField;
+	// params->em_IC.BZ         /= CS->bField;
+	// params->em_IC.Bx_profile /= CS->bField;
+  //
+	// params->em_IC.EX 	 	 /= CS->eField;
+	// params->em_IC.EY     	 /= CS->eField;
+	// params->em_IC.EZ         /= CS->eField;
+	// params->em_IC.Ex_profile /= CS->eField;
 
 	// Fundamental scales:
 	// -------------------
-	params->ionLarmorRadius /= CS->length;
-	params->ionSkinDepth /= CS->length;
-	params->ionGyroPeriod /= CS->time;
+	// params->ionLarmorRadius /= CS->length;
+	// params->ionSkinDepth /= CS->length;
+	// params->ionGyroPeriod /= CS->time;
 
 	// Mesh quantities:
 	// ----------------
-	params->mesh.nodesX = params->mesh.nodesX/CS->length;
-	params->mesh.DX /= CS->length;
-	params->mesh.LX /= CS->length;
+  mesh->xm  /= CS->length;
+  mesh->xmg /= CS->length;
+  mesh->dx  /= CS->length;
+  params->mesh_params.dx /= CS->length;
+  params->mesh_params.Lx_max /= CS->length;
+  params->mesh_params.Lx_min /= CS->length;
+  params->mesh_params.x0 /= CS->length;
+  params->mesh_params.r0_max /= CS->length;
+  params->mesh_params.r0_min /= CS->length;
+  params->mesh_params.ionSkinDepth /= CS->length;
+  params->mesh_params.A0 /= pow(CS->length,2);
+  params->mesh_params.B0 /= CS->bField;
 
-    // RF parameters:
-    // -------------
-    params->RF.Prf  /= CS->energy/CS->time;
-    params->RF.freq *= CS->time;
-    params->RF.x1   /= CS->length;
-    params->RF.x2   /= CS->length;
-    params->RF.t_ON  /= CS->time;
-    params->RF.t_OFF /= CS->time;
-    params->RF.kpar *= CS->length;
-    params->RF.kper *= CS->length;
+
+  // RF parameters:
+  // -------------
+  params->RF.Prf  /= CS->energy/CS->time;
+  params->RF.freq *= CS->time;
+  params->RF.x1   /= CS->length;
+  params->RF.x2   /= CS->length;
+  params->RF.t_ON  /= CS->time;
+  params->RF.t_OFF /= CS->time;
+  params->RF.kpar *= CS->length;
+  params->RF.kper *= CS->length;
 
 	// Normalizing IONS:
     // =========================================================================
 	for(int ii=0;ii<IONS->size();ii++)
-    {
+  {
 		// Particle boundary conditions:
 		// ----------------------------
-		IONS->at(ii).p_BC.mean_x  /= CS->length;
-		IONS->at(ii).p_BC.sigma_x /= CS->length;
-		IONS->at(ii).p_BC.T /= CS->temperature;
-		IONS->at(ii).p_BC.E /= CS->temperature;
-        IONS->at(ii).p_BC.G *= CS->time;
+    params->ions_BC[ii].T /= CS->temperature;
+    params->ions_BC[ii].E /= CS->temperature;
+    params->ions_BC[ii].mean_x  /= CS->length;
+    params->ions_BC[ii].sigma_x  /= CS->length;
+    params->ions_BC[ii].G *= CS->time;
 
 		// Particle parameters:
 		// -------------------
@@ -402,37 +420,44 @@ void units_TYP::normalizeVariables(params_TYP * params, vector<ionSpecies_TYP> *
 
 		// Particle initial conditions:
 		// ----------------------------
-		IONS->at(ii).p_IC.Tpar /= CS->temperature;
-		IONS->at(ii).p_IC.Tper /= CS->temperature;
-		IONS->at(ii).p_IC.Tper_profile /= CS->temperature;
-		IONS->at(ii).p_IC.Tpar_profile /= CS->temperature;
-		IONS->at(ii).p_IC.densityFraction_profile /= CS->density;
-        IONS->at(ii).p_IC.x_profile /= CS->length;
+		// IONS->at(ii).p_IC.Tpar /= CS->temperature;
+		// IONS->at(ii).p_IC.Tper /= CS->temperature;
+		// IONS->at(ii).p_IC.Tper_profile /= CS->temperature;
+		// IONS->at(ii).p_IC.Tpar_profile /= CS->temperature;
+		// IONS->at(ii).p_IC.densityFraction_profile /= CS->density;
+    // IONS->at(ii).p_IC.x_profile /= CS->length;
 
         // Scales:
-		IONS->at(ii).LarmorRadius /= CS->length;
-		IONS->at(ii).VTpar /= CS->velocity;
-		IONS->at(ii).VTper /= CS->velocity;
+		// IONS->at(ii).LarmorRadius /= CS->length;
+		// IONS->at(ii).VTpar /= CS->velocity;
+		// IONS->at(ii).VTper /= CS->velocity;
 		IONS->at(ii).Wc *= CS->time;
 		IONS->at(ii).Wp *= CS->time;
-        IONS->at(ii).GyroPeriod *= CS->time;
-        IONS->at(ii).SkinDepth /= CS->length;
+    IONS->at(ii).GyroPeriod *= CS->time;
+    IONS->at(ii).SkinDepth /= CS->length;
 
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
-    	{
-            IONS->at(ii).X_p = IONS->at(ii).X_p/CS->length;
-            IONS->at(ii).V_p = IONS->at(ii).V_p/CS->velocity;
+  	{
+      IONS->at(ii).x_p = IONS->at(ii).x_p/CS->length;
+      IONS->at(ii).v_p = IONS->at(ii).v_p/CS->velocity;
 		}
 	}
 
-    // Normalizing "electrons":
-    // =========================================================================
-    electrons->Te_m /= CS->temperature;
+  // Normalizing "electrons":
+  // =========================================================================
+  electrons->Te_m /= CS->temperature;
 
-    // Normalizing "fields":
-    // =========================================================================
-	fields->EX_m   /=  CS->eField;
-	fields->BX_m   /=  CS->bField;
-    fields->dBX_m  /= (CS->bField/pow(CS->length,1));
-    fields->ddBX_m /= (CS->bField/pow(CS->length,2));
+  // Normalizing "fields":
+  // =========================================================================
+	fields->Ex_m   /=  CS->eField;
+	fields->Bx_m   /=  CS->bField;
+  fields->dBx_m  /= (CS->bField/pow(CS->length,1));
+  fields->ddBx_m /= (CS->bField/pow(CS->length,2));
+
+  if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+  {
+		cout << endl << "* * * * * * * * * * * * SIMULATION VARIABLES NORMALIZED * * * * * * * * * * * * * * * * * *" << endl;
+    cout << endl <<""<< endl;
+	}
+
 }

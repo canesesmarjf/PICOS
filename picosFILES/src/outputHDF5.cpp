@@ -390,7 +390,7 @@ HDF_TYP::HDF_TYP(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS)
       saveToHDF5(group_mesh, name, &int_value);
       name.clear();
 
-      name = "NX_IN_SIM";
+      name = "Nx_IN_SIM";
       int_value = params->mesh_params.Nx;
       saveToHDF5(group_mesh, name, &int_value);
       name.clear();
@@ -431,12 +431,6 @@ HDF_TYP::HDF_TYP(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS)
         Group * group_ionSpecies = new Group( outputFile->createGroup( name ) );
         name.clear();
 
-/*
-        name = "densityFraction";
-        cpp_type_value = (CPP_TYPE)IONS->at(ii).p_IC.densityFraction;
-        saveToHDF5(group_ionSpecies, name, &cpp_type_value);
-        name.clear();
-*/
 				name = "speciesType";
 				cpp_type_value = (CPP_TYPE)IONS->at(ii).SPECIES;
 				saveToHDF5(group_ionSpecies, name, &cpp_type_value);
@@ -483,14 +477,6 @@ HDF_TYP::HDF_TYP(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS)
       delete group_ions;
 			}
 
-/*
-      //Electromagnetic fields
-      name = "BX_0";
-      vector_values = { (CPP_TYPE)params->em_IC.BX , (CPP_TYPE)params->em_IC.BX , (CPP_TYPE)params->em_IC.BX };
-      saveToHDF5(outputFile, name, &vector_values);
-      name.clear();
-*/
-
       delete outputFile;
 
     }//End of try block
@@ -518,10 +504,9 @@ HDF_TYP::HDF_TYP(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS)
   } // MPI-0
 }
 
-/*
+
 void HDF_TYP::saveOutputs(const params_TYP * params, const vector<ions_TYP> * IONS, electrons_TYP * electrons, fields_TYP * fields, const CS_TYP * CS, const int it, double totalTime)
 {
-
 	try
 	{
 		stringstream iteration;
@@ -579,7 +564,7 @@ void HDF_TYP::saveOutputs(const params_TYP * params, const vector<ions_TYP> * IO
 		}
 		else if (params->mpi.COMM_COLOR == FIELDS_MPI_COLOR)
 		{
-			saveFieldsVariables(params, fields, CS, group_iteration);
+			// saveFieldsVariables(params, fields, CS, group_iteration);
 		}
 
 		delete group_iteration;
@@ -588,29 +573,29 @@ void HDF_TYP::saveOutputs(const params_TYP * params, const vector<ions_TYP> * IO
 	}//End of try block
 
 	// catch failure caused by the H5File operations
-    catch( FileIException error )
+  catch( FileIException error )
 	{
 		error.printErrorStack();
-    }
+  }
 
 	// catch failure caused by the DataSet operations
-    catch( DataSetIException error )
+  catch( DataSetIException error )
 	{
 		error.printErrorStack();
-    }
+  }
 
 	// catch failure caused by the DataSpace operations
-    catch( DataSpaceIException error )
+  catch( DataSpaceIException error )
 	{
 		error.printErrorStack();
-    }
+  }
 }
 
 
 void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP> * IONS, electrons_TYP * electrons, const CS_TYP * CS, const Group * group_iteration)
 {
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex(params->mesh_params.Nx_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->mesh_params.Nx_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
 	try
 	{
@@ -637,7 +622,7 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 		for(int ii=0; ii<IONS->size(); ii++)
 		{
 			// Determine total number of particles to record:
-			unsigned int N = IONS->at(ii).nSupPartOutput;
+			unsigned int N = IONS->at(ii).N_CP_MPI;
 
 			stringstream ionSpec;
 			ionSpec << (ii+1);
@@ -648,31 +633,31 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 			// Loop over all output variables:
 			for(int ov=0; ov<params->outputs_variables.size(); ov++)
 			{
-				if(params->outputs_variables.at(ov) == "X_p")
+				if(params->outputs_variables.at(ov) == "x_p")
 				{
 					// Particle position:
-					name = "X_p";
+					name = "x_p";
 
 					#ifdef HDF5_DOUBLE
-					vec_values = CS->length*IONS->at(ii).X_p.subvec(0,N-1);
+					vec_values = CS->length*IONS->at(ii).x_p.subvec(0,N-1);
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(CS->length*IONS->at(ii).X_p.subvec(0,N-1));
+					fvec_values = conv_to<fvec>::from(CS->length*IONS->at(ii).x_p.subvec(0,N-1));
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
 
 				 }
-				if(params->outputs_variables.at(ov) == "V_p")
+				if(params->outputs_variables.at(ov) == "v_p")
 				{
 					// Velocity vector:
-					name = "V_p";
+					name = "v_p";
 
 					#ifdef HDF5_DOUBLE
-					mat_values = CS->velocity*IONS->at(ii).V_p.submat(0,0,N-1,1);
+					mat_values = CS->velocity*IONS->at(ii).v_p.submat(0,0,N-1,1);
 					saveToHDF5(group_ionSpecies, name, &mat_values);
 					#elif defined HDF5_FLOAT
-					fmat_values = conv_to<fmat>::from(CS->velocity*IONS->at(ii).V_p.submat(0,0,N-1,1));
+					fmat_values = conv_to<fmat>::from(CS->velocity*IONS->at(ii).v_p.submat(0,0,N-1,1));
 					saveToHDF5(group_ionSpecies, name, &fmat_values);
 					#endif
 					name.clear();
@@ -705,30 +690,30 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 					#endif
 					name.clear();
 				}
-				if(params->outputs_variables.at(ov) == "EX_p")
+				if(params->outputs_variables.at(ov) == "Ex_p")
 				{
 					// Particle-defined electric field:
-					name = "EX_p";
+					name = "Ex_p";
 
 					#ifdef HDF5_DOUBLE
-					vec_values = CS->eField*IONS->at(ii).EX_p.subvec(0,N-1);
+					vec_values = CS->eField*IONS->at(ii).Ex_p.subvec(0,N-1);
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from( CS->eField*IONS->at(ii).EX_p.subvec(0,N-1));
+					fvec_values = conv_to<fvec>::from( CS->eField*IONS->at(ii).Ex_p.subvec(0,N-1));
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
 				}
-				if(params->outputs_variables.at(ov) == "BX_p")
+				if(params->outputs_variables.at(ov) == "Bx_p")
 				{
 					// Particle-defined magnetic field:
-					name = "BX_p";
+					name = "Bx_p";
 
 					#ifdef HDF5_DOUBLE
-					vec_values = CS->bField*IONS->at(ii).BX_p.subvec(0,N-1);
+					vec_values = CS->bField*IONS->at(ii).Bx_p.subvec(0,N-1);
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from( CS->bField*IONS->at(ii).BX_p.subvec(0,N-1));
+					fvec_values = conv_to<fvec>::from( CS->bField*IONS->at(ii).Bx_p.subvec(0,N-1));
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
@@ -810,15 +795,25 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 						//Saving ions species density
 						name = "n_m";
 						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).n_m.subvec(1,params->mesh.NX_IN_SIM)/CS->volume;
+						vec_values = IONS->at(ii).n_m.subvec(1,params->mesh_params.Nx)/CS->volume;
 						saveToHDF5(group_ionSpecies, name, &vec_values);
 						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).n_m.subvec(1,params->mesh.NX_IN_SIM)/CS->volume);
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).n_m.subvec(1,params->mesh_params.Nx)/CS->volume);
+						saveToHDF5(group_ionSpecies, name, &fvec_values);
+						#endif
+						name.clear();
+
+						//Saving ions computational particle density
+						name = "ncp_m";
+						#ifdef HDF5_DOUBLE
+						vec_values = IONS->at(ii).ncp_m.subvec(1,params->mesh_params.Nx)/CS->length;
+						saveToHDF5(group_ionSpecies, name, &vec_values);
+						#elif defined HDF5_FLOAT
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).ncp_m.subvec(1,params->mesh_params.Nx)/CS->length);
 						saveToHDF5(group_ionSpecies, name, &fvec_values);
 						#endif
 						name.clear();
 					}
-
 				}
 				if(params->outputs_variables.at(ov) == "Tpar_m")
 				{
@@ -827,10 +822,10 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 						//Saving ions species density
 						name = "Tpar_m";
 						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).Tpar_m.subvec(1,params->mesh.NX_IN_SIM)*CS->temperature*F_KB/F_E;
+						vec_values = IONS->at(ii).Tpar_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E;
 						saveToHDF5(group_ionSpecies, name, &vec_values);
 						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tpar_m.subvec(1,params->mesh.NX_IN_SIM)*CS->temperature*F_KB/F_E);
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tpar_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E);
 						saveToHDF5(group_ionSpecies, name, &fvec_values);
 						#endif
 						name.clear();
@@ -844,10 +839,10 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 						//Saving ions species density
 						name = "Tper_m";
 						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).Tper_m.subvec(1,params->mesh.NX_IN_SIM)*CS->temperature*F_KB/F_E;
+						vec_values = IONS->at(ii).Tper_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E;
 						saveToHDF5(group_ionSpecies, name, &vec_values);
 						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tper_m.subvec(1,params->mesh.NX_IN_SIM)*CS->temperature*F_KB/F_E);
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tper_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E);
 						saveToHDF5(group_ionSpecies, name, &fvec_values);
 						#endif
 						name.clear();
@@ -861,10 +856,10 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 						//Saving electron temperature values on the grid:
 						name = "Te_m";
 						#ifdef HDF5_DOUBLE
-						vec_values = electrons->Te_m.subvec(1,params->mesh.NX_IN_SIM)*CS->temperature*F_KB/F_E;
+						vec_values = electrons->Te_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E;
 						saveToHDF5(group_ionSpecies, name, &vec_values);
 						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(electrons->Te_m.subvec(1,params->mesh.NX_IN_SIM)*CS->temperature*F_KB/F_E);
+						fvec_values = conv_to<fvec>::from(electrons->Te_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E);
 						saveToHDF5(group_ionSpecies, name, &fvec_values);
 						#endif
 						name.clear();
@@ -888,10 +883,10 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 						//x-component species bulk velocity
 						name = "x";
 						#ifdef HDF5_DOUBLE
-						vec_values = CS->velocity*IONS->at(ii).nv_m.subvec(1,params->mesh.NX_IN_SIM)/IONS->at(ii).n_m.subvec(1,params->mesh.NX_IN_SIM);
+						vec_values = CS->velocity*IONS->at(ii).nv_m.subvec(1,params->mesh_params.Nx)/IONS->at(ii).n_m.subvec(1,params->mesh_params.Nx);
 						saveToHDF5(group_ionSpecies, name, &vec_values);
 						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv_m.subvec(1,params->mesh.NX_IN_SIM)/IONS->at(ii).n_m.subvec(1,params->mesh.NX_IN_SIM));
+						fvec_values = conv_to<fvec>::from(CS->velocity*IONS->at(ii).nv_m.subvec(1,params->mesh_params.Nx)/IONS->at(ii).n_m.subvec(1,params->mesh_params.Nx));
 						saveToHDF5(group_bulkVelocity, name, &fvec_values);
 						#endif
 						name.clear();
@@ -907,27 +902,27 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 		delete group_ions;
 	}//End of try block
 
+  catch( FileIException error ){// catch failure caused by the H5File operations
+	error.printErrorStack();
+  }
 
-    catch( FileIException error ){// catch failure caused by the H5File operations
-		error.printErrorStack();
-    }
+  catch( DataSetIException error ){// catch failure caused by the DataSet operations
+	error.printErrorStack();
+  }
 
-    catch( DataSetIException error ){// catch failure caused by the DataSet operations
-		error.printErrorStack();
-    }
-
-    catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
-		error.printErrorStack();
-    }
+  catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
+	error.printErrorStack();
+  }
 }
 
-
+/*
 void HDF_TYP::saveFieldsVariables(const params_TYP * params, fields_TYP * fields, const CS_TYP * CS, const Group * group_iteration)
 {
-	unsigned int iIndex(params->mesh.NX_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
-	unsigned int fIndex(params->mesh.NX_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
+	unsigned int iIndex(params->mesh_params.Nx_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
+	unsigned int fIndex(params->mesh_params.Nx_PER_MPI*(params->mpi.MPI_DOMAIN_NUMBER_CART+1));
 
-	try{
+	try
+	{
 		string name;
 
 		int int_value;
@@ -1016,16 +1011,16 @@ void HDF_TYP::saveFieldsVariables(const params_TYP * params, fields_TYP * fields
 	}
 
 
-    catch( FileIException error ){// catch failure caused by the H5File operations
-		error.printErrorStack();
-    }
+  catch( FileIException error ){// catch failure caused by the H5File operations
+	error.printErrorStack();
+  }
 
-    catch( DataSetIException error ){// catch failure caused by the DataSet operations
-		error.printErrorStack();
-    }
+  catch( DataSetIException error ){// catch failure caused by the DataSet operations
+	error.printErrorStack();
+  }
 
-    catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
-		error.printErrorStack();
-    }
+  catch( DataSpaceIException error ){// catch failure caused by the DataSpace operations
+	error.printErrorStack();
+  }
 }
 */

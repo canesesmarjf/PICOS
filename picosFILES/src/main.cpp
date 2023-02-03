@@ -166,7 +166,7 @@ int main(int argc, char* argv[])
 
   // Save 1st output:
   // =========================================================================
-  // HDF.saveOutputs(&params, &IONS, &electrons, &fields, &CS, 0, 0);
+  HDF.saveOutputs(&params, &IONS, &electrons, &fields, &CS, 0, 0);
 
   // Start timing simulations:
   // =========================================================================

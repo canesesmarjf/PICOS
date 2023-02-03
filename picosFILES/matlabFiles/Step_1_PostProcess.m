@@ -10,6 +10,7 @@ pathName = [dirName,fileName];
 
 fileStruct = extractStructFromHDF5(pathName);
 fileStruct2 = extractStructFromHDF5('../outputFiles/HDF5/main.h5');
+fileStruct3 = extractStructFromHDF5('../outputFiles/HDF5/PARTICLES_FILE_0.h5');
 
 % 2- Get group names:
 % =========================================================================

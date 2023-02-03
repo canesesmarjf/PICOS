@@ -62,7 +62,7 @@ class HDF_TYP
 	void saveToHDF5(Group * group, string name, arma::fmat * values);
 
 
-	// void saveIonsVariables(const params_TYP * params, const vector<ions_TYP> * IONS, electrons_TYP * electrons, const CS_TYP * CS, const Group * group_iteration);
+	void saveIonsVariables(const params_TYP * params, const vector<ions_TYP> * IONS, electrons_TYP * electrons, const CS_TYP * CS, const Group * group_iteration);
 
 	// void saveFieldsVariables(const params_TYP * params, fields_TYP * fields, const CS_TYP * CS, const Group * group_iteration);
 

@@ -19,7 +19,7 @@
 #include "PIC.h"
 #include "fieldSolve.h"
 // #include "particleBC.h"
-// #include "collisionOperator.h"
+#include "collisionOperator.h"
 // #include "rfOperator.h"
 
 // Include headers for parallelization:
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
   units_TYP units;
 
   // Collision operator object:
-  // coll_operator_TYP coll_operator;
+  coll_operator_TYP coll_operator;
 
   // Particle boundary condition operator:
   // particleBC_TYP particleBC;
@@ -223,7 +223,7 @@ int main(int argc, char* argv[])
     // =====================================================================
     if (params.SW.Collisions == 1)
     {
-        // coll_operator.ApplyCollisions_AllSpecies(&params,&CS,&IONS,&electrons);
+      coll_operator.ApplyCollisions_AllSpecies(&params,&CS,&IONS,&electrons);
     }
 
     // Apply RF operator:
@@ -269,9 +269,11 @@ int main(int argc, char* argv[])
     {
         vector<ions_TYP> IONS_OUT = IONS;
 
-        //HDF.saveOutputs(&params, &IONS_OUT, &electrons, &fields, &CS, outputIterator+1, params.currentTime);
+        HDF.saveOutputs(&params, &IONS_OUT, &electrons, &fields, &CS, outputIterator+1, params.currentTime);
 
         outputIterator++;
+
+        cout << "data saved at tt = " << tt << endl;
     }
 
     // Estimate simulation time:

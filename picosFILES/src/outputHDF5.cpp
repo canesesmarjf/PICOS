@@ -780,10 +780,10 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 					name = "Te_p";
 
 					#ifdef HDF5_DOUBLE
-					vec_values = IONS->at(ii).Te_p.subvec(0,N-1)*CS->temperature; //*F_KB/F_E;
+					vec_values = IONS->at(ii).Te_p.subvec(0,N-1)*CS->temperature*F_KB/F_E; // [eV]
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(IONS->at(ii).Te_p.subvec(0,N-1))*CS->temperature; //*F_KB/F_E;
+					fvec_values = conv_to<fvec>::from(IONS->at(ii).Te_p.subvec(0,N-1))*CS->temperature*F_KB/F_E; // [eV]
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
@@ -822,15 +822,14 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 						//Saving ions species density
 						name = "Tpar_m";
 						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).Tpar_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E;
+						vec_values = IONS->at(ii).Tpar_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E; // [eV]
 						saveToHDF5(group_ionSpecies, name, &vec_values);
 						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tpar_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E);
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tpar_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E); // [eV]
 						saveToHDF5(group_ionSpecies, name, &fvec_values);
 						#endif
 						name.clear();
 					}
-
 				}
 				if(params->outputs_variables.at(ov) == "Tper_m")
 				{
@@ -839,15 +838,14 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 						//Saving ions species density
 						name = "Tper_m";
 						#ifdef HDF5_DOUBLE
-						vec_values = IONS->at(ii).Tper_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E;
+						vec_values = IONS->at(ii).Tper_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E; // [eV]
 						saveToHDF5(group_ionSpecies, name, &vec_values);
 						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tper_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E);
+						fvec_values = conv_to<fvec>::from(IONS->at(ii).Tper_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E); // [K]
 						saveToHDF5(group_ionSpecies, name, &fvec_values);
 						#endif
 						name.clear();
 					}
-
 				}
 				if(params->outputs_variables.at(ov) == "Te_m")
 				{
@@ -856,10 +854,10 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 						//Saving electron temperature values on the grid:
 						name = "Te_m";
 						#ifdef HDF5_DOUBLE
-						vec_values = electrons->Te_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E;
+						vec_values = electrons->Te_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E; // [eV]
 						saveToHDF5(group_ionSpecies, name, &vec_values);
 						#elif defined HDF5_FLOAT
-						fvec_values = conv_to<fvec>::from(electrons->Te_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E);
+						fvec_values = conv_to<fvec>::from(electrons->Te_m.subvec(1,params->mesh_params.Nx)*CS->temperature*F_KB/F_E); // [eV]
 						saveToHDF5(group_ionSpecies, name, &fvec_values);
 						#endif
 						name.clear();

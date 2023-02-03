@@ -19,12 +19,12 @@ class coll_operator_TYP
 {
 private:
     // Ion moment interpolation functions:
-    void interpolateIonMoments(const params_TYP * params, vector<ionSpecies_TYP> * IONS, int a, int b);
-    void interpolateScalarField(const params_TYP * params, ionSpecies_TYP * IONS, arma::vec * F_m, arma::vec * F_p);
+    void interpolateIonMoments(const params_TYP * params, vector<ions_TYP> * IONS, int a, int b);
+    void interpolateScalarField(const params_TYP * params, ions_TYP * IONS, arma::vec * F_m, arma::vec * F_p);
     void fill4Ghosts(arma::vec * v);
 
     // Electron temperature interpolation:
-    void interpolateElectronTemperature(const params_TYP * params, vector<ionSpecies_TYP> * IONS, int a, electrons_TYP * electrons);
+    void interpolateElectronTemperature(const params_TYP * params, vector<ions_TYP> * IONS, int a, electrons_TYP * electrons);
 
     // Scattering operators:
     void u_CollisionOperator(double * w, double xab, double wTb, double nb, double Tb, double Mb, double Zb, double Za, double Ma, double DT);
@@ -46,7 +46,7 @@ private:
 
 public:
     coll_operator_TYP();
-    void ApplyCollisions_AllSpecies(const params_TYP * params, const CS_TYP * CS, vector<ionSpecies_TYP> * IONS, electrons_TYP * electrons);
+    void ApplyCollisions_AllSpecies(const params_TYP * params, const CS_TYP * CS, vector<ions_TYP> * IONS, electrons_TYP * electrons);
 };
 
 #endif

@@ -269,7 +269,7 @@ void init_TYP::read_inputFile(params_TYP * params)
   params->electrons_IC.fileName  = parametersStringMap["IC_electrons_fileName"];
   params->electrons_IC.n_offset = stod(parametersStringMap["IC_n_offset"]);
   params->electrons_IC.n_scale  = stod(parametersStringMap["IC_n_scale"]);
-  params->electrons_IC.T_offset = stod(parametersStringMap["IC_T_offset"]);
+  params->electrons_IC.T_offset = stod(parametersStringMap["IC_T_offset"])*F_E/F_KB; // [K]
   params->electrons_IC.T_scale  = stod(parametersStringMap["IC_T_scale"]);
 
   // Mesh:
@@ -408,13 +408,13 @@ void init_TYP::read_ionsPropertiesFile(params_TYP * params)
 
     // IC:
     name = "IC_Tpar_offset" + kk.str();
-    params->ions_IC[ss].Tpar_offset = stod(parametersMap[name]);
+    params->ions_IC[ss].Tpar_offset = stod(parametersMap[name])*F_E/F_KB; // [K]
 
     name = "IC_Tpar_scale" + kk.str();
     params->ions_IC[ss].Tpar_scale = stod(parametersMap[name]);
 
     name = "IC_Tper_offset" + kk.str();
-    params->ions_IC[ss].Tper_offset = stod(parametersMap[name]);
+    params->ions_IC[ss].Tper_offset = stod(parametersMap[name])*F_E/F_KB; // [K]
 
     name = "IC_Tper_scale" + kk.str();
     params->ions_IC[ss].Tper_scale = stod(parametersMap[name]);
@@ -436,10 +436,10 @@ void init_TYP::read_ionsPropertiesFile(params_TYP * params)
     params->ions_BC[ss].type = stod(parametersMap[name]);
 
     name = "BC_T" + kk.str();
-    params->ions_BC[ss].T = stod(parametersMap[name]);
+    params->ions_BC[ss].T = stod(parametersMap[name]); // [eV]
 
     name = "BC_E" + kk.str();
-    params->ions_BC[ss].E = stod(parametersMap[name]);
+    params->ions_BC[ss].E = stod(parametersMap[name]); // [eV]
 
     name = "BC_eta" + kk.str();
     params->ions_BC[ss].eta = stod(parametersMap[name]);
@@ -451,7 +451,7 @@ void init_TYP::read_ionsPropertiesFile(params_TYP * params)
     params->ions_BC[ss].sigma_x = stod(parametersMap[name]);
 
     name = "BC_G" + kk.str();
-    params->ions_BC[ss].G = stod(parametersMap[name]);
+    params->ions_BC[ss].G = stod(parametersMap[name]); // [particles/sec]
 
     name = "BC_G_fileName" + kk.str();
     params->ions_BC[ss].G_fileName = parametersMap[name];
@@ -560,7 +560,7 @@ void init_TYP::read_IC_profiles(params_TYP * params, mesh_TYP * mesh, IC_TYP * I
 
   // Load and assign data:
   y.load(arma::hdf5_name(fullPath,"x"));
-  IC->electrons.x = y;
+  IC->electrons.x = y; // [m]
 
   y.load(arma::hdf5_name(fullPath,"n"));
   offset = params->electrons_IC.n_offset;
@@ -570,7 +570,7 @@ void init_TYP::read_IC_profiles(params_TYP * params, mesh_TYP * mesh, IC_TYP * I
   y.load(arma::hdf5_name(fullPath,"T"));
   offset = params->electrons_IC.T_offset;
   scale  = params->electrons_IC.T_scale;
-  IC->electrons.T = offset + scale*y;
+  IC->electrons.T = offset + scale*y*F_E/F_KB; // [K]
 
   // Read and scale fields profiles:
   // ==================================================
@@ -642,13 +642,13 @@ void init_TYP::read_IC_profiles(params_TYP * params, mesh_TYP * mesh, IC_TYP * I
     y.load(arma::hdf5_name(fullPath,dataset));
     offset = params->ions_IC.at(ss).Tpar_offset;
     scale  = params->ions_IC.at(ss).Tpar_scale;
-    IC->ions.at(ss).Tpar = offset + scale*y;
+    IC->ions.at(ss).Tpar = offset + scale*y*F_E/F_KB; // [K]
 
     dataset = group + "/Tper";
     y.load(arma::hdf5_name(fullPath,dataset));
     offset = params->ions_IC.at(ss).Tper_offset;
     scale  = params->ions_IC.at(ss).Tper_scale;
-    IC->ions.at(ss).Tper = offset + scale*y;
+    IC->ions.at(ss).Tper = offset + scale*y*F_E/F_KB; // [K]
 
     dataset = group + "/upar";
     y.load(arma::hdf5_name(fullPath,dataset));
@@ -1073,7 +1073,7 @@ void init_TYP::initialize_ions(params_TYP * params, IC_TYP * IC, mesh_TYP * mesh
 
         // Parallel velocity:
         // ==================
-        double vTpar = sqrt(2*F_E*Tpar_m(m+1)/M);
+        double vTpar = sqrt(2*F_KB*Tpar_m(m+1)/M);
         arma::vec X1 = arma::randu(N);
         arma::vec X2 = arma::randu(N);
         arma::vec xpar = sqrt(-log(X1))%cos(2*M_PI*X2);
@@ -1082,7 +1082,7 @@ void init_TYP::initialize_ions(params_TYP * params, IC_TYP * IC, mesh_TYP * mesh
 
         // Perpendicular velocity:
         // ==================
-        double vTper = sqrt(2*F_E*Tper_m(m+1)/M);
+        double vTper = sqrt(2*F_KB*Tper_m(m+1)/M);
         X1 = arma::randu(N);
         X2 = arma::randu(N);
         arma::vec xy = sqrt(-log(X1))%cos(2*M_PI*X2);

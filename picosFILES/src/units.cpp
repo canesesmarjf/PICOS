@@ -40,7 +40,7 @@ void units_TYP::defineCharacteristicScales(params_TYP * params, vector<ions_TYP>
 	CS->volume = CS->length*CS->length*CS->length;
 	CS->eField = ( CS->mass*CS->velocity )/( CS->charge*CS->time );
 	CS->bField = CS->eField/CS->velocity;
-	CS->temperature = CS->mass*CS->velocity*CS->velocity/F_KB;
+	CS->temperature = CS->mass*CS->velocity*CS->velocity/F_KB; // [K]
 	CS->magneticMoment = CS->mass*CS->velocity*CS->velocity/CS->bField;
 	CS->vacuumPermittivity = (pow(CS->length*CS->charge,2)*CS->density)/(CS->mass*pow(CS->velocity,2));
 	CS->vacuumPermeability = CS->mass/( CS->density*pow(CS->charge*CS->velocity*CS->time,2) );

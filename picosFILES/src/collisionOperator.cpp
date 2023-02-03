@@ -10,127 +10,125 @@ coll_operator_TYP::coll_operator_TYP()
 // =============================================================================
 void coll_operator_TYP::u_CollisionOperator(double * w, double xab,double wTb, double nb, double Tb, double Mb, double Zb, double Za, double Ma, double DT)
 {
-    // double BoozerFactor = (double)0.5;
-    double BoozerFactor = (double)1.0;
-    double nu_E_dt(0.0);
-    int energyOperatorModel = 2;
+  // double BoozerFactor = (double)0.5;
+  double BoozerFactor = (double)1.0;
+  double nu_E_dt(0.0);
+  int energyOperatorModel = 2;
 
-    // Normalized collision rate:
-    nu_E_dt = BoozerFactor*nu_E(xab,nb,Tb,Mb,Zb,Za,Ma,energyOperatorModel)*DT;
+  // Normalized collision rate:
+  nu_E_dt = BoozerFactor*nu_E(xab,nb,Tb,Mb,Zb,Za,Ma,energyOperatorModel)*DT;
 
-    // Calculate substeps:
-    int Nstep   = round(nu_E_dt/0.4) + 1;
-    double dt_s = (double) DT/Nstep;
+  // Calculate substeps:
+  int Nstep   = round(nu_E_dt/0.4) + 1;
+  double dt_s = (double) DT/Nstep;
 
-    // Limit substepping:
-    if (Nstep > 100)
+  // Limit substepping:
+  if (Nstep > 100)
+  {
+    cout << "Nstep for 'w' operator = " << Nstep << endl;
+    Nstep = 100;
+  }
+
+  // Apply operator:
+  nu_E_dt  = nu_E_dt/Nstep;
+
+  for (int kk = 0; kk<Nstep; kk++)
+  {
+    double E0 = (0.5*Ma*pow((*w),2.0))/F_E;
+    double A = -2.0*nu_E_dt*E0;
+    double B = 2.0*nu_E_dt*( 1.5 + E_nuE_d_nu_E_dE(xab))*Tb;
+
+    // Random number between 0 and 1:
+    double randomNumber = (double) rand()/RAND_MAX;
+    //  double randomNumber = uniform_distribution(generator);
+    double Rm;
+
+    // -1 or +1 function:
+    if (randomNumber - 0.5 < 0)
     {
-        cout << "Nstep for 'w' operator = " << Nstep << endl;
-        Nstep = 100;
+        Rm = -1.0;
+    }
+    else
+    {
+        Rm = +1.0;
     }
 
-    // Apply operator:
-    nu_E_dt  = nu_E_dt/Nstep;
-
-    for (int kk = 0; kk<Nstep; kk++)
-    {
-        double E0 = (0.5*Ma*pow((*w),2.0))/F_E;
-        double A = -2.0*nu_E_dt*E0;
-        double B = 2.0*nu_E_dt*( 1.5 + E_nuE_d_nu_E_dE(xab))*Tb;
-
-        // Random number between 0 and 1:
-        double randomNumber = (double) rand()/RAND_MAX;
-        //  double randomNumber = uniform_distribution(generator);
-        double Rm;
-
-        // -1 or +1 function:
-        if (randomNumber - 0.5 < 0)
-        {
-            Rm = -1.0;
-        }
-        else
-        {
-            Rm = +1.0;
-        }
-
-        double C = 2.0*Rm*sqrt(Tb*E0*nu_E_dt);
-        E0 = E0 + A + B + C;
-        *(w) = sqrt(2.0*F_E*E0/Ma);
-    }
-
+    double C = 2.0*Rm*sqrt(Tb*E0*nu_E_dt);
+    E0 = E0 + A + B + C;
+    *(w) = sqrt(2.0*F_E*E0/Ma);
+  }
 }
 
 // Pitch angle scattering operator:
 // =============================================================================
 void coll_operator_TYP:: xi_CollisionOperator(double * xi, double xab, double wTb, double nb, double Tb, double Mb, double Zb, double Za, double Ma, double DT)
 {
-    // Normalized collisional rate:
-    // ===========================
-    double nu_D_dt(0.0);
-    nu_D_dt = nu_D(xab,nb,Tb,Mb,Zb,Za,Ma)*DT;
+  // Normalized collisional rate:
+  // ===========================
+  double nu_D_dt(0.0);
+  nu_D_dt = nu_D(xab,nb,Tb,Mb,Zb,Za,Ma)*DT;
 
-    // Calculate substeps:
-    // ===========================
-    int Nstep   = round(nu_D_dt/0.4) + 1;
-    double dt_s = (double) DT/Nstep;
+  // Calculate substeps:
+  // ===========================
+  int Nstep   = round(nu_D_dt/0.4) + 1;
+  double dt_s = (double) DT/Nstep;
 
-    // Recalculate normalized rate:
-    // ============================
-    nu_D_dt  = nu_D_dt/Nstep;
+  // Recalculate normalized rate:
+  // ============================
+  nu_D_dt  = nu_D_dt/Nstep;
 
-    // Limit substepping:
-    // ===========================
-    if (Nstep > 100)
+  // Limit substepping:
+  // ===========================
+  if (Nstep > 100)
+  {
+      cout << "Nstep for 'xi' operator = " << Nstep << endl;
+      Nstep = 100;
+  }
+
+  // Apply operator:
+  // ===========================
+  for (int kk = 0; kk<Nstep; kk++)
+  {
+    // Deterministic part:
+    // ==================
+    double A = -(*xi)*nu_D_dt;
+    double B = 0.0;
+
+    // Stochastic part:
+    // ===============
+    // Random number between 0 and 1:
+    double randomNumber = (double) rand()/RAND_MAX;
+    double Rm;
+
+    // -1 or +1 function:
+    if (randomNumber - 0.5 < 0)
     {
-        cout << "Nstep for 'xi' operator = " << Nstep << endl;
-        Nstep = 100;
+        Rm = -1.0;
+    }
+    else
+    {
+        Rm = +1.0;
     }
 
-    // Apply operator:
-    // ===========================
-    for (int kk = 0; kk<Nstep; kk++)
-    {
-        // Deterministic part:
-        // ==================
-        double A = -(*xi)*nu_D_dt;
-        double B = 0.0;
+    double C = Rm*sqrt( (1.0 - pow(*(xi),2.0))*nu_D_dt );
 
-        // Stochastic part:
-        // ===============
-        // Random number between 0 and 1:
-        double randomNumber = (double) rand()/RAND_MAX;
-        double Rm;
-
-        // -1 or +1 function:
-        if (randomNumber - 0.5 < 0)
-        {
-            Rm = -1.0;
-        }
-        else
-        {
-            Rm = +1.0;
-        }
-
-        double C = Rm*sqrt( (1.0 - pow(*(xi),2.0))*nu_D_dt );
-
-        // Monte-Carlo change:
-        // ==================
-       *(xi) = *(xi) + A + B + C;
-    }
-
+    // Monte-Carlo change:
+    // ==================
+   *(xi) = *(xi) + A + B + C;
+  }
 }
 
 // Interpolate ion moments: test species "a" and background species "b"
-void coll_operator_TYP::interpolateIonMoments(const params_TYP * params, vector<ionSpecies_TYP> * IONS, int a, int b)
+void coll_operator_TYP::interpolateIonMoments(const params_TYP * params, vector<ions_TYP> * IONS, int a, int b)
 {
     //  Number of computational particles:
-    int NSP(IONS->at(a).NSP);
+    int N_CP(IONS->at(a).N_CP_MPI);
 
     // Create particle-defined quantities:
-    arma::vec n_p    = zeros(NSP,1);
-    arma::vec nv_p   = zeros(NSP,1);
-    arma::vec Tpar_p = zeros(NSP,1);
-    arma::vec Tper_p = zeros(NSP,1);
+    arma::vec n_p    = zeros(N_CP,1);
+    arma::vec nv_p   = zeros(N_CP,1);
+    arma::vec Tpar_p = zeros(N_CP,1);
+    arma::vec Tper_p = zeros(N_CP,1);
 
     // Create mesh defined quantities:
     arma::vec n_m    = IONS->at(b).n_m;
@@ -152,22 +150,22 @@ void coll_operator_TYP::interpolateIonMoments(const params_TYP * params, vector<
 }
 
 // Interpolate electron temperature : test species "a" and electron fluid as species "b"
-void coll_operator_TYP::interpolateElectronTemperature(const params_TYP * params, vector<ionSpecies_TYP> * IONS, int a, electrons_TYP * electrons)
+void coll_operator_TYP::interpolateElectronTemperature(const params_TYP * params, vector<ions_TYP> * IONS, int a, electrons_TYP * electrons)
 {
-    //  Number of computational particles:
-    int NSP(IONS->at(a).NSP);
+  //  Number of computational particles:
+  int N_CP(IONS->at(a).N_CP_MPI);
 
-    // Create particle-defined quantities:
-    arma::vec Te_p = zeros(NSP,1);
+  // Create particle-defined quantities:
+  arma::vec Te_p = zeros(N_CP,1);
 
-    // Create mesh defined quantities:
-    arma::vec Te_m   = electrons->Te_m;
+  // Create mesh defined quantities:
+  arma::vec Te_m = electrons->Te_m;
 
-    // Interpolate:
-    interpolateScalarField(params, &IONS->at(a), &Te_m, &Te_p);
+  // Interpolate:
+  interpolateScalarField(params, &IONS->at(a), &Te_m, &Te_p);
 
-    // Assign values:
-    IONS->at(a).Te_p = Te_p;
+  // Assign values:
+  IONS->at(a).Te_p = Te_p;
 }
 
 // Fill ghost cells:
@@ -182,19 +180,19 @@ void coll_operator_TYP::fill4Ghosts(arma::vec * v)
 
 // General scalar field second order interpolation method:
 // =============================================================================
-void coll_operator_TYP::interpolateScalarField(const params_TYP * params, ionSpecies_TYP * IONS, arma::vec * F_m, arma::vec * F_p)
+void coll_operator_TYP::interpolateScalarField(const params_TYP * params, ions_TYP * IONS, arma::vec * F_m, arma::vec * F_p)
 {
-	int NX =  params->mesh.NX_IN_SIM + 4; //Mesh size along the X axis (considering the gosht cell)
-	int NSP(IONS->NSP);
+	int Nx =  params->mesh_params.Nx + 4; //Mesh size along the X axis (considering the gosht cell)
+	int N_CP(IONS->N_CP_MPI);
 
-	arma::vec F = zeros(NX);
+	arma::vec F = zeros(Nx);
 
-	F.subvec(1,NX-2) = *F_m;
+	F.subvec(1,Nx-2) = *F_m;
 
 	fill4Ghosts(&F);
 
-	#pragma omp parallel for default(none) shared(params, IONS, F_p, F) firstprivate(NSP)
-	for(int ii=0; ii<NSP; ii++)
+	#pragma omp parallel for default(none) shared(params, IONS, F_p, F) firstprivate(N_CP)
+	for(int ii=0; ii<N_CP; ii++)
 	{
 		int ix = IONS->mn(ii) + 2;
 
@@ -207,45 +205,45 @@ void coll_operator_TYP::interpolateScalarField(const params_TYP * params, ionSpe
 
 // Entire collision operator method:
 // =============================================================================
-void coll_operator_TYP::ApplyCollisions_AllSpecies(const params_TYP * params, const CS_TYP * CS, vector<ionSpecies_TYP> * IONS, electrons_TYP * electrons)
+void coll_operator_TYP::ApplyCollisions_AllSpecies(const params_TYP * params, const CS_TYP * CS, vector<ions_TYP> * IONS, electrons_TYP * electrons)
 {
-    if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
-    {
-        // Number of ION species:
-    	// =====================
-    	int numIonSpecies = IONS->size();
+  if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
+  {
+    // Number of ION species:
+  	// =====================
+  	int numIonSpecies = IONS->size();
 
-        // Time step:
-        // =========
-        double DT = params->DT*CS->time;
+    // Time step:
+    // =========
+    double DT = params->DT*CS->time;
 
-    	for (int aa=0; aa<numIonSpecies; aa++)
-    	{
-            // Number of particles is "aa" species:
-        	// ===================================
-        	int NSP_a = IONS->at(aa).NSP;
+  	for (int aa=0; aa<numIonSpecies; aa++)
+  	{
+      // Number of particles is "aa" species:
+    	// ===================================
+    	int N_CP_a = IONS->at(aa).N_CP_MPI;
 
-        	// Species "aa" parameters:
-        	// =======================
-        	double Ma = IONS->at(aa).M*CS->mass;
-        	double Za = IONS->at(aa).Z;
+    	// Species "aa" parameters:
+    	// =======================
+    	double Ma = IONS->at(aa).M*CS->mass;
+    	double Za = IONS->at(aa).Z;
 
-            // Initialize Species "bb" parameters:
-            // =======================
-            double Mb(0.0);
-            double Zb(0.0);
-            arma::vec nb  =  zeros(NSP_a,1);
-            arma::vec Tb  =  zeros(NSP_a,1);
-            arma::vec uxb =  zeros(NSP_a,1);
+      // Initialize Species "bb" parameters:
+      // =======================
+      double Mb(0.0);
+      double Zb(0.0);
+      arma::vec nb  =  zeros(N_CP_a,1);
+      arma::vec Tb  =  zeros(N_CP_a,1);
+      arma::vec uxb =  zeros(N_CP_a,1);
 
-            // Initialize total ion density and flux density:
-        	// ===========================================
-        	arma::vec nUx_i = zeros(NSP_a,1);
-        	arma::vec n_i   = zeros(NSP_a,1);
+      // Initialize total ion density and flux density:
+    	// ===========================================
+    	arma::vec nUx_i = zeros(N_CP_a,1);
+    	arma::vec n_i   = zeros(N_CP_a,1);
 
-        	for (int bb=0; bb<(numIonSpecies+1); bb++)
-            {
-                // Background species "bb" conditions:
+    	for (int bb=0; bb<(numIonSpecies+1); bb++)
+      {
+        // Background species "bb" conditions:
 				// ==================================
 				if (bb < numIonSpecies) // Ions:
 				{
@@ -275,26 +273,26 @@ void coll_operator_TYP::ApplyCollisions_AllSpecies(const params_TYP * params, co
 					Mb = F_ME;
 					Zb = -1;
 
-                    // Interpolate electron temperature:
-                    interpolateElectronTemperature(params,IONS,aa,electrons);
+          // Interpolate electron temperature:
+          interpolateElectronTemperature(params,IONS,aa,electrons);
 					arma::vec Te_p  = IONS->at(aa).Te_p*CS->temperature*F_KB/F_E;
 
 					// Background conditions:
 					nb  = n_i;
-                    Tb  = Te_p;
+          Tb  = Te_p;
 					uxb = nUx_i/n_i;
 				}
 
-                // Apply collisions to all particles:
+        // Apply collisions to all particles:
 				// ==================================
-                #pragma omp parallel for default(none) shared(params, IONS, aa, CS, Ma, Za, Mb, Zb, nb, Tb, uxb, DT, std::cout) firstprivate(NSP_a)
-				for(int ii=0; ii<NSP_a; ii++)
+        #pragma omp parallel for default(none) shared(params, IONS, aa, CS, Ma, Za, Mb, Zb, nb, Tb, uxb, DT, std::cout) firstprivate(N_CP_a)
+				for(int ii=0; ii<N_CP_a; ii++)
 				{
 					// Species "aa":
 					// =============================================================================
 					// Velocities:
-					double vxa = IONS->at(aa).V_p(ii,0)*CS->velocity;
-					double vya = IONS->at(aa).V_p(ii,1)*CS->velocity;
+					double vxa = IONS->at(aa).v_p(ii,0)*CS->velocity;
+					double vya = IONS->at(aa).v_p(ii,1)*CS->velocity;
 					double vza = 0;
 
 					// Convert to ion species "bb" frame:
@@ -303,14 +301,14 @@ void coll_operator_TYP::ApplyCollisions_AllSpecies(const params_TYP * params, co
 					double wya = vya;
 					double wza = vza;
 
-                    // Convert velocity from cartesian to spherical coordinate system:
+          // Convert velocity from cartesian to spherical coordinate system:
 					// =============================================================================
 					double w(0.0);
 					double xi(0.0);
 					double phi(0.0);
 					cartesian2Spherical(&wxa, &wya, &wza, &w, &xi, &phi);
 
-                    // Apply Monte-Carlo collision operator:
+          // Apply Monte-Carlo collision operator:
 					// =============================================================================
 					double w0   = w;
 					double xi0  = xi;
@@ -348,57 +346,56 @@ void coll_operator_TYP::ApplyCollisions_AllSpecies(const params_TYP * params, co
 
 					// Back to lab frame and normalize:
 					// =====================================================================
-					IONS->at(aa).V_p(ii,0) = (wxa + uxb(ii))/CS->velocity;
-					IONS->at(aa).V_p(ii,1) = wya/CS->velocity;
+					IONS->at(aa).v_p(ii,0) = (wxa + uxb(ii))/CS->velocity;
+					IONS->at(aa).v_p(ii,1) = wya/CS->velocity;
 
-                    if ( isnan(IONS->at(aa).V_p(ii,0)) || isnan(IONS->at(aa).V_p(ii,1)) )
-                    {
-                        cout << "isnan(V) == 1" << endl;
-                    }
+          if ( isnan(IONS->at(aa).v_p(ii,0)) || isnan(IONS->at(aa).v_p(ii,1)) )
+          {
+              cout << "isnan(V) == 1" << endl;
+          }
 
-                } // "ii" particle loop
+        } // "ii" particle loop
 
-            } // "bb" species loop
+      } // "bb" species loop
 
-        } // "aa" species loop
+    } // "aa" species loop
 
-    } // MPI if statement
-
+  } // MPI if statement
 }
 
 // Coordinate transformation function:
 // =============================================================================
 void coll_operator_TYP::cartesian2Spherical(double * wx, double * wy, double * wz, double * w, double * xi, double * phi)
 {
-    *w = sqrt( pow(*wx,2.0) + pow(*wy,2.0) + pow(*wz,2.0) );
-    *xi = (*wx)/(*w);
-    *phi = atan2(-*wy,*wz);
+  *w = sqrt( pow(*wx,2.0) + pow(*wy,2.0) + pow(*wz,2.0) );
+  *xi = (*wx)/(*w);
+  *phi = atan2(-*wy,*wz);
 }
 
 void coll_operator_TYP::Spherical2Cartesian(double * w, double * xi, double * phi, double * wx, double * wy, double * wz)
 {
-    double wper = (*w)*sqrt( 1.0 - pow((*xi),2.0) );
-    *wx   = (*w)*(*xi);
-    *wy   = -wper*sin(*phi);
-    *wz   = +wper*cos(*phi);
+  double wper = (*w)*sqrt( 1.0 - pow((*xi),2.0) );
+  *wx   = (*w)*(*xi);
+  *wy   = -wper*sin(*phi);
+  *wz   = +wper*cos(*phi);
 }
 
 // Collisional rates based on Maxwellian background species:
 // =============================================================================
 double coll_operator_TYP::nu_E(double xab, double nb, double Tb, double Mb, double Zb, double Za, double Ma, int energyOperatorModel)
 {
-    double y;
+  double y;
 
-    if (energyOperatorModel == 1)
-    {
-        // From Hinton 1983 EQ 92 and T.S. Chen 1988 EQ 50
-        y = nu_ab0(nb,Tb,Mb,Zb,Za,Ma)*( (2.0*(Ma/Mb)*Gb(xab)/xab) - (erfp(xab)/(pow(xab,2.0)) ) );
-    }
-    else if  (energyOperatorModel == 2)
-    {
-        //From T.S. Chen 1988 Report EQ 57 commonly used for NBI
-        y = nu_ab0(nb,Tb,Mb,Zb,Za,Ma)*(2.0*(Ma/Mb))*(Gb(xab)/xab);
-    }
+  if (energyOperatorModel == 1)
+  {
+      // From Hinton 1983 EQ 92 and T.S. Chen 1988 EQ 50
+      y = nu_ab0(nb,Tb,Mb,Zb,Za,Ma)*( (2.0*(Ma/Mb)*Gb(xab)/xab) - (erfp(xab)/(pow(xab,2.0)) ) );
+  }
+  else if  (energyOperatorModel == 2)
+  {
+      //From T.S. Chen 1988 Report EQ 57 commonly used for NBI
+      y = nu_ab0(nb,Tb,Mb,Zb,Za,Ma)*(2.0*(Ma/Mb))*(Gb(xab)/xab);
+  }
 
     /* References:
     T.S Chen 1988:
@@ -411,59 +408,59 @@ double coll_operator_TYP::nu_E(double xab, double nb, double Tb, double Mb, doub
     Chapter 1.5 - Collisional Transport in Plasma"
     */
 
-    return y;
+  return y;
 }
 
 double coll_operator_TYP::nu_D(double xab, double nb, double Tb, double Mb, double Zb, double Za, double Ma)
 {
-    double y = nu_ab0(nb,Tb,Mb,Zb,Za,Ma)*(erf(xab) - Gb(xab))/pow(xab,3.0);
-    return y;
+  double y = nu_ab0(nb,Tb,Mb,Zb,Za,Ma)*(erf(xab) - Gb(xab))/pow(xab,3.0);
+  return y;
 }
 
 double coll_operator_TYP::nu_ab0(double nb, double Tb, double Mb, double Zb, double Za, double Ma)
 {
-    double wTb = sqrt(2.0*F_E*Tb/Mb);
-    double y  = nb*pow(F_E,4.0)*pow(Za*Zb,2.0)*logA(nb,Tb)/(2.0*M_PI*Ma*Ma*F_EPSILON*F_EPSILON*pow(wTb,3.0));
+  double wTb = sqrt(2.0*F_E*Tb/Mb);
+  double y  = nb*pow(F_E,4.0)*pow(Za*Zb,2.0)*logA(nb,Tb)/(2.0*M_PI*Ma*Ma*F_EPSILON*F_EPSILON*pow(wTb,3.0));
 
-    return y;
+  return y;
 }
 
 double coll_operator_TYP::logA(double nb, double Tb)
 {
-    double y = 30.0 - log( sqrt( nb*pow(Tb,-3.0/2) ) );
-    return y;
+  double y = 30.0 - log( sqrt( nb*pow(Tb,-3.0/2) ) );
+  return y;
 }
 
 double coll_operator_TYP::Gb(double xab)
 {
-    double y;
+  double y;
 
-    if (xab < 0.01)
-    {
-        y = (2.0/sqrt(M_PI))*xab/3;
-    }
-    else
-    {
-        y = (erf(xab) - xab*erfp(xab))/(2.0*pow(xab,2.0));
-    }
+  if (xab < 0.01)
+  {
+      y = (2.0/sqrt(M_PI))*xab/3;
+  }
+  else
+  {
+      y = (erf(xab) - xab*erfp(xab))/(2.0*pow(xab,2.0));
+  }
 
-    return y;
+  return y;
 }
 
 double coll_operator_TYP::erfp(double xab)
 {
-    double y = (2.0/sqrt(M_PI))*exp(-pow(xab,2.0));
-    return y;
+  double y = (2.0/sqrt(M_PI))*exp(-pow(xab,2.0));
+  return y;
 }
 
 double coll_operator_TYP::erfpp(double xab)
 {
-    double y = -(4.0*xab/sqrt(M_PI))*exp(-pow(xab,2.0));
-    return y;
+  double y = -(4.0*xab/sqrt(M_PI))*exp(-pow(xab,2.0));
+  return y;
 }
 
 double coll_operator_TYP::E_nuE_d_nu_E_dE(double xab)
 {
-    double y = 0.5*(  ( 3.0*xab*erfp(xab) - 3.0*erf(xab) - (pow(xab,2.0))*erfpp(xab) )/( erf(xab) - (xab*erfp(xab)) )  );
-    return y;
+  double y = 0.5*(  ( 3.0*xab*erfp(xab) - 3.0*erf(xab) - (pow(xab,2.0))*erfpp(xab) )/( erf(xab) - (xab*erfp(xab)) )  );
+  return y;
 }

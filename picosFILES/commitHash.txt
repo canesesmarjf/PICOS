@@ -1,1 +1,1 @@
-6df6553 Developed PIC_TYP to take in mesh_TYP * mesh and postprocessed data in MATLAB where we proved that the IC produces the correct computational particle density profile, ion densities, ion temperatures and bulk flows in both shape and magnitude
+a67fb9f enabled all PIC methods except the advanceParticle ones, we will now enable the collision operator instead and complete that'

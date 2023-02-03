@@ -8,9 +8,10 @@ fileName = 'file_1_rank_2.h5';
 dirName = '../outputFiles/HDF5_simple/';
 pathName = [dirName,fileName];
 
-fileStruct = extractStructFromHDF5(pathName);
-fileStruct2 = extractStructFromHDF5('../outputFiles/HDF5/main.h5');
-fileStruct3 = extractStructFromHDF5('../outputFiles/HDF5/PARTICLES_FILE_0.h5');
+f1 = extractStructFromHDF5(pathName);
+f2 = extractStructFromHDF5('../outputFiles/HDF5/main.h5');
+f3 = extractStructFromHDF5('../outputFiles/HDF5/PARTICLES_FILE_0.h5');
+f4 = extractStructFromHDF5('../outputFiles/HDF5/FIELDS_FILE_0.h5');
 
 % 2- Get group names:
 % =========================================================================

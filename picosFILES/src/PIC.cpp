@@ -171,11 +171,11 @@ PIC_TYP::PIC_TYP(const params_TYP * params, const mesh_TYP * mesh, fields_TYP * 
 
 	// Interpolate all fields on all species:
 	// ======================================
-	// interpolateFields_AllSpecies(params,IONS,fields);
+	interpolateFields_AllSpecies(params,IONS,fields);
 
 	// Interpolate electron temperature on all species:
 	// ===============================================
-	// interpolateElectrons_AllSpecies(params,IONS,electrons);
+	interpolateElectrons_AllSpecies(params,IONS,electrons);
 
 	// Calculate ion moments and populate mesh-defined ion moments:
 	// ============================================================

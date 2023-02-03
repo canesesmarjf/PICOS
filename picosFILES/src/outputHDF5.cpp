@@ -564,7 +564,7 @@ void HDF_TYP::saveOutputs(const params_TYP * params, const vector<ions_TYP> * IO
 		}
 		else if (params->mpi.COMM_COLOR == FIELDS_MPI_COLOR)
 		{
-			// saveFieldsVariables(params, fields, CS, group_iteration);
+			saveFieldsVariables(params, fields, CS, group_iteration);
 		}
 
 		delete group_iteration;
@@ -780,10 +780,10 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 					name = "Te_p";
 
 					#ifdef HDF5_DOUBLE
-					vec_values = IONS->at(ii).Te_p.subvec(0,N-1)*CS->temperature*F_KB/F_E;
+					vec_values = IONS->at(ii).Te_p.subvec(0,N-1)*CS->temperature; //*F_KB/F_E;
 					saveToHDF5(group_ionSpecies, name, &vec_values);
 					#elif defined HDF5_FLOAT
-					fvec_values = conv_to<fvec>::from(IONS->at(ii).Te_p.subvec(0,N-1))*CS->temperature*F_KB/F_E;
+					fvec_values = conv_to<fvec>::from(IONS->at(ii).Te_p.subvec(0,N-1))*CS->temperature; //*F_KB/F_E;
 					saveToHDF5(group_ionSpecies, name, &fvec_values);
 					#endif
 					name.clear();
@@ -915,7 +915,6 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
   }
 }
 
-/*
 void HDF_TYP::saveFieldsVariables(const params_TYP * params, fields_TYP * fields, const CS_TYP * CS, const Group * group_iteration)
 {
 	unsigned int iIndex(params->mesh_params.Nx_PER_MPI*params->mpi.MPI_DOMAIN_NUMBER_CART+1);
@@ -939,66 +938,66 @@ void HDF_TYP::saveFieldsVariables(const params_TYP * params, fields_TYP * fields
 
 		for(int ov=0; ov<params->outputs_variables.size(); ov++)
 		{
-			if(params->outputs_variables.at(ov) == "EX_m")
+			if(params->outputs_variables.at(ov) == "Ex_m")
 			{
-				Group * group_field = new Group( group_fields->createGroup( "EX_m" ) );//Electric fields
+				Group * group_field = new Group( group_fields->createGroup( "Ex_m" ) );//Electric fields
 
 				//x-component of electric field
 				name = "x";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->eField*fields->EX_m.subvec(iIndex,fIndex);
+				vec_values = CS->eField*fields->Ex_m.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->eField*fields->EX_m.subvec(iIndex,fIndex) );
+				fvec_values = conv_to<fvec>::from( CS->eField*fields->Ex_m.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
 
 				delete group_field;
 			}
-			if(params->outputs_variables.at(ov) == "BX_m")
+			if(params->outputs_variables.at(ov) == "Bx_m")
 			{
-				Group * group_field = new Group( group_fields->createGroup( "BX_m" ) );//Electric fields
+				Group * group_field = new Group( group_fields->createGroup( "Bx_m" ) );//Electric fields
 
 				//x-component of magnetic field
 				name = "x";
 				#ifdef HDF5_DOUBLE
-				vec_values = CS->bField*fields->BX_m.subvec(iIndex,fIndex);
+				vec_values = CS->bField*fields->Bx_m.subvec(iIndex,fIndex);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( CS->bField*fields->BX_m.subvec(iIndex,fIndex) );
+				fvec_values = conv_to<fvec>::from( CS->bField*fields->Bx_m.subvec(iIndex,fIndex) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
 
 				delete group_field;
 			}
-			if(params->outputs_variables.at(ov) == "dBX_m")
+			if(params->outputs_variables.at(ov) == "dBx_m")
 			{
-				Group * group_field = new Group( group_fields->createGroup( "dBX_m" ) );//Electric fields
+				Group * group_field = new Group( group_fields->createGroup( "dBx_m" ) );//Electric fields
 
 				name = "x";
 				#ifdef HDF5_DOUBLE
-				vec_values = fields->dBX_m.subvec(iIndex,fIndex)*CS->bField/CS->length;
+				vec_values = fields->dBx_m.subvec(iIndex,fIndex)*CS->bField/CS->length;
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( fields->dBX_m.subvec(iIndex,fIndex)*CS->bField/CS->length );
+				fvec_values = conv_to<fvec>::from( fields->dBx_m.subvec(iIndex,fIndex)*CS->bField/CS->length );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
 
 				delete group_field;
 			}
-			if(params->outputs_variables.at(ov) == "ddBX_m")
+			if(params->outputs_variables.at(ov) == "ddBx_m")
 			{
-				Group * group_field = new Group( group_fields->createGroup( "ddBX_m" ) );//Electric fields
+				Group * group_field = new Group( group_fields->createGroup( "ddBx_m" ) );//Electric fields
 
 				name = "x";
 				#ifdef HDF5_DOUBLE
-				vec_values = fields->ddBX_m.subvec(iIndex,fIndex)*CS->bField/pow(CS->length,2);
+				vec_values = fields->ddBx_m.subvec(iIndex,fIndex)*CS->bField/pow(CS->length,2);
 				saveToHDF5(group_ionSpecies, name, &vec_values);
 				#elif defined HDF5_FLOAT
-				fvec_values = conv_to<fvec>::from( fields->ddBX_m.subvec(iIndex,fIndex)*CS->bField/pow(CS->length,2) );
+				fvec_values = conv_to<fvec>::from( fields->ddBx_m.subvec(iIndex,fIndex)*CS->bField/pow(CS->length,2) );
 				saveToHDF5(group_field, name, &fvec_values);
 				#endif
 				name.clear();
@@ -1023,4 +1022,3 @@ void HDF_TYP::saveFieldsVariables(const params_TYP * params, fields_TYP * fields
 	error.printErrorStack();
   }
 }
-*/

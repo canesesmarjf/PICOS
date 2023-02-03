@@ -438,8 +438,22 @@ void units_TYP::normalizeVariables(params_TYP * params, mesh_TYP * mesh, vector<
 
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
   	{
-      IONS->at(ii).x_p = IONS->at(ii).x_p/CS->length;
-      IONS->at(ii).v_p = IONS->at(ii).v_p/CS->velocity;
+      IONS->at(ii).x_p  /= CS->length;
+      IONS->at(ii).v_p  /= CS->velocity;
+      IONS->at(ii).Te_p /= CS->temperature;
+
+      // The following would need to be normalied, however it does not matter since at this
+      // stage of the computation they are zero. They are defined in PIC.
+      // Ex_p;
+      // Bx_p;
+      // dBx_p;
+      // ddBx_p;
+      //
+      // n_p;
+      // nv_p;
+      // Tpar_p;
+      // Tper_p;
+      // Te_p;
 		}
 	}
 

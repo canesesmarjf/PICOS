@@ -170,13 +170,11 @@ int main(int argc, char* argv[])
 
   // Start timing simulations:
   // =========================================================================
-  // t1 = MPI_Wtime();
+  t1 = MPI_Wtime();
 
   // #########################################################################
   // Start time iterations:
   // #########################################################################
-
-  /*
   for(int tt=0; tt<params.timeIterations; tt++)
   {
 
@@ -208,18 +206,18 @@ int main(int argc, char* argv[])
         // particleBC.applyParticleReinjection(&params,&CS,&fields,&IONS);
 
         // Assign cell:
-        // PIC.assignCell_AllSpecies(&params,&IONS);
+        PIC.assignCell_AllSpecies(&params,&mesh,&IONS);
 
         // Interpolate all fields:
-        // PIC.interpolateFields_AllSpecies(&params,&IONS,&fields);
+        PIC.interpolateFields_AllSpecies(&params,&IONS,&fields);
 
         // Interpolate electron temperature:
-    	   // PIC.interpolateElectrons_AllSpecies(&params,&IONS,&electrons);
+    	  PIC.interpolateElectrons_AllSpecies(&params,&IONS,&electrons);
     }
 
     // Calculate ion moments:
     // =====================================================================
-    // PIC.extrapolateMoments_AllSpecies(&params,&CS,&fields,&IONS);
+    PIC.extrapolateMoments_AllSpecies(&params,&fields,&IONS);
 
     // Apply collision operator:
     // =====================================================================
@@ -271,7 +269,7 @@ int main(int argc, char* argv[])
     {
         vector<ions_TYP> IONS_OUT = IONS;
 
-        // HDF.saveOutputs(&params, &IONS_OUT, &electrons, &fields, &CS, outputIterator+1, params.currentTime);
+        //HDF.saveOutputs(&params, &IONS_OUT, &electrons, &fields, &CS, outputIterator+1, params.currentTime);
 
         outputIterator++;
     }
@@ -291,7 +289,6 @@ int main(int argc, char* argv[])
     }
 
   }
-*/
 
   // #########################################################################
   // End time iterations.

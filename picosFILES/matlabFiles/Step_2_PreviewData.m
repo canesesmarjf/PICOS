@@ -377,13 +377,13 @@ disp('********************************************************************')
 disp('')
 
 %% Testing the RK4 integrator results:
-if 0
+if 1
     close all
-    rng = find(x_p{1}(:,1) >1.50 & x_p{1}(:,1)< 1.55);
+%     rng = find(x_p{1}(:,1) >1.50 & x_p{1}(:,1)< 1.55);
 %     rng = find(x_p{1}(:,1) >0.0 & x_p{1}(:,1)< 3.55);
 
     % For symmetric domains:
-     rng = find(x_p{1}(:,1) >-0.1 & x_p{1}(:,1)< 0.1);
+     rng = find(x_p{1}(:,1) >-0.2 & x_p{1}(:,1)< 0.2);
 
 
     % Kinetic energy:
@@ -403,7 +403,7 @@ if 0
     hold on
     plot(x_m,Bx_m(:,1)*tMax/bMax)
     for ii = 1:numel(rng)
-        plot(x_p{1}(rng(ii),:),t_p,'k-'); 
+        plot(x_p{1}(rng(ii),:),t_p,'k.'); 
     end
     xlim([m.mesh.Lx_min,m.mesh.Lx_max]);
     title('Particle position vs time')
@@ -432,8 +432,9 @@ if 0
         plot3(x_p{1}(rng(ii),:),t_p,KE_p(rng(ii),:)); 
     end
     xlim([m.mesh.Lx_min,m.mesh.Lx_max]);
-    zlim([1,1e2])
+%     zlim([1,1e2])
     title('Kinetic energy vs position')
+    zlabel('KE')
 
     figure; 
     hold on
@@ -446,17 +447,18 @@ if 0
     end
     xlim([m.mesh.Lx_min,m.mesh.Lx_max]);
     title('Magnetic moment vs position')  
+    zlabel('\mu')
     
     % Test individual particles:
     figure; 
     ii = 10; 
     subplot(1,3,1); 
     plot(t_p,x_p{1}(ii,:),'r.-'); 
-    ylim([0,3])
+    ylim([-2,+2])
     
     subplot(1,3,2); 
     plot(t_p,KE_p(ii,:)); 
-    ylim([0,1e3]); 
+%     ylim([0,1e3]); 
     
     subplot(1,3,3); 
     plot(t_p,mu_p{1}(ii,:)); 
@@ -553,12 +555,12 @@ end
 % close all
 
 % x range:
-rng_x = find(x_m >= -2 & x_m <= 10);
+rng_x = find(x_m >= -2 & x_m <= 2);
 
 % Plasma quantities:
 M      = m.ions.species_1.M;
-A0     = pi*(5/100)^2;
-B0     = 0.2;
+A0     = m.mesh.A0;
+B0     = m.mesh.B0;
 Te     = Te_m(rng_x,:);
 Ti_par = Tpar_m{1}(rng_x,:);
 Ti_per = Tper_m{1}(rng_x,:);
@@ -599,7 +601,7 @@ P_per = e_c*(Te + Ti_per).*ne;
 P_KE  = M*ne.*U.^2; 
 
 % Smooth over space:
-fr = 15;
+fr = 5;
 P_par = movmean(P_par,fr,1);
 P_per = movmean(P_per,fr,1);
 P_KE  = movmean(P_KE ,fr,1);
@@ -791,7 +793,7 @@ switch rangeType
     case 1
         % mirror region:
         % % ===============
-        x_center = -1;
+        x_center = +0;
         x_delta  = +1;
         z1 = x_center - x_delta;
         z2 = x_center + x_delta;

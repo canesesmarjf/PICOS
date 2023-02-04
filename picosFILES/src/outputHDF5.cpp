@@ -713,7 +713,7 @@ void HDF_TYP::saveIonsVariables(const params_TYP * params, const vector<ions_TYP
 			for(int ii=0; ii<IONS->size(); ii++)
 			{
 				// Determine total number of particles to record:
-				unsigned int N = IONS->at(ii).N_CP_MPI;
+				unsigned int N = IONS->at(ii).N_CP_MPI_Output;
 
 				stringstream ionSpec;
 				ionSpec << (ii+1);

@@ -986,7 +986,7 @@ void init_TYP::initialize_ions(params_TYP * params, IC_TYP * IC, mesh_TYP * mesh
 
     // Calculating number of computational particles to store EACH MPI's output:
     IONS->at(s).pct_N_CP_MPI_Output = params->ions_params[s].pct_N_CP_Output;
-    IONS->at(s).N_CP_MPI_Output     = floor((IONS->at(s).pct_N_CP_MPI_Output)/100)*IONS->at(s).N_CP_MPI;
+    IONS->at(s).N_CP_MPI_Output     = floor((IONS->at(s).pct_N_CP_MPI_Output/100.0)*IONS->at(s).N_CP_MPI);
 
     double M = IONS->at(s).M;
     double Z = IONS->at(s).Z;

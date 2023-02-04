@@ -273,7 +273,7 @@ int main(int argc, char* argv[])
 
         outputIterator++;
 
-        if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+        if(params.mpi.MPI_DOMAIN_NUMBER == 0)
         {
           cout << "data saved at tt = " << tt << endl;
         }

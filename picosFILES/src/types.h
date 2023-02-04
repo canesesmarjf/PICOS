@@ -84,6 +84,14 @@ struct ions_BC_params_TYP
 
     double G;
     string G_fileName; // file that stores time dependent source rate
+
+		// Computational particle accumulators:
+		double S1;
+		double S2;
+		double GSUM;
+
+		// Variable to store new particle weight based on fueling:
+		double a_p_new;
 };
 
 // Class to hold the initial conditions PARAMETERS for electrons:

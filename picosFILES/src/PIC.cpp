@@ -279,8 +279,7 @@ void PIC_TYP::interpolateElectrons_AllSpecies(const params_TYP * params, vector<
 	}
 }
 
-/*
-void PIC_TYP::interpEM(const params_TYP * params, const ions_TYP * IONS, const fields_TYP * fields, arma::rowvec * ZN, arma::rowvec * EM)
+void PIC_TYP::interpEM(const params_TYP * params, mesh_TYP * mesh, const ions_TYP * IONS, const fields_TYP * fields, arma::rowvec * ZN, arma::rowvec * EM)
 {
     // Assign cell:
     double xp   = (*ZN)(0);
@@ -299,7 +298,7 @@ void PIC_TYP::interpEM(const params_TYP * params, const ions_TYP * IONS, const f
     }
 
     // Distance to nearest grid point:
-    double x    = mesh.xm(m) - xp;
+    double x = mesh->xm(m) - xp;
 
     // Assignment function:
     arma::vec W = zeros<vec>(3);
@@ -331,11 +330,8 @@ void PIC_TYP::interpEM(const params_TYP * params, const ions_TYP * IONS, const f
     f(1) = fields->dBx_m(ix);
     f(2) = fields->dBx_m(ix + 1);
     (*EM)(2) = arma::dot(f,W);
-
 }
-*/
 
-/*
 void PIC_TYP::calculateF(const params_TYP * params, const ions_TYP * IONS, arma::rowvec * ZN, arma::rowvec * EM, arma::rowvec * F)
 {
     // Ion parameters:
@@ -355,9 +351,9 @@ void PIC_TYP::calculateF(const params_TYP * params, const ions_TYP * IONS, arma:
 		double vper = (*ZN)(2);
 
 		// Output:
-	    (*F)(0) = +vpar;
+	  (*F)(0) = +vpar;
 		(*F)(1) = -0.5*vper*vper*dB/B + (qa/Ma)*E;
-    	(*F)(2) = +0.5*vper*vpar*dB/B;
+    (*F)(2) = +0.5*vper*vpar*dB/B;
 	}
 	if (params->advanceParticleMethod == 2)
 	{
@@ -365,17 +361,15 @@ void PIC_TYP::calculateF(const params_TYP * params, const ions_TYP * IONS, arma:
 		double vpar = (*ZN)(1);
 		double mu = (*ZN)(2);
 
-	    (*F)(0) = +vpar;
+	  (*F)(0) = +vpar;
 		(*F)(1) = -(mu/Ma)*dB + (qa/Ma)*E;
-    	(*F)(2) = 0;
+    (*F)(2) = 0;
 	}
 }
-*/
 
-/*
-void PIC_TYP::advanceParticles(const params_TYP * params, fields_TYP * fields, vector<ions_TYP> * IONS)
+void PIC_TYP::advanceParticles(const params_TYP * params, mesh_TYP * mesh, fields_TYP * fields, vector<ions_TYP> * IONS)
 {
-    // Get latest mesh-defined values from FIELDS MPIs:
+  // Get latest mesh-defined values from FIELDS MPIs:
 	MPI_Recv_AllFields(params,fields);
 
 	// Fill the ghost cells in all fields:
@@ -387,32 +381,31 @@ void PIC_TYP::advanceParticles(const params_TYP * params, fields_TYP * fields, v
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
 		{
 			// Number of particles:
-			int N_CP = IONS->at(ss).N_CP;
+			int N_CP = IONS->at(ss).N_CP_MPI;
 
-            // Time step:
-            double DT = params->DT;
+      // Time step:
+      double DT = params->DT;
 
 			// Ion mass:
 			double Ma = IONS->at(ss).M;
 
-			#pragma omp parallel for default(none) shared(IONS, params, fields, DT, ss, Ma, std::cout) firstprivate(N_CP, F_C_DS)
-            for(int ii=0;ii<N_CP;ii++)
+			#pragma omp parallel for default(none) shared(IONS, params, fields, DT, ss, Ma, std::cout, mesh) firstprivate(N_CP, F_C_DS)
+      for(int ii=0;ii<N_CP;ii++)
 			{
-                // Start RK4 solution:
-                //==============================================================
+        // Start RK4 solution:
+        //==============================================================
 
-                ! Equations of motion are expressed as follows:
-                !
-                ! dZ/dt = F, thus Z1 = Z0 + dZ
-                !
-                ! where
-                !
-                ! dZ = F(Z0)*dt
-                ! Z = [z, vz, vp]
-                ! F(1) = +vz
-                ! F(2) = -0.5*vp*vp*dB/B + (q/Ma)*E
-                ! F(3) = +0.5*vp*vz*dB/B
-
+        // Equations of motion are expressed as follows:
+        //
+        // dZ/dt = F, thus Z1 = Z0 + dZ
+				//
+        // where
+				//
+        // dZ = F(Z0)*dt
+        // Z = [z, vz, vp]
+        // F(1) = +vz
+        // F(2) = -0.5*vp*vp*dB/B + (q/Ma)*E
+        // F(3) = +0.5*vp*vz*dB/B
 
 				// Assemble vectors to use in RK4 method:
 				arma::rowvec Z0  = zeros<rowvec>(3);
@@ -426,7 +419,7 @@ void PIC_TYP::advanceParticles(const params_TYP * params, fields_TYP * fields, v
         arma::rowvec dZ4 = zeros<rowvec>(3);
 
 				// Extract particle states:
-				double x    = IONS->at(ss).v_p(ii);
+				double x    = IONS->at(ss).x_p(ii);
 				double vpar = IONS->at(ss).v_p(ii,0);
 				double vper = IONS->at(ss).v_p(ii,1);
 
@@ -446,7 +439,7 @@ void PIC_TYP::advanceParticles(const params_TYP * params, fields_TYP * fields, v
 				}
 
 				// Interpolate fields at current particle postion:
-				interpEM(params, &IONS->at(ss), fields, &Z0, &EM);
+				interpEM(params, mesh, &IONS->at(ss), fields, &Z0, &EM);
 
 				// Select solution method:
 				switch (params->advanceParticleMethod)
@@ -462,31 +455,31 @@ void PIC_TYP::advanceParticles(const params_TYP * params, fields_TYP * fields, v
 					break;
 				}
 
-                // Step 1:
-                ZN = Z0;
-                calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
-                dZ1 = F*DT;
+        // Step 1:
+        ZN = Z0;
+        calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
+        dZ1 = F*DT;
 
-                // Step 2:
-                ZN = Z0 + dZ1/2;
-                interpEM(params, &IONS->at(ss), fields, &ZN, &EM);
-                calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
-                dZ2 = F*DT;
+        // Step 2:
+        ZN = Z0 + dZ1/2;
+        interpEM(params, mesh, &IONS->at(ss), fields, &ZN, &EM);
+        calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
+        dZ2 = F*DT;
 
-                // Step 3:
-                ZN = Z0 + dZ2/2;
-                interpEM(params, &IONS->at(ss), fields, &ZN, &EM);
-                calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
-                dZ3 = F*DT;
+        // Step 3:
+        ZN = Z0 + dZ2/2;
+        interpEM(params, mesh, &IONS->at(ss), fields, &ZN, &EM);
+        calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
+        dZ3 = F*DT;
 
-                // Step 4:
-                ZN = Z0 + dZ3;
-                interpEM(params, &IONS->at(ss), fields, &ZN, &EM);
-                calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
-                dZ4 = F*DT;
+        // Step 4:
+        ZN = Z0 + dZ3;
+        interpEM(params, mesh, &IONS->at(ss), fields, &ZN, &EM);
+        calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
+        dZ4 = F*DT;
 
-                // Assemble RK4 solution:
-                Z1 = Z0 + (dZ1 + 2*dZ2 + 2*dZ3 + dZ4)/6;
+        // Assemble RK4 solution:
+        Z1 = Z0 + (dZ1 + 2*dZ2 + 2*dZ3 + dZ4)/6;
 
 				if ( isnan(ZN(0)) || isnan(ZN(1)) || isnan(ZN(2)) )
 				{
@@ -497,7 +490,7 @@ void PIC_TYP::advanceParticles(const params_TYP * params, fields_TYP * fields, v
 				}
 
 				// Interpolate fields at new particle position:
-				interpEM(params, &IONS->at(ss), fields, &Z1, &EM);
+				interpEM(params, mesh, &IONS->at(ss), fields, &Z1, &EM);
 
 				// Assign solution to output vector:
 				switch (params->advanceParticleMethod)
@@ -526,7 +519,6 @@ void PIC_TYP::advanceParticles(const params_TYP * params, fields_TYP * fields, v
 		}
 	}//structure to iterate over all the ion species.
 }
-*/
 
 void PIC_TYP::assignCell(const params_TYP * params, const mesh_TYP * mesh, ions_TYP * IONS)
 {

@@ -405,7 +405,7 @@ if 0
     for ii = 1:numel(rng)
         plot(x_p{1}(rng(ii),:),t_p,'k-'); 
     end
-    xlim([0,m.geometry.LX]);
+    xlim([m.mesh.Lx_min,m.mesh.Lx_max]);
     title('Particle position vs time')
     
     figure;
@@ -431,7 +431,7 @@ if 0
     for ii = 1:numel(rng)
         plot3(x_p{1}(rng(ii),:),t_p,KE_p(rng(ii),:)); 
     end
-    xlim([0,m.geometry.LX]);
+    xlim([m.mesh.Lx_min,m.mesh.Lx_max]);
     zlim([1,1e2])
     title('Kinetic energy vs position')
 
@@ -440,11 +440,11 @@ if 0
     for ii = 1:numel(rng)
         plot3(x_p{1}(rng(ii),:),t_p,mu_pb(rng(ii),:)); 
     end
-    xlim([0,m.geometry.LX]);
+    xlim([m.mesh.Lx_min,m.mesh.Lx_max]);
     for ii = 1:numel(rng)
         plot3(x_p{1}(rng(ii),:),t_p,mu_p{1}(rng(ii),:),'.'); 
     end
-    xlim([0,m.geometry.LX]);
+    xlim([m.mesh.Lx_min,m.mesh.Lx_max]);
     title('Magnetic moment vs position')  
     
     % Test individual particles:
@@ -478,16 +478,17 @@ if find(strcmpi('n_m',vars.output) == 1)
     figure
     mesh(t_p,x_m,movmean(n_m{1},10,1));
     zlim([0,2e20])
-    caxis([0,2e20])
+    caxis([0,5e20])
     title('n')
 end
 
-if find(strcmpi('n_cpm',vars.output) == 1)
+if find(strcmpi('ncp_m',vars.output) == 1)
     figure
-    mesh(t_p,x_m,movmean(ncp_m{1},10,1));
+    mesh(t_p*1e3,x_m,movmean(ncp_m{1},10,1));
 %     zlim([0,2e20])
-    caxis([0,2e20])
+%     caxis([0,2e20])
     title('n_cp')
+    xlabel('[ms]')
 end
 
 if find(strcmpi('Ex_m',vars.output) == 1)
@@ -535,17 +536,17 @@ if find(strcmpi('u_m',vars.output) == 1)
 end
 
 % Temperature during and before RF
-try
-    figure('color','w')
-    hold on
-    rng = 18:20; 
-    hT(1) = plot(x_m,movmean(mean(Tpar_m{1}(:,rng),2),9,1)); 
-    hT(2) = plot(x_m,movmean(mean(Tper_m{1}(:,rng),2),9,1));
-    rng = 30:40; 
-    hT(3) = plot(x_m,movmean(mean(Tpar_m{1}(:,rng),2),9,1)); 
-    hT(4) = plot(x_m,movmean(mean(Tper_m{1}(:,rng),2),9,1));
-    plot(x_m,Bx_m(:,1)*200)
-end
+% try
+%     figure('color','w')
+%     hold on
+%     rng = 18:20; 
+%     hT(1) = plot(x_m,movmean(mean(Tpar_m{1}(:,rng),2),9,1)); 
+%     hT(2) = plot(x_m,movmean(mean(Tper_m{1}(:,rng),2),9,1));
+%     rng = 30:40; 
+%     hT(3) = plot(x_m,movmean(mean(Tpar_m{1}(:,rng),2),9,1)); 
+%     hT(4) = plot(x_m,movmean(mean(Tper_m{1}(:,rng),2),9,1));
+%     plot(x_m,Bx_m(:,1)*200,'k-')
+% end
 
 
 %% Force balance:

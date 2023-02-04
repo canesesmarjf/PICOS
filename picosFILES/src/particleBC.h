@@ -19,19 +19,20 @@ class particleBC_TYP
 
 private:
 
-    void particleReinjection(int ii, const params_TYP * params, const CS_TYP * CS, fields_TYP * fields, ionSpecies_TYP * IONS);
+    // void particleReinjection(int ii, params_TYP * params, const CS_TYP * CS, fields_TYP * fields, ions_TYP * IONS);
+    void particleReinjection(int ii, params_TYP * params, const CS_TYP * CS, fields_TYP * fields, ions_TYP * IONS, int ss);
 
-    void MPI_AllreduceDouble(const params_TYP * params, double * v);
+    void MPI_AllreduceDouble(params_TYP * params, double * v);
 
-    template <typename vec_TYP> void MPI_OMP_AllreduceVec(const params_TYP * params, vec_TYP * V, double * S);
+    template <typename vec_TYP> void MPI_OMP_AllreduceVec(params_TYP * params, vec_TYP * V, double * S);
 
-    void checkBoundaryAndFlag(const params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS);
+    void checkBoundaryAndFlag(params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS);
 
-    void getFluxesAcrossBoundaries(const params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS);
+    void getFluxesAcrossBoundaries(params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS);
 
-    void calculateParticleWeight(const params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS);
+    void calculateParticleWeight(params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS);
 
-    void getParticleInjectionRates(const params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS);
+    void getParticleInjectionRates(params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS);
 
 public:
 
@@ -45,7 +46,7 @@ public:
 
     particleBC_TYP();
 
-    void applyParticleReinjection(const params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS);
+    void applyParticleReinjection(params_TYP * params, const CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS);
 };
 
 #endif

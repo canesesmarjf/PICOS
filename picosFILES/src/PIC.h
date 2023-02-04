@@ -63,9 +63,9 @@ protected:
 
 	void interpolateScalarField(const params_TYP * params, ions_TYP * IONS, const arma::vec * F_m, arma::vec * F_p);
 
-	// void interpEM(const params_TYP * params, const ions_TYP * IONS, const fields_TYP * fields, arma::rowvec * ZN, arma::rowvec * EM);
+	void interpEM(const params_TYP * params, mesh_TYP * mesh, const ions_TYP * IONS, const fields_TYP * fields, arma::rowvec * ZN, arma::rowvec * EM);
 
-	// void calculateF(const params_TYP * params, const ions_TYP * IONS, arma::rowvec * ZN, arma::rowvec * EM, arma::rowvec * F);
+	void calculateF(const params_TYP * params, const ions_TYP * IONS, arma::rowvec * ZN, arma::rowvec * EM, arma::rowvec * F);
 
 	void eim(const params_TYP * params, fields_TYP * fields, ions_TYP * IONS);
 
@@ -79,7 +79,7 @@ protected:
 
 	void assignCell(const params_TYP * params, const mesh_TYP * mesh, ions_TYP * IONS);
 
-  // void advanceParticles(const params_TYP * params, fields_TYP * fields, vector<ions_TYP> * IONS);
+  void advanceParticles(const params_TYP * params, mesh_TYP * mesh, fields_TYP * fields, vector<ions_TYP> * IONS);
 
 	void assignCell_AllSpecies(const params_TYP * params, const mesh_TYP * mesh, vector<ions_TYP> * IONS);
 

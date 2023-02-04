@@ -18,7 +18,7 @@
 #include "outputHDF5.h"
 #include "PIC.h"
 #include "fieldSolve.h"
-// #include "particleBC.h"
+#include "particleBC.h"
 #include "collisionOperator.h"
 // #include "rfOperator.h"
 
@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
   coll_operator_TYP coll_operator;
 
   // Particle boundary condition operator:
-  // particleBC_TYP particleBC;
+  particleBC_TYP particleBC;
 
   // Initialize object:
   init_TYP init(&params, argc, argv);
@@ -200,10 +200,10 @@ int main(int argc, char* argv[])
     if (params.SW.advancePos == 1)
     {
         // Advance particle position and velocity to level X^(N+1):
-        // PIC.advanceParticles(&params, &fields, &IONS);
+        PIC.advanceParticles(&params, &mesh, &fields, &IONS);
 
         // Re-inject particles that leave computational domain:
-        // particleBC.applyParticleReinjection(&params,&CS,&fields,&IONS);
+        particleBC.applyParticleReinjection(&params,&CS,&fields,&IONS);
 
         // Assign cell:
         PIC.assignCell_AllSpecies(&params,&mesh,&IONS);
@@ -256,7 +256,7 @@ int main(int argc, char* argv[])
     if (params.SW.EfieldSolve == 1)
     {
         // Use Ohm's law to advance the electric field:
-        // fields_solver.advanceEfield(&params,&fields,&CS,&IONS,&electrons);
+        fields_solver.advanceEfield(&params,&fields,&CS,&IONS,&electrons);
     }
 
     // Advance time:
@@ -273,7 +273,10 @@ int main(int argc, char* argv[])
 
         outputIterator++;
 
-        cout << "data saved at tt = " << tt << endl;
+        if(params->mpi.MPI_DOMAIN_NUMBER == 0)
+        {
+          cout << "data saved at tt = " << tt << endl;
+        }
     }
 
     // Estimate simulation time:

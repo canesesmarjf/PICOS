@@ -148,7 +148,8 @@ void fields_solver_TYP::advanceEfield(const params_TYP * params, fields_TYP * fi
 		Te = electrons->Te_m.subvec(iIndex - 1, fIndex + 1);
 
 		// Electron pressure:
-		Pe = (Te%ne)/F_E_DS;
+		// Pe = (Te%ne)/F_E_DS;
+		Pe = (F_KB_DS*Te%ne);
 
 		// Gradient in the electron pressure:
 		dPe.subvec(1,Nx_S - 2) = 0.5*( Pe.subvec(2,Nx_S-1) - Pe.subvec(0,Nx_S-3) );

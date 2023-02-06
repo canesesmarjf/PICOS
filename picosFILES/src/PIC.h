@@ -59,7 +59,7 @@ protected:
 	// PIC related:
 	void interpolateFields(const params_TYP * params, ions_TYP * IONS, const fields_TYP * fields);
 
-	void interpolateElectrons(const params_TYP * params, ions_TYP * IONS, const electrons_TYP * electrons);
+	void interpolateElectrons(const params_TYP * params, ions_TYP * IONS, electrons_TYP * electrons);
 
 	void interpolateScalarField(const params_TYP * params, ions_TYP * IONS, const arma::vec * F_m, arma::vec * F_p);
 
@@ -85,7 +85,7 @@ protected:
 
 	void interpolateFields_AllSpecies(const params_TYP * params, vector<ions_TYP> * IONS, const fields_TYP * fields);
 
-	void interpolateElectrons_AllSpecies(const params_TYP * params, vector<ions_TYP> * IONS, const electrons_TYP * electrons);
+	void interpolateElectrons_AllSpecies(const params_TYP * params, vector<ions_TYP> * IONS, electrons_TYP * electrons);
 
 	void extrapolateMoments_AllSpecies(const params_TYP * params, fields_TYP * fields, vector<ions_TYP> * IONS);
 };

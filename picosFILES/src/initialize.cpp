@@ -237,10 +237,10 @@ void init_TYP::read_inputFile(params_TYP * params)
   // Characteristic values:
   // -------------------------------------------------------------------------
   params->CV.ne   = stod( parametersStringMap["CV_ne"] );
-  params->CV.Te   = stod( parametersStringMap["CV_Te"] )*F_E/F_KB;
+  params->CV.Te   = stod( parametersStringMap["CV_Te"] )*F_E/F_KB; // [K]
   params->CV.B    = stod( parametersStringMap["CV_B"] );
-  params->CV.Tpar = stod( parametersStringMap["CV_Tpar"] )*F_E/F_KB;
-  params->CV.Tper = stod( parametersStringMap["CV_Tper"] )*F_E/F_KB;
+  params->CV.Tpar = stod( parametersStringMap["CV_Tpar"] )*F_E/F_KB; // [K]
+  params->CV.Tper = stod( parametersStringMap["CV_Tper"] )*F_E/F_KB; // [K]
 
   // Simulation time:
   // -------------------------------------------------------------------------
@@ -436,10 +436,10 @@ void init_TYP::read_ionsPropertiesFile(params_TYP * params)
     params->ions_BC[ss].type = stod(parametersMap[name]);
 
     name = "BC_T" + kk.str();
-    params->ions_BC[ss].T = stod(parametersMap[name]); // [eV]
+    params->ions_BC[ss].T = stod(parametersMap[name])*F_E/F_KB; // [K]
 
     name = "BC_E" + kk.str();
-    params->ions_BC[ss].E = stod(parametersMap[name]); // [eV]
+    params->ions_BC[ss].E = stod(parametersMap[name])*F_E/F_KB; // [K]
 
     name = "BC_eta" + kk.str();
     params->ions_BC[ss].eta = stod(parametersMap[name]);
@@ -761,7 +761,7 @@ void init_TYP::interpolate_IC_profiles(params_TYP * params, mesh_TYP * mesh, IC_
   }
 }
 
-arma::vec  pdf(arma::vec y, double x)
+arma::vec pdf(arma::vec y, double x)
 {
   arma::vec value = y/sum(y*x);
   return value;
@@ -992,8 +992,6 @@ void init_TYP::initialize_ions(params_TYP * params, IC_TYP * IC, mesh_TYP * mesh
     double Z = IONS->at(s).Z;
     double Q = IONS->at(s).Q;
     double f = params->ions_IC.at(s).densityFraction;
-    // double n = params->CV.ne;
-    // double B = params->CV.B;
 
     // Characteristic frequencies:
     IONS->at(s).Wc    = Q*params->CV.B/M;
@@ -1058,6 +1056,7 @@ void init_TYP::initialize_ions(params_TYP * params, IC_TYP * IC, mesh_TYP * mesh
         int N = N_CP_cell(m+1);
 
         // Uniform random numbers between -1/2 to +1/2:
+        arma::arma_rng::set_seed(params->mpi.MPI_DOMAIN_NUMBER);
         arma::vec R1 = arma::randu(N) - 0.5;
 
         // Index range:
@@ -1074,6 +1073,7 @@ void init_TYP::initialize_ions(params_TYP * params, IC_TYP * IC, mesh_TYP * mesh
         // Parallel velocity:
         // ==================
         double vTpar = sqrt(2*F_KB*Tpar_m(m+1)/M);
+        arma::arma_rng::set_seed(params->mpi.MPI_DOMAIN_NUMBER);
         arma::vec X1 = arma::randu(N);
         arma::vec X2 = arma::randu(N);
         arma::vec xpar = sqrt(-log(X1))%cos(2*M_PI*X2);
@@ -1083,6 +1083,7 @@ void init_TYP::initialize_ions(params_TYP * params, IC_TYP * IC, mesh_TYP * mesh
         // Perpendicular velocity:
         // ==================
         double vTper = sqrt(2*F_KB*Tper_m(m+1)/M);
+        arma::arma_rng::set_seed(params->mpi.MPI_DOMAIN_NUMBER);
         X1 = arma::randu(N);
         X2 = arma::randu(N);
         arma::vec xy = sqrt(-log(X1))%cos(2*M_PI*X2);

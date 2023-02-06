@@ -1,6 +1,6 @@
 #include "rfOperator.h"
 
-RF_Operator_TYP::RF_Operator_TYP(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS)
+RF_Operator_TYP::RF_Operator_TYP(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS)
 {
     if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
     {
@@ -17,15 +17,15 @@ void RF_Operator_TYP::MPI_AllreduceDouble(params_TYP * params, double * v)
     *v = recvbuf;
 }
 
-void RF_Operator_TYP::calculateResNum(int ii, params_TYP * params, CS_TYP * CS, fields_TYP * fields, ionSpecies_TYP * IONS)
+void RF_Operator_TYP::calculateResNum(int ii, params_TYP * params, CS_TYP * CS, fields_TYP * fields, ions_TYP * IONS)
 {
     // Ion parameters:
     double Ma = IONS->M;
     double Q  = IONS->Q;
 
     // Particle states:
-    double vpar = IONS->V_p(ii,0);
-    double Bp   = IONS->BX_p(ii);
+    double vpar = IONS->v_p(ii,0);
+    double Bp   = IONS->Bx_p(ii);
     double wcp   = abs(Q)*Bp/Ma;
 
     // RF paramters:
@@ -38,15 +38,15 @@ void RF_Operator_TYP::calculateResNum(int ii, params_TYP * params, CS_TYP * CS, 
     IONS->resNum(ii) = wrf - kpar*vpar - n*wcp;
 }
 
-void RF_Operator_TYP::calculateResNum_AllSpecies(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS)
+void RF_Operator_TYP::calculateResNum_AllSpecies(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS)
 {
         for (int ss=0; ss<IONS->size();ss++)
         {
-            int NSP   = IONS->at(ss).NSP;
+            int N_CP   = IONS->at(ss).N_CP_MPI;
             double Ma = IONS->at(ss).M;
 
-            #pragma omp parallel for default(none) shared(params, IONS, ss, CS, fields, std::cout) firstprivate(NSP,Ma)
-            for(int ii=0; ii<NSP; ii++)
+            #pragma omp parallel for default(none) shared(params, IONS, ss, CS, fields, std::cout) firstprivate(N_CP,Ma)
+            for(int ii=0; ii<N_CP; ii++)
             {
                 // Store previous resNum:
                 IONS->at(ss).resNum_(ii) = IONS->at(ss).resNum(ii);
@@ -58,17 +58,17 @@ void RF_Operator_TYP::calculateResNum_AllSpecies(params_TYP * params, CS_TYP * C
         } // Species
 }
 
-void RF_Operator_TYP::checkResNumAndFlag_AllSpecies(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS)
+void RF_Operator_TYP::checkResNumAndFlag_AllSpecies(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS)
 {
     for (int ss=0; ss<IONS->size();ss++)
     {
-        int NSP   = IONS->at(ss).NSP;
+        int N_CP   = IONS->at(ss).N_CP_MPI;
 
-        #pragma omp parallel for default(none) shared(params, IONS, ss, CS, fields, std::cout) firstprivate(NSP)
-        for(int ii=0; ii<NSP; ii++)
+        #pragma omp parallel for default(none) shared(params, IONS, ss, CS, fields, std::cout) firstprivate(N_CP)
+        for(int ii=0; ii<N_CP; ii++)
         {
             // Parameters needed to check resonance condition:
-            double xp = IONS->at(ss).X_p(ii);
+            double xp = IONS->at(ss).x_p(ii);
             double x1 = params->RF.x1;
             double x2 = params->RF.x2;
             double resNum  = IONS->at(ss).resNum(ii);
@@ -89,7 +89,7 @@ void RF_Operator_TYP::checkResNumAndFlag_AllSpecies(params_TYP * params, CS_TYP 
     } // Species
 }
 
-void RF_Operator_TYP::calculateRfTerms(int ii, params_TYP * params, CS_TYP * CS, fields_TYP * fields, ionSpecies_TYP * IONS)
+void RF_Operator_TYP::calculateRfTerms(int ii, params_TYP * params, CS_TYP * CS, fields_TYP * fields, ions_TYP * IONS)
 {
     // Ion parameters:
     double Ma = IONS->M;
@@ -109,14 +109,14 @@ void RF_Operator_TYP::calculateRfTerms(int ii, params_TYP * params, CS_TYP * CS,
     double mean_dKE_per = 0;
 
     // Particle states:
-    double vpar = IONS->V_p(ii,0);
-    double vper = IONS->V_p(ii,1);
+    double vpar = IONS->v_p(ii,0);
+    double vper = IONS->v_p(ii,1);
 
     // Particle-defined fields:
-    double Bp   = IONS->BX_p(ii);
-    double dBp  = IONS->dBX_p(ii);
-    double ddBp = IONS->ddBX_p(ii);
-    double Ep   = IONS->EX_p(ii);
+    double Bp   = IONS->Bx_p(ii);
+    double dBp  = IONS->dBx_p(ii);
+    double ddBp = IONS->ddBx_p(ii);
+    double Ep   = IONS->Ex_p(ii);
 
     // Derived quantities:
     double KE_par  = 0.5*Ma*vper*vper;
@@ -179,14 +179,14 @@ void RF_Operator_TYP::calculateRfTerms(int ii, params_TYP * params, CS_TYP * CS,
     IONS->udE3(ii)    = IONS->udErf(ii)*(1 + IONS->doppler(ii)); // [J] normalized energy
 }
 
-void RF_Operator_TYP::calculateRfTerms_AllSpecies(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS)
+void RF_Operator_TYP::calculateRfTerms_AllSpecies(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS)
 {
     for (int ss=0; ss<IONS->size();ss++)
     {
-        int NSP   = IONS->at(ss).NSP;
+        int N_CP = IONS->at(ss).N_CP;
 
-        #pragma omp parallel for default(none) shared(params, IONS, ss, CS, fields, std::cout) firstprivate(NSP)
-        for(int ii=0; ii<NSP; ii++)
+        #pragma omp parallel for default(none) shared(params, IONS, ss, CS, fields, std::cout) firstprivate(N_CP)
+        for(int ii=0; ii<N_CP; ii++)
         {
             if ( IONS->at(ss).f3(ii) == 1 )
             {
@@ -198,23 +198,23 @@ void RF_Operator_TYP::calculateRfTerms_AllSpecies(params_TYP * params, CS_TYP * 
     } // Species
 }
 
-void RF_Operator_TYP::calculatePowerPerUnitErf_AllSpecies(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS)
+void RF_Operator_TYP::calculatePowerPerUnitErf_AllSpecies(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS)
 {
     double uEdot3 = 0;
     double DT = params->DT;
 
     for (int ss=0; ss<IONS->size();ss++)
     {
-        double NCP = IONS->at(ss).NCP;
-        int NSP    = IONS->at(ss).NSP;
+        double K = IONS->at(ss).K;
+        int N_CP    = IONS->at(ss).N_CP_MPI;
 
-        #pragma omp parallel default(none) shared(uEdot3, params, IONS, ss, CS, fields, std::cout) firstprivate(NSP,NCP,DT)
+        #pragma omp parallel default(none) shared(uEdot3, params, IONS, ss, CS, fields, std::cout) firstprivate(N_CP,K,DT)
         {
             // Private variables:
             double uEdot3_private = 0;
 
             #pragma omp for
-            for(int ii=0; ii<NSP; ii++)
+            for(int ii=0; ii<N_CP; ii++)
             {
                 if ( IONS->at(ss).f3(ii) == 1 )
                 {
@@ -223,7 +223,7 @@ void RF_Operator_TYP::calculatePowerPerUnitErf_AllSpecies(params_TYP * params, C
                     double a_p  = IONS->at(ss).a_p(ii);
 
                     // Accumulate power:
-                    uEdot3_private += (NCP/DT)*a_p*udE3;
+                    uEdot3_private += (K/DT)*a_p*udE3;
 
                 } // if
 
@@ -244,7 +244,7 @@ void RF_Operator_TYP::calculatePowerPerUnitErf_AllSpecies(params_TYP * params, C
 
 }
 
-void RF_Operator_TYP::ApplyRfOperator_AllSpecies( params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS)
+void RF_Operator_TYP::ApplyRfOperator_AllSpecies( params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS)
 {
     // Calculate electric field:
     double E_rf = sqrt(params->RF.Prf/params->RF.uE3);
@@ -264,19 +264,19 @@ void RF_Operator_TYP::ApplyRfOperator_AllSpecies( params_TYP * params, CS_TYP * 
 
     for (int ss=0; ss<IONS->size();ss++)
     {
-        int NSP = IONS->at(ss).NSP;
+        int N_CP = IONS->at(ss).N_CP_MPI;
         int Ma  = IONS->at(ss).M;
 
-        #pragma omp parallel default(none) shared(params, IONS, ss, CS, E_rf, NSP, Ma, cout, uniform_distribution) firstprivate(generator)
+        #pragma omp parallel default(none) shared(params, IONS, ss, CS, E_rf, N_CP, Ma, cout, uniform_distribution) firstprivate(generator)
         {
             #pragma omp for
-            for(int ii=0; ii<NSP; ii++)
+            for(int ii=0; ii<N_CP; ii++)
             {
                 if (IONS->at(ss).f3(ii) == 1)
                 {
                     //  Particle states:
-                    double vpar = IONS->at(ss).V_p(ii,0);
-                    double vper = IONS->at(ss).V_p(ii,1);
+                    double vpar = IONS->at(ss).v_p(ii,0);
+                    double vper = IONS->at(ss).v_p(ii,1);
 
                     // Sign of vpar:
                     double eps  = abs(vpar)/vpar;
@@ -315,8 +315,8 @@ void RF_Operator_TYP::ApplyRfOperator_AllSpecies( params_TYP * params, CS_TYP * 
                     vper = sqrt(2*KE_per/Ma);
 
                     // Output data:
-                    IONS->at(ss).V_p(ii,0) = vpar;
-                    IONS->at(ss).V_p(ii,1) = vper;
+                    IONS->at(ss).v_p(ii,0) = vpar;
+                    IONS->at(ss).v_p(ii,1) = vper;
 
                     // Energy increments:
                     IONS->at(ss).dE3(ii) = dKE;
@@ -331,23 +331,23 @@ void RF_Operator_TYP::ApplyRfOperator_AllSpecies( params_TYP * params, CS_TYP * 
 
 }
 
-void RF_Operator_TYP::calculateAbsorbedPower_AllSpecies(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS)
+void RF_Operator_TYP::calculateAbsorbedPower_AllSpecies(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS)
 {
     double Edot3 = 0;
     double DT = params->DT;
 
     for (int ss=0; ss<IONS->size();ss++)
     {
-        double NCP = IONS->at(ss).NCP;
-        int NSP    = IONS->at(ss).NSP;
+        double K = IONS->at(ss).K;
+        int N_CP    = IONS->at(ss).N_CP_MPI;
 
-        #pragma omp parallel default(none) shared(Edot3, params, IONS, ss, CS, fields, std::cout) firstprivate(NSP,NCP,DT)
+        #pragma omp parallel default(none) shared(Edot3, params, IONS, ss, CS, fields, std::cout) firstprivate(N_CP,K,DT)
         {
             // Private variables:
             double Edot3_private = 0;
 
             #pragma omp for
-            for(int ii=0; ii<NSP; ii++)
+            for(int ii=0; ii<N_CP; ii++)
             {
                 if ( IONS->at(ss).f3(ii) == 1 )
                 {
@@ -356,7 +356,7 @@ void RF_Operator_TYP::calculateAbsorbedPower_AllSpecies(params_TYP * params, CS_
                     double a_p = IONS->at(ss).a_p(ii);
 
                     // Accumulate power:
-                    Edot3_private += (NCP/DT)*a_p*dE3;
+                    Edot3_private += (K/DT)*a_p*dE3;
 
                     // Clear flags:
                     IONS->at(ss).f3(ii)  = 0;
@@ -390,7 +390,7 @@ void RF_Operator_TYP::calculateAbsorbedPower_AllSpecies(params_TYP * params, CS_
 
 }
 
-void RF_Operator_TYP::ApplyRfHeating_AllSpecies(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ionSpecies_TYP> * IONS)
+void RF_Operator_TYP::ApplyRfHeating_AllSpecies(params_TYP * params, CS_TYP * CS, fields_TYP * fields, vector<ions_TYP> * IONS)
 {
     if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
     {

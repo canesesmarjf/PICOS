@@ -253,7 +253,7 @@ void PIC_TYP::interpolateFields_AllSpecies(const params_TYP * params, vector<ion
 	}
 }
 
-void PIC_TYP::interpolateElectrons(const params_TYP * params, ions_TYP * IONS, const electrons_TYP * electrons)
+void PIC_TYP::interpolateElectrons(const params_TYP * params, ions_TYP * IONS, electrons_TYP * electrons)
 {
 	// Allocate memory:
 	arma::vec Te_p = zeros(IONS->N_CP_MPI, 1);
@@ -265,7 +265,7 @@ void PIC_TYP::interpolateElectrons(const params_TYP * params, ions_TYP * IONS, c
 	IONS->Te_p = Te_p;
 }
 
-void PIC_TYP::interpolateElectrons_AllSpecies(const params_TYP * params, vector<ions_TYP> * IONS, const electrons_TYP * electrons)
+void PIC_TYP::interpolateElectrons_AllSpecies(const params_TYP * params, vector<ions_TYP> * IONS, electrons_TYP * electrons)
 {
 	// Interpolate all fields on all species:
 	// =======================
@@ -274,6 +274,7 @@ void PIC_TYP::interpolateElectrons_AllSpecies(const params_TYP * params, vector<
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
 		{
 			// Interpolate mesh-defined electron temperature into ALL particles locations:
+			electrons->Te_m = IONS->at(0).Tpar_m;
 			interpolateElectrons(params, &IONS->at(ss), electrons);
 		}
 	}
@@ -770,6 +771,6 @@ void PIC_TYP::calculateDerivedIonMoments(const params_TYP * params, ions_TYP * I
 	arma::vec Pper = IONS->P22_m;
 
 	// Ion temperatures:
-	IONS->Tpar_m = Ppar/(F_E_DS*IONS->n_m);
-	IONS->Tper_m = Pper/(F_E_DS*IONS->n_m);
+	IONS->Tpar_m = Ppar/(F_KB_DS*IONS->n_m);
+	IONS->Tper_m = Pper/(F_KB_DS*IONS->n_m);
 }

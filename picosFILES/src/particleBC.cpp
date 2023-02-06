@@ -407,13 +407,14 @@ void particleBC_TYP::particleReinjection(int ii, params_TYP * params, const CS_T
 		double Ma = IONS->M;
 
 		// Thermal velocity of source:
-		double vT = sqrt(2*F_E_DS*T/Ma);
+		// double vT = sqrt(2*F_E_DS*T/Ma);
+    double vT = sqrt(2*F_KB_DS*T/Ma);
 
 		// Pitch angle of source:
 		double xip = cos(eta);
 
 		// Drift velocity of source:
-		double U  = sqrt(2*F_E_DS*E/Ma);
+		double U  = sqrt(2*F_KB_DS*E/Ma);
 		double Ux = U*xip;
 		double Uy = U*sqrt(1 - pow(xip,2));
 		double Uz = 0;

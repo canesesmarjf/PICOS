@@ -1,4 +1,16 @@
-% Extract data from PICOS++ output:
+% Objective:
+% In this script we are interested plotting, checking and analysing the
+% individual particle motion.
+% This script is intended for the following types of runs:
+% - Field solver operator DISABLED
+% - Collision operator  DISABLED
+% - RF heating operator DISABLED
+% - Advance particle position ENABLED
+% - Cadence is set to a very low number or == 1
+% - Smallest number of MPIs (== 4)
+% - Simulation time set to ~ 500 to 300 depending on cadence
+% - Not interested in mesh-defined quantities except Bx_m
+% - outputs_variables           {x_p,v_p,a_p,Bx_p,mu_p,Bx_m}
 
 clear all;
 close all;
@@ -36,15 +48,14 @@ Nx = main.mesh.Nx_IN_SIM;
 NxPerMPI = double(main.mesh.Nx_PER_MPI);
 
 % x axis:
-x_m  = main.mesh.x_m;
+x_m = main.mesh.x_m;
 
 % Number of ions species:
 numIonSpecies = main.ions.numberOfParticleSpecies;
 
 % Ion species parameters:
 for ii = 1:numIonSpecies
-    fieldName = ['species_',num2str(ii)];
-    ionParameters{ii} = main.ions.(fieldName);
+    ionParameters{ii} = main.ions.(['species_',num2str(ii)]);
 end
 
 % Get number of time outputs:
@@ -55,19 +66,17 @@ timeSteps = fieldnames(fields);
 Nt = length(timeSteps);
 timeMax = double(fields.(['t',num2str(Nt-1)]).time);
 
-
 % Determine the outputted variables:
 % =========================================================================
 % fields:
 vars.fields = fieldnames(fields.t0.fields);
 
-% plasma:
+% ions:
 fileName  = ['../outputFiles/HDF5/PARTICLES_FILE_0.h5'];
 plasma      = H5_to_struct(fileName);
-vars.ions      = fieldnames(plasma.t0.ions.species_1);
-vars.electrons = fieldnames(plasma.t0.electrons);
+vars.ions   = fieldnames(plasma.t0.ions.species_1);
 
-vars.output = [vars.fields;vars.ions;vars.electrons];
+vars.output = [vars.fields;vars.ions];
 
 % Display to terminal:
 % =========================================================================
@@ -88,14 +97,13 @@ disp('Extracting field data...')
 
 % Initialize mesh-defined electromagnetic field variables:
 % =======================================================
-if find(strcmpi('Bx_m',vars.fields) == 1)
-    Bx_m   = zeros(Nx,Nt);
-elseif find(strcmpi('dBx_m',vars.fields) == 1)
-    dBx_m  = zeros(Nx,Nt);
-elseif find(strcmpi('ddBx_m',vars.fields) == 1)
-    ddBx_m = zeros(Nx,Nt);
-elseif find(strcmpi('ddBx_m',vars.fields) == 1)
-    Ex_m   = zeros(Nx,Nt);
+for vv = 1:numel(vars.fields)
+    if strcmpi(vars.fields{vv},"Ex_m")
+        command = [vars.fields{vv},' = zeros(Nx,Nt);'];
+    else
+        command = [vars.fields{vv},' = zeros(Nx,1);'];
+    end
+    eval(command);
 end
 
 % Get the data:
@@ -113,26 +121,26 @@ for rr = 1:ranksFields
     % Data range:
     rng_m = 1 + NxPerMPI*(rr-1) : 1 : NxPerMPI*rr;
     
-    % Loop over all time:
-    for tt = 1:Nt
-        % Obtain time stamp:
-        kk = str2double(timeSteps{tt}(2:end)) + 1;
-        
-        % Mesh-defined fields:
-        if sum(strcmpi('Bx_m',vars.output))
-            Bx_m(rng_m,kk)   = fields.(timeSteps{tt}).fields.Bx_m.x;
+    % Mesh-defined fields:
+    for vv = 1:numel(vars.fields)
+        if strcmpi(vars.fields{vv},"Ex_m")
+            % Loop over all time:
+            for tt = 1:Nt        
+                % Obtain time stamp:
+                kk = str2double(timeSteps{tt}(2:end)) + 1;
+                command = [vars.fields{vv},'(rng_m,kk) = fields.(timeSteps{tt}).fields.',vars.fields{vv},'.x;'];
+            end
+        else
+            % Magnetic field and gradients:
+            command = [vars.fields{vv},'(rng_m) = fields.(timeSteps{1}).fields.',vars.fields{vv},'.x;'];
         end
-        if sum(strcmpi('dBx_m',vars.output))
-            dBx_m(rng_m,kk)  = fields.(timeSteps{tt}).fields.dBx_m.x;
+        try
+            eval(command);
+        catch
+            error('Error: No field data found ... (line 180)');
         end
-        if sum(strcmpi('ddBx_m',vars.output))
-            ddBx_m(rng_m,kk) = fields.(timeSteps{tt}).fields.ddBx_m.x;
-        end
-        if sum(strcmpi('Ex_m',vars.output))
-            Ex_m(rng_m,kk) = fields.(timeSteps{tt}).fields.Ex_m.x;
-        end
-        
     end
+
 end
 
 disp('Field data extraction completed!')
@@ -378,14 +386,13 @@ disp('********************************************************************')
 disp('')
 
 %% Testing the RK4 integrator results:
-if 0
+if 1
     close all
-%     rng = find(x_p{1}(:,1) >1.50 & x_p{1}(:,1)< 1.55);
-%     rng = find(x_p{1}(:,1) >0.0 & x_p{1}(:,1)< 3.55);
 
-    % For symmetric domains:
-     rng = find(x_p{1}(:,1) >-1.5 & x_p{1}(:,1)< -1.0);
-    rng = rng(1:10);
+    % Select particles:
+    rng = find(x_p{1}(:,1) >-1.5 & x_p{1}(:,1)< -1.0);
+    rng = rng(1:50)
+%     rng = 1:10;
 
     % Kinetic energy:
     Ma   = main.ions.species_1.M;
@@ -467,6 +474,8 @@ if 0
     xlim([0,t_p(end)])
 end
 
+return
+
 %% Plot ion moments:
 close all
 
@@ -475,29 +484,23 @@ if find(strcmpi('Bx_p',vars.output) == 1) && find(strcmpi('x_p',vars.output) == 
     hold on
     plot(x_p{1},Bx_p{1},'k.')
     plot(x_m   ,Bx_m,'r.-')
-    xlim([-2,2])
 end
 
 if find(strcmpi('n_m',vars.output) == 1)
     figure
-    hold on
-    for s = 1:numel(n_m)
-        mesh(t_p,x_m,movmean(n_m{s},10,1));
-    end
-    zlim([0,1e20])
+    mesh(t_p,x_m,movmean(n_m{1},10,1));
+    zlim([0,2e20])
+    caxis([0,5e20])
     title('n')
-    ylim([-2,2])
 end
 
 if find(strcmpi('ncp_m',vars.output) == 1)
     figure
-    hold on
-    for s = 1:numel(ncp_m)
-        mesh(t_p*1e3,x_m,movmean(ncp_m{s},10,1));
-    end
+    mesh(t_p*1e3,x_m,movmean(ncp_m{1},10,1));
+%     zlim([0,2e20])
+%     caxis([0,2e20])
     title('n_cp')
     xlabel('[ms]')
-    ylim([-2,2])    
 end
 
 if find(strcmpi('Ex_m',vars.output) == 1)
@@ -506,7 +509,6 @@ if find(strcmpi('Ex_m',vars.output) == 1)
     zlim([-1,1]*8)
     caxis([-1,1]*8)
     title('Ex')
-    ylim([-2,2])    
 end
 
 if find(strcmpi('u_m',vars.output) == 1)
@@ -514,7 +516,6 @@ if find(strcmpi('u_m',vars.output) == 1)
     figure
     mesh(t_p,x_m,movmean(ux_m{1}./Cs,10,1));
     title('u_x/{v_T}')
-    ylim([-2,2])   
 end
 
 if find(strcmpi('Tpar_m',vars.output) == 1)
@@ -523,7 +524,6 @@ if find(strcmpi('Tpar_m',vars.output) == 1)
     Tpar_max = max(max(Tpar_m{1}));
     zlim([0,2*Tpar_max])
     title('T_par')
-    ylim([-2,2])    
 end
 
 if find(strcmpi('Tper_m',vars.output) == 1)
@@ -531,7 +531,6 @@ if find(strcmpi('Tper_m',vars.output) == 1)
     mesh(t_p,x_m,movmean(Tper_m{1},10,1));
     zlim([0,1.2]*max(max(Tper_m{1})))
     title('T_per')
-    ylim([-2,2])    
 end
 
 % Cross sectional area:
@@ -546,7 +545,6 @@ if find(strcmpi('u_m',vars.output) == 1)
     figure
     mesh(t_p,x_m,movmean(F,10,1));
     title('particle flux')
-    ylim([-2,2])    
 end
 
 % Temperature during and before RF
@@ -799,14 +797,14 @@ return
 
 %% Calculate velocity space PDF:
 % Select range:
-k = 1;
+
 rangeType = 1;
 switch rangeType
     case 1
         % mirror region:
         % % ===============
-        x_center = +0.0;
-        x_delta  = +0.35;
+        x_center = +0;
+        x_delta  = +1;
         z1 = x_center - x_delta;
         z2 = x_center + x_delta;
     case 2
@@ -845,7 +843,7 @@ dx = double(main.mesh.dx);
 x_m_g = ((1:(Nx+4))-1)*dx + 0.5*dx - 2*dx;
 
 % Select range of velocity grid:
-a = 20;
+a = 12;
 vxMin = -a*vT;
 vxMax = +a*vT;
 vyMin = -a*vT;
@@ -874,13 +872,13 @@ A0 = pi*(0.1^2);
 Phi0 = B0*A0;
 for jj = 1:NS
     % Select the spatial range:
-    rng = find(x_p{k}(:,jj) > z1 & x_p{k}(:,jj) < z2);
+    rng = find(x_p{1}(:,jj) > z1 & x_p{1}(:,jj) < z2);
 %     rng = rng(1:150E3);
     Nrng = numel(rng);
     Rm = rand(Nrng,1);
         
-    vvy = vper_p{k}(rng,jj).*cos(2*pi*Rm);
-    vvx = vpar_p{k}(rng,jj);   
+    vvy = vper_p{1}(rng,jj).*cos(2*pi*Rm);
+    vvx = vpar_p{1}(rng,jj);   
     
     [WXL,WXC,WXR,MXI,WYL,WYC,WYR,MYI] = AssignCell_2D(vvx/vT,vvy/vT,vxGrid/vT,vyGrid/vT);
     disp(['jj: ',num2str(jj)])
@@ -890,18 +888,18 @@ for jj = 1:NS
             ix = MXI(ii) + 2;
             iy = MYI(ii) + 2;
 
-            fv(ix - 1,iy + 0,jj) = fv(ix - 1,iy + 0,jj) + (Bx_p{1}(rng(ii),jj)/Phi0)*WXL(ii)*WYC(ii)*a_p{k}(rng(ii),jj)/Nrng;
-            fv(ix + 0,iy + 0,jj) = fv(ix + 0,iy + 0,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXC(ii)*WYC(ii)*a_p{k}(rng(ii),jj)/Nrng;    
-            fv(ix + 1,iy + 0,jj) = fv(ix + 1,iy + 0,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXR(ii)*WYC(ii)*a_p{k}(rng(ii),jj)/Nrng;
+            fv(ix - 1,iy + 0,jj) = fv(ix - 1,iy + 0,jj) + (Bx_p{1}(rng(ii),jj)/Phi0)*WXL(ii)*WYC(ii)*a_p{1}(rng(ii),jj)/Nrng;
+            fv(ix + 0,iy + 0,jj) = fv(ix + 0,iy + 0,jj) + (Bx_p{1}(rng(ii),jj)/Phi0)*WXC(ii)*WYC(ii)*a_p{1}(rng(ii),jj)/Nrng;    
+            fv(ix + 1,iy + 0,jj) = fv(ix + 1,iy + 0,jj) + (Bx_p{1}(rng(ii),jj)/Phi0)*WXR(ii)*WYC(ii)*a_p{1}(rng(ii),jj)/Nrng;
 
-            fv(ix + 0,iy - 1,jj) = fv(ix + 0,iy - 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXC(ii)*WYL(ii)*a_p{k}(rng(ii),jj)/Nrng;
-            fv(ix + 0,iy + 1,jj) = fv(ix + 0,iy + 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXC(ii)*WYR(ii)*a_p{k}(rng(ii),jj)/Nrng;    
+            fv(ix + 0,iy - 1,jj) = fv(ix + 0,iy - 1,jj) + (Bx_p{1}(rng(ii),jj)/Phi0)*WXC(ii)*WYL(ii)*a_p{1}(rng(ii),jj)/Nrng;
+            fv(ix + 0,iy + 1,jj) = fv(ix + 0,iy + 1,jj) + (Bx_p{1}(rng(ii),jj)/Phi0)*WXC(ii)*WYR(ii)*a_p{1}(rng(ii),jj)/Nrng;    
 
-            fv(ix + 1,iy - 1,jj) = fv(ix + 1,iy - 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXR(ii)*WYL(ii)*a_p{k}(rng(ii),jj)/Nrng;
-            fv(ix + 1,iy + 1,jj) = fv(ix + 1,iy + 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXR(ii)*WYR(ii)*a_p{k}(rng(ii),jj)/Nrng;
+            fv(ix + 1,iy - 1,jj) = fv(ix + 1,iy - 1,jj) + (Bx_p{1}(rng(ii),jj)/Phi0)*WXR(ii)*WYL(ii)*a_p{1}(rng(ii),jj)/Nrng;
+            fv(ix + 1,iy + 1,jj) = fv(ix + 1,iy + 1,jj) + (Bx_p{1}(rng(ii),jj)/Phi0)*WXR(ii)*WYR(ii)*a_p{1}(rng(ii),jj)/Nrng;
 
-            fv(ix - 1,iy - 1,jj) = fv(ix - 1,iy - 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXL(ii)*WYL(ii)*a_p{k}(rng(ii),jj)/Nrng;
-            fv(ix - 1,iy + 1,jj) = fv(ix - 1,iy + 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXL(ii)*WYR(ii)*a_p{k}(rng(ii),jj)/Nrng;
+            fv(ix - 1,iy - 1,jj) = fv(ix - 1,iy - 1,jj) + (Bx_p{1}(rng(ii),jj)/Phi0)*WXL(ii)*WYL(ii)*a_p{1}(rng(ii),jj)/Nrng;
+            fv(ix - 1,iy + 1,jj) = fv(ix - 1,iy + 1,jj) + (Bx_p{1}(rng(ii),jj)/Phi0)*WXL(ii)*WYR(ii)*a_p{1}(rng(ii),jj)/Nrng;
         end
     end
 end
@@ -918,18 +916,15 @@ vNBI = sqrt(e_c*5000/Ma);
 
 % % Plotting the integral of the electric field:
 figure; 
-set(gcf,'Position',[1293         409         550         427])
-hold on
-endTime = size(Tpar_m{k},2);
-rngLC = endTime-5:endTime-1;
+endTime = size(Tpar_m{1},2);
+rngLC = endTime-10:endTime-1;
 frame=1;
 ff = mean(movmean(Ex_m(:,rngLC),frame,1),2);
 try
     rng = find(x_m>x_center & x_m<z2);
 catch
-    rng = find(x_m>z1 & x_m<z2);
+        rng = find(x_m>z1 & x_m<z2);
 end
-%     rng = find(x_m>z1 & x_m<z2);
 
 delta_V = trapz(x_m(rng),ff(rng));
 gg = Bx_m(:,jj);
@@ -937,48 +932,47 @@ plot(x_m(:),ff,'k');hold on;
 plot(x_m(rng),ff(rng),'g');
 plot(x_m(:),gg*max(ff)/max(gg),'r');
 ylim([-10 10]*Te_mean);
-% hold off;
+hold off;
 
 % Calculating the hyperbola that defines the trapped region:
 vvpar = vxGrid/vT;
 vvper = sqrt((vvpar.^2 + 1*delta_V/(Te_mean))/(R_m - 1));
 
 figure('color','w'); 
-ax = gca;
 rngx = 3:(NV+4-2);
 rngy = 3:(NV+4-2);
-Limit=a;
+Limit=5;
 fmax = max(max(fv(:,:,end)));
 for jj = 1:1:size(fv,3)-5
-    contourf(ax,vxGrid/vT,vyGrid/vT,mean(fv(rngx,rngy,jj:jj+5),3)',10,'LineStyle','none');
+    contourf(vxGrid/vT,vyGrid/vT,mean(fv(rngx,rngy,jj:jj+5),3)',10,'LineStyle','none');
 
-    hold(ax,'on');
-    lossCone(1) = line(ax,[-1,+1]*Limit,[-1,+1]*Limit*tan(theta_m));
-    lossCone(2) = line(ax,[-1,+1]*Limit,[+1,-1]*Limit*tan(theta_m));
+    hold on
+    lossCone(1) = line([-1,+1]*Limit,[-1,+1]*Limit*tan(theta_m));
+    lossCone(2) = line([-1,+1]*Limit,[+1,-1]*Limit*tan(theta_m));
     set(lossCone,'LineWidth',2,'color','k','lineStyle','--','LineWidth',2)
         
     if 0
-        NBICone(1) = line(ax,[-1,+1]*Limit,[-1,+1]*Limit*tan(theta_NBI));
-        NBICone(2) = line(ax,[-1,+1]*Limit,[+1,-1]*Limit*tan(theta_NBI));
+        NBICone(1) = line([-1,+1]*Limit,[-1,+1]*Limit*tan(theta_NBI));
+        NBICone(2) = line([-1,+1]*Limit,[+1,-1]*Limit*tan(theta_NBI));
         set(NBICone,'LineWidth',2,'color','g','lineStyle','--','LineWidth',2)
-        plot(ax,vNBI*cos(theta_NBI)/vT,vNBI*sin(theta_NBI)/vT,'go')
+        plot(vNBI*cos(theta_NBI)/vT,vNBI*sin(theta_NBI)/vT,'go')
     end
     
     
-    confinementRegion(1) = plot(ax,vvpar,+vvper,'k','LineWidth',1);
-    confinementRegion(2) = plot(ax,vvpar,-vvper,'k','LineWidth',1);
+    confinementRegion(1) = plot(vvpar,+vvper,'k','LineWidth',1);
+    confinementRegion(2) = plot(vvpar,-vvper,'k','LineWidth',1);
     
-    title(ax,['$f(v_\parallel,v_\perp)$ '],'interpreter','latex','FontSize',20)
-    hold(ax,'off');
+    title(['$f(v_\parallel,v_\perp)$ '],'interpreter','latex','FontSize',20)
+    hold off
     axis square
-    xlim(ax,[-1,1]*Limit)
-    ylim(ax,[-1,1]*Limit)
-    xlabel(ax,'$v_\parallel/v_{Ti}$','interpreter','latex','FontSize',20)
-    ylabel(ax,'$v_\perp/v_{Te}$','interpreter','latex','FontSize',20)
-    caxis(ax,[0,0.75]*fmax)
-    colorbar(ax)
-    colormap(ax,flipud(hot))
-    view(ax,[0,90])
+    xlim([-1,1]*Limit)
+    ylim([-1,1]*Limit)
+    xlabel('$v_\parallel/v_{Ti}$','interpreter','latex','FontSize',20)
+    ylabel('$v_\perp/v_{Te}$','interpreter','latex','FontSize',20)
+    caxis([0,0.9]*fmax)
+    colorbar
+    colormap(flipud(hot))
+    view([0,90])
     drawnow
     pause(0.01)
 end
@@ -1043,9 +1037,9 @@ for jj = 1:numel(t_p)
     pause(0.1)
 end
 hold on
-% plot(x_m,movmean(n_m{1}(:,20),10,1))
-% plot(x_m,movmean(n_m{1}(:,26),10,1))
-% plot(x_m,movmean(n_m{1}(:,30),10,1))
+plot(x_m,movmean(n_m{1}(:,20),10,1))
+plot(x_m,movmean(n_m{1}(:,26),10,1))
+plot(x_m,movmean(n_m{1}(:,30),10,1))
 % plot(x_m,movmean(n_m{1}(:,40),10,1))
 
 % Animation of the flow change:
@@ -1062,9 +1056,9 @@ for jj = 1:numel(t_p)
     pause(0.1)
 end
 hold on
-% plot(x_m,movmean(ux_m{1}(:,20)./Cs(:,20),10,1))
-% plot(x_m,movmean(ux_m{1}(:,26)./Cs(:,20),10,1))
-% plot(x_m,movmean(ux_m{1}(:,30)./Cs(:,20),10,1))
+plot(x_m,movmean(ux_m{1}(:,20)./Cs(:,20),10,1))
+plot(x_m,movmean(ux_m{1}(:,26)./Cs(:,20),10,1))
+plot(x_m,movmean(ux_m{1}(:,30)./Cs(:,20),10,1))
 
 % Animation of the temperature change:
 figure('color','w')

@@ -40,6 +40,7 @@ extern double F_E_DS; 		// Dimensionless electron charge
 extern double F_ME_DS; 		// Dimensionless electron mass
 extern double F_MU_DS; 		// Dimensionless vacuum permeability
 extern double F_C_DS; 		// Dimensionless speed of light
+extern double F_KB_DS; 		// Dimensionless Boltzmann constant
 
 // Class to hold ion parameters:
 // =============================================================================
@@ -408,6 +409,7 @@ struct CV_TYP
 		Tpar = 0;
 		Tper = 0;
 	}
+  
 };
 
 //  Define structure to store switches that control physics modules:

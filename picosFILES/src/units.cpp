@@ -250,7 +250,7 @@ void units_TYP::defineTimeStep(params_TYP * params, vector<ions_TYP> * IONS)
     }
 
     // Minimum time step required by CFL condition for ions:
-    double dx_factor = 4;
+    double dx_factor = 2;
     DT_CFL_I = dx_factor*params->mesh_params.dx/ionsMaxVel;
 
     // We gather DT_CFL_I from all MPI processes in particles communicator:
@@ -330,11 +330,12 @@ void units_TYP::normalizeVariables(params_TYP * params, mesh_TYP * mesh, vector<
 
 	// Normalizing physical constants:
     // =========================================================================
-	F_E_DS /= CS->charge; 					// Dimensionless electron charge
-	F_ME_DS /= CS->mass; 					// Dimensionless electron charge
-	F_MU_DS /= CS->vacuumPermeability; 		// Dimensionless vacuum permeability
-	F_EPSILON_DS /= CS->vacuumPermittivity;	// Dimensionless vacuum permittivity
-	F_C_DS /= CS->velocity; 				// Dimensionless speed of light
+	F_E_DS /= CS->charge; 					        // Dimensionless electron charge
+	F_ME_DS /= CS->mass; 					          // Dimensionless electron charge
+	F_MU_DS /= CS->vacuumPermeability; 	    // Dimensionless vacuum permeability
+	F_EPSILON_DS /= CS->vacuumPermittivity; // Dimensionless vacuum permittivity
+	F_C_DS /= CS->velocity; 				        // Dimensionless speed of light
+  F_KB_DS *= CS->temperature/CS->energy;  // Dimensionless Boltzmann constant
 
 	// Normalizing "params":
     // =========================================================================
@@ -349,24 +350,6 @@ void units_TYP::normalizeVariables(params_TYP * params, mesh_TYP * mesh, vector<
 	params->CV.B /= CS->bField;
 	params->CV.Tpar /= CS->temperature;
 	params->CV.Tper /= CS->temperature;
-
-	// Fluid initial conditions:
-	// -------------------------
-	// params->f_IC.ne         /= CS->density;
-	// params->f_IC.Te         /= CS->temperature;
-  // params->f_IC.Te_profile /= CS->temperature;
-
-	// Electromagnetic fields initial conditions:
-	// -----------------------------------------
-	// params->em_IC.BX 	 	 /= CS->bField;
-	// params->em_IC.BY     	 /= CS->bField;
-	// params->em_IC.BZ         /= CS->bField;
-	// params->em_IC.Bx_profile /= CS->bField;
-  //
-	// params->em_IC.EX 	 	 /= CS->eField;
-	// params->em_IC.EY     	 /= CS->eField;
-	// params->em_IC.EZ         /= CS->eField;
-	// params->em_IC.Ex_profile /= CS->eField;
 
 	// Fundamental scales:
 	// -------------------
@@ -388,7 +371,6 @@ void units_TYP::normalizeVariables(params_TYP * params, mesh_TYP * mesh, vector<
   params->mesh_params.ionSkinDepth /= CS->length;
   params->mesh_params.A0 /= pow(CS->length,2);
   params->mesh_params.B0 /= CS->bField;
-
 
   // RF parameters:
   // -------------
@@ -440,7 +422,6 @@ void units_TYP::normalizeVariables(params_TYP * params, mesh_TYP * mesh, vector<
   	{
       IONS->at(ii).x_p  /= CS->length;
       IONS->at(ii).v_p  /= CS->velocity;
-      IONS->at(ii).Te_p /= CS->temperature;
 
       // The following would need to be normalied, however it does not matter since at this
       // stage of the computation they are zero. They are defined in PIC.

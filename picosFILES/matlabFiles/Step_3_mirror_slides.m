@@ -20,8 +20,10 @@ E_0 = m_p*c^2;
 runType = 2;
 switch runType
     case 1
-        root = '/home/jfcm/Documents/compX/ARPAE/mirror_case_6/';
+        root = '/home/jfcm/Documents/compX/ARPAE/mirror_case_10/';        
     case 2
+        root = '/home/jfcm/Documents/compX/ARPAE/mirror_case_11b/';        
+    case 3
         root = '../outputFiles/';
 end
 
@@ -71,7 +73,7 @@ set(hT,'lineWidth',5)
 set(hL,'interpreter','latex','FontSize',13)
 title('$T_{i\parallel}$ [eV]','Interpreter','latex','FontSize',15)
 xlabel('x [m]','Interpreter','latex','FontSize',15)
-ylim([0,1e4])
+ylim([0,1e3])
 
 subplot(1,2,2)
 box on
@@ -85,7 +87,7 @@ legendText{2} = ['t = 2 [ms]'];
 
 hL = legend(hT,legendText);
 
-ylim([0,1e4])
+ylim([0,1e3])
 set(hT,'lineWidth',5)
 set(hL,'interpreter','latex','FontSize',13)
 title('$T_{i\perp}$ [eV]','Interpreter','latex','FontSize',15)
@@ -95,8 +97,8 @@ xlabel('x [m]','Interpreter','latex','FontSize',15)
 figure('color','w')
 box on
 hold on
-hE(1) = plot(x_m,movmean(Ex_m(:,1),5),'r');
-hE(2) = plot(x_m,movmean(Ex_m(:,end),5),'k');
+hE(1) = plot(x_m,movmean(Ex_m(:,1),10),'r');
+hE(2) = plot(x_m,movmean(Ex_m(:,end),20),'k');
 % plot(x_m,movmean(Ex_m(:,1:5:end),5,2),'k');
 
 set(hE,'lineWidth',5)
@@ -112,12 +114,178 @@ box on
 hold on
 hV = plot(x_m,V(:,end)./Te_m,'k');
 set(hV,'lineWidth',2)
-ylim([0,6])
+ylim([0,3])
 
 title('e$V/T_e$','Interpreter','latex','FontSize',15)
 xlabel('x [m]','Interpreter','latex','FontSize',15)
 
 %% Distribution function:
+
+%% Calculate velocity space PDF:
+% Select range:
+k = 1;
+rangeType = 1;
+switch rangeType
+    case 1
+        % mirror region:
+        % % ===============
+        x_center = +0.0;
+        x_delta  = +0.2;
+        z1 = x_center - x_delta;
+        z2 = x_center + x_delta;
+    case 2
+    case 3
+    case 4  
+    case 5
+end
+
+% Ion parameters:
+beam.E = 1.5e3;
+Ma = main.ions.species_1.M;
+
+% Ion derived quantities:
+Te_mean = mean(mean(Te_m));
+vT = double(sqrt(2*Te_mean*e_c/Ma));
+
+% Create mesh with ghost cells"
+Nx = double(main.mesh.Nx_IN_SIM);
+dx = double(main.mesh.dx);
+x_m_g = ((1:(Nx+4))-1)*dx + 0.5*dx - 2*dx;
+
+% Select range of velocity grid:
+a = 5;
+vxMin = -a*vT;
+vxMax = +a*vT;
+vyMin = -a*vT;
+vyMax = +a*vT;
+
+NV = 200;
+dvx = (vxMax-vxMin)/NV;
+dvy = (vyMax-vyMin)/NV;
+vxGrid = ((1:NV)-1)*dvx + dvx/2 + vxMin;
+vyGrid = ((1:NV)-1)*dvy + dvy/2 + vyMin;
+
+% Number of time steps:
+NS = size(a_p{1},2);
+
+% Allocate memory:
+fv = zeros(NV+4,NV+4,NS);
+
+% Reference flux:
+B0 = main.mesh.B0;
+A0 = main.mesh.A0;
+Phi0 = B0*A0;
+
+for jj = 1:NS
+    % Select the spatial range:
+    rng = find(x_p{k}(:,jj) > z1 & x_p{k}(:,jj) < z2);
+
+    Nrng = numel(rng);
+    Rm = rand(Nrng,1);
+        
+   vvy = vper_p{k}(rng,jj).*cos(2*pi*Rm);
+%      bin_vec = 2*(Rm > 0.5) - 1;
+%      vvy = vper_p{k}(rng,jj).*bin_vec;
+%      vvy = vper_p{k}(rng,jj);  
+    vvx = vpar_p{k}(rng,jj);   
+    
+    [WXL,WXC,WXR,MXI,WYL,WYC,WYR,MYI] = AssignCell_2D(vvx/vT,vvy/vT,vxGrid/vT,vyGrid/vT);
+    disp(['jj: ',num2str(jj)])
+    
+    for ii = 1:Nrng
+        if ~isempty(MXI(ii))||~isempty(MYI(ii))
+            ix = MXI(ii) + 2;
+            iy = MYI(ii) + 2;
+
+            fv(ix - 1,iy + 0,jj) = fv(ix - 1,iy + 0,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXL(ii)*WYC(ii)*a_p{k}(rng(ii),jj)/Nrng;
+            fv(ix + 0,iy + 0,jj) = fv(ix + 0,iy + 0,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXC(ii)*WYC(ii)*a_p{k}(rng(ii),jj)/Nrng;    
+            fv(ix + 1,iy + 0,jj) = fv(ix + 1,iy + 0,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXR(ii)*WYC(ii)*a_p{k}(rng(ii),jj)/Nrng;
+
+            fv(ix + 0,iy - 1,jj) = fv(ix + 0,iy - 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXC(ii)*WYL(ii)*a_p{k}(rng(ii),jj)/Nrng;
+            fv(ix + 0,iy + 1,jj) = fv(ix + 0,iy + 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXC(ii)*WYR(ii)*a_p{k}(rng(ii),jj)/Nrng;    
+
+            fv(ix + 1,iy - 1,jj) = fv(ix + 1,iy - 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXR(ii)*WYL(ii)*a_p{k}(rng(ii),jj)/Nrng;
+            fv(ix + 1,iy + 1,jj) = fv(ix + 1,iy + 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXR(ii)*WYR(ii)*a_p{k}(rng(ii),jj)/Nrng;
+
+            fv(ix - 1,iy - 1,jj) = fv(ix - 1,iy - 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXL(ii)*WYL(ii)*a_p{k}(rng(ii),jj)/Nrng;
+            fv(ix - 1,iy + 1,jj) = fv(ix - 1,iy + 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXL(ii)*WYR(ii)*a_p{k}(rng(ii),jj)/Nrng;
+        end
+    end
+end
+
+
+%% Plot PDF:
+% Mirror ratio
+R_m =max(Bx_m(:,1))/B0;
+
+% Loss cone angle:
+theta_m = asin(1/sqrt(R_m));
+theta_NBI = 45*pi/180;
+vNBI = sqrt(2*e_c*25000/Ma);
+
+% % Plotting the integral of the electric field:
+figure; 
+set(gcf,'Position',[1293,409,550,427])
+hold on
+endTime = size(Tpar_m{k},2);
+rngLC = endTime-5:endTime-1;
+frame=1;
+ff = mean(movmean(Ex_m(:,rngLC),frame,1),2);
+rng = find(x_m>x_center & x_m<z2);
+
+delta_V = trapz(x_m(rng),ff(rng));
+gg = Bx_m(:,jj);
+plot(x_m(:),ff,'k');hold on;
+plot(x_m(rng),ff(rng),'g');
+plot(x_m(:),gg*max(ff)/max(gg),'r');
+ylim([-10 10]*Te_mean);
+
+% Calculating the hyperbola that defines the trapped region:
+vvpar = vxGrid/vT;
+vvper = sqrt((vvpar.^2 + 1*delta_V/(Te_mean))/(R_m - 1));
+
+figure('color','w'); 
+ax = gca;
+rngx = 3:(NV+4-2);
+rngy = 3:(NV+4-2);
+Limit=4;
+fmax = max(max(fv(:,:,end)));
+for jj = 1:1:size(fv,3)-6
+    contourf(ax,vxGrid/vT,vyGrid/vT,mean(fv(rngx,rngy,jj:jj+6),3)',10,'LineStyle','none');
+
+    hold(ax,'on');
+    lossCone(1) = line(ax,[-1,+1]*Limit,[-1,+1]*Limit*tan(theta_m));
+    lossCone(2) = line(ax,[-1,+1]*Limit,[+1,-1]*Limit*tan(theta_m));
+    set(lossCone,'LineWidth',2,'color','k','lineStyle','--','LineWidth',2)
+        
+    if 0
+        NBICone(1) = line(ax,[-1,+1]*Limit,[-1,+1]*Limit*tan(theta_NBI));
+        NBICone(2) = line(ax,[-1,+1]*Limit,[+1,-1]*Limit*tan(theta_NBI));
+        set(NBICone,'LineWidth',2,'color','g','lineStyle','--','LineWidth',2)
+        plot(ax,vNBI*cos(theta_NBI)/vT,vNBI*sin(theta_NBI)/vT,'go')
+    end
+    
+    
+    confinementRegion(1) = plot(ax,vvpar,+vvper,'k','LineWidth',1);
+    confinementRegion(2) = plot(ax,vvpar,-vvper,'k','LineWidth',1);
+    
+    title(ax,['$f(v_\parallel,v_\perp)$ '],'interpreter','latex','FontSize',20)
+    hold(ax,'off');
+    axis square
+    xlim(ax,[-1,1]*Limit)
+    ylim(ax,[-1,1]*Limit)
+    xlabel(ax,'$v_\parallel/v_{Te}$','interpreter','latex','FontSize',20)
+    ylabel(ax,'$v_\perp/v_{Te}$','interpreter','latex','FontSize',20)
+%     caxis(ax,[0,10]*fmax)
+    colorbar(ax)
+    colormap(ax,flipud(hot))
+    view(ax,[0,90])
+    drawnow
+    pause(0.01)
+    axis square
+end
+
+
 
 
 
@@ -479,168 +647,6 @@ xlabel('x [m]','interpreter','latex','fontSize',14)
 
 return
 
-%% Calculate velocity space PDF:
-% Select range:
-k = 1;
-rangeType = 1;
-switch rangeType
-    case 1
-        % mirror region:
-        % % ===============
-        x_center = +0.0;
-        x_delta  = +1.0;
-        z1 = x_center - x_delta;
-        z2 = x_center + x_delta;
-    case 2
-    case 3
-    case 4  
-    case 5
-end
-
-% Ion parameters:
-beam.E = 1.5e3;
-Ma = main.ions.species_1.M;
-
-% Ion derived quantities:
-Te_mean = mean(mean(Te_m));
-vT = double(sqrt(2*Te_mean*e_c/Ma));
-
-% Create mesh with ghost cells"
-Nx = double(main.mesh.Nx_IN_SIM);
-dx = double(main.mesh.dx);
-x_m_g = ((1:(Nx+4))-1)*dx + 0.5*dx - 2*dx;
-
-% Select range of velocity grid:
-a = 5;
-vxMin = -a*vT;
-vxMax = +a*vT;
-vyMin = -a*vT;
-vyMax = +a*vT;
-
-NV = 200;
-dvx = (vxMax-vxMin)/NV;
-dvy = (vyMax-vyMin)/NV;
-vxGrid = ((1:NV)-1)*dvx + dvx/2 + vxMin;
-vyGrid = ((1:NV)-1)*dvy + dvy/2 + vyMin;
-
-% Number of time steps:
-NS = size(a_p{1},2);
-
-% Allocate memory:
-fv = zeros(NV+4,NV+4,NS);
-
-% Reference flux:
-B0 = main.mesh.B0;
-A0 = main.mesh.A0;
-Phi0 = B0*A0;
-
-for jj = 1:NS
-    % Select the spatial range:
-    rng = find(x_p{k}(:,jj) > z1 & x_p{k}(:,jj) < z2);
-
-    Nrng = numel(rng);
-    Rm = rand(Nrng,1);
-        
-   vvy = vper_p{k}(rng,jj).*cos(2*pi*Rm);
-%      bin_vec = 2*(Rm > 0.5) - 1;
-%      vvy = vper_p{k}(rng,jj).*bin_vec;
-%      vvy = vper_p{k}(rng,jj);  
-    vvx = vpar_p{k}(rng,jj);   
-    
-    [WXL,WXC,WXR,MXI,WYL,WYC,WYR,MYI] = AssignCell_2D(vvx/vT,vvy/vT,vxGrid/vT,vyGrid/vT);
-    disp(['jj: ',num2str(jj)])
-    
-    for ii = 1:Nrng
-        if ~isempty(MXI(ii))||~isempty(MYI(ii))
-            ix = MXI(ii) + 2;
-            iy = MYI(ii) + 2;
-
-            fv(ix - 1,iy + 0,jj) = fv(ix - 1,iy + 0,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXL(ii)*WYC(ii)*a_p{k}(rng(ii),jj)/Nrng;
-            fv(ix + 0,iy + 0,jj) = fv(ix + 0,iy + 0,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXC(ii)*WYC(ii)*a_p{k}(rng(ii),jj)/Nrng;    
-            fv(ix + 1,iy + 0,jj) = fv(ix + 1,iy + 0,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXR(ii)*WYC(ii)*a_p{k}(rng(ii),jj)/Nrng;
-
-            fv(ix + 0,iy - 1,jj) = fv(ix + 0,iy - 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXC(ii)*WYL(ii)*a_p{k}(rng(ii),jj)/Nrng;
-            fv(ix + 0,iy + 1,jj) = fv(ix + 0,iy + 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXC(ii)*WYR(ii)*a_p{k}(rng(ii),jj)/Nrng;    
-
-            fv(ix + 1,iy - 1,jj) = fv(ix + 1,iy - 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXR(ii)*WYL(ii)*a_p{k}(rng(ii),jj)/Nrng;
-            fv(ix + 1,iy + 1,jj) = fv(ix + 1,iy + 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXR(ii)*WYR(ii)*a_p{k}(rng(ii),jj)/Nrng;
-
-            fv(ix - 1,iy - 1,jj) = fv(ix - 1,iy - 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXL(ii)*WYL(ii)*a_p{k}(rng(ii),jj)/Nrng;
-            fv(ix - 1,iy + 1,jj) = fv(ix - 1,iy + 1,jj) + (Bx_p{k}(rng(ii),jj)/Phi0)*WXL(ii)*WYR(ii)*a_p{k}(rng(ii),jj)/Nrng;
-        end
-    end
-end
-
-
-%% Plot PDF:
-% Mirror ratio
-R_m =max(Bx_m(:,1))/B0;
-
-% Loss cone angle:
-theta_m = asin(1/sqrt(R_m));
-theta_NBI = 45*pi/180;
-vNBI = sqrt(2*e_c*25000/Ma);
-
-% % Plotting the integral of the electric field:
-figure; 
-set(gcf,'Position',[1293,409,550,427])
-hold on
-endTime = size(Tpar_m{k},2);
-rngLC = endTime-5:endTime-1;
-frame=1;
-ff = mean(movmean(Ex_m(:,rngLC),frame,1),2);
-rng = find(x_m>x_center & x_m<z2);
-
-delta_V = trapz(x_m(rng),ff(rng));
-gg = Bx_m(:,jj);
-plot(x_m(:),ff,'k');hold on;
-plot(x_m(rng),ff(rng),'g');
-plot(x_m(:),gg*max(ff)/max(gg),'r');
-ylim([-10 10]*Te_mean);
-
-% Calculating the hyperbola that defines the trapped region:
-vvpar = vxGrid/vT;
-vvper = sqrt((vvpar.^2 + 1*delta_V/(Te_mean))/(R_m - 1));
-
-figure('color','w'); 
-ax = gca;
-rngx = 3:(NV+4-2);
-rngy = 3:(NV+4-2);
-Limit=4;
-fmax = max(max(fv(:,:,end)));
-for jj = 1:1:size(fv,3)-6
-    contourf(ax,vxGrid/vT,vyGrid/vT,mean(fv(rngx,rngy,jj:jj+6),3)',10,'LineStyle','none');
-
-    hold(ax,'on');
-    lossCone(1) = line(ax,[-1,+1]*Limit,[-1,+1]*Limit*tan(theta_m));
-    lossCone(2) = line(ax,[-1,+1]*Limit,[+1,-1]*Limit*tan(theta_m));
-    set(lossCone,'LineWidth',2,'color','k','lineStyle','--','LineWidth',2)
-        
-    if 0
-        NBICone(1) = line(ax,[-1,+1]*Limit,[-1,+1]*Limit*tan(theta_NBI));
-        NBICone(2) = line(ax,[-1,+1]*Limit,[+1,-1]*Limit*tan(theta_NBI));
-        set(NBICone,'LineWidth',2,'color','g','lineStyle','--','LineWidth',2)
-        plot(ax,vNBI*cos(theta_NBI)/vT,vNBI*sin(theta_NBI)/vT,'go')
-    end
-    
-    
-    confinementRegion(1) = plot(ax,vvpar,+vvper,'k','LineWidth',1);
-    confinementRegion(2) = plot(ax,vvpar,-vvper,'k','LineWidth',1);
-    
-    title(ax,['$f(v_\parallel,v_\perp)$ '],'interpreter','latex','FontSize',20)
-    hold(ax,'off');
-    axis square
-    xlim(ax,[-1,1]*Limit)
-    ylim(ax,[-1,1]*Limit)
-    xlabel(ax,'$v_\parallel/v_{Te}$','interpreter','latex','FontSize',20)
-    ylabel(ax,'$v_\perp/v_{Te}$','interpreter','latex','FontSize',20)
-%     caxis(ax,[0,10]*fmax)
-    colorbar(ax)
-    colormap(ax,flipud(hot))
-    view(ax,[0,90])
-    drawnow
-    pause(0.01)
-end
 
 %% Functions:
 

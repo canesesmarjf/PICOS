@@ -26,6 +26,25 @@ mu0 = 4*pi*1e-7;
 c   = 299792458;
 E_0 = m_p*c^2;
 
+% Extract data from HDF5 files:
+% =========================================================================
+% Root directory:
+runType = 2;
+switch runType
+    case 1
+        root = '/home/jfcm/Documents/compX/ARPAE/mirror_case_10/';
+    case 2
+        root = '../outputFiles/';
+end
+
+% File name:
+fileName = [root,'HDF5/main.h5'];
+
+% Extract data:
+extractDataFromH5;
+
+return
+
 % Read MAIN file:
 % =========================================================================
 

@@ -250,7 +250,7 @@ void units_TYP::defineTimeStep(params_TYP * params, vector<ions_TYP> * IONS)
     }
 
     // Minimum time step required by CFL condition for ions:
-    double dx_factor = 2;
+    double dx_factor = 4;
     DT_CFL_I = dx_factor*params->mesh_params.dx/ionsMaxVel;
 
     // We gather DT_CFL_I from all MPI processes in particles communicator:

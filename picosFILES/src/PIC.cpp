@@ -274,7 +274,7 @@ void PIC_TYP::interpolateElectrons_AllSpecies(const params_TYP * params, vector<
 		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
 		{
 			// Interpolate mesh-defined electron temperature into ALL particles locations:
-			electrons->Te_m = IONS->at(0).Tpar_m;
+			// electrons->Te_m = IONS->at(0).Tpar_m;
 			interpolateElectrons(params, &IONS->at(ss), electrons);
 		}
 	}

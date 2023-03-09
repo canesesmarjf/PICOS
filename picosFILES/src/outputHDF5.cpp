@@ -476,6 +476,11 @@ HDF_TYP::HDF_TYP(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS)
         saveToHDF5(group_ionSpecies, name, &cpp_type_value);
         name.clear();
 
+				name = "pct_N_CP_MPI_Output";
+				cpp_type_value = (CPP_TYPE)IONS->at(ii).pct_N_CP_MPI_Output;
+				saveToHDF5(group_ionSpecies, name, &cpp_type_value);
+				name.clear();
+
         name = "K";
         cpp_type_value = (CPP_TYPE)IONS->at(ii).K;
         saveToHDF5(group_ionSpecies, name, &cpp_type_value);

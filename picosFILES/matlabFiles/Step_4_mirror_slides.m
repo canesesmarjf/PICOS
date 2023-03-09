@@ -17,14 +17,20 @@ E_0 = m_p*c^2;
 % Extract data from HDF5 files:
 % =========================================================================
 % Root directory:
-runType = 99;
+runType = 6;
 switch runType
     case 1
         root = '/home/jfcm/Documents/compX/ARPAE/mirror_case_10/';        
     case 2
         root = '/home/jfcm/Documents/compX/ARPAE/mirror_case_11b/'; 
     case 3
-        root = '/home/jfcm/Documents/compX/ARPAE/mirror_case_12/';         
+        root = '/home/jfcm/Documents/compX/ARPAE/mirror_case_12/';    
+    case 4
+        root = '/home/jfcm/Documents/compX/ARPAE/mirror_case_13d/'; 
+    case 5
+        root = '/home/jfcm/Documents/compX/ARPAE/mirror_case_11c/';     
+    case 6
+        root = '/home/jfcm/Documents/compX/ARPAE/mirror_case_11d/';           
     case 99
         root = '../outputFiles/';
 end
@@ -39,26 +45,32 @@ extractDataFromH5;
 
 %% Plasma density plots:
 
-ne = n_m{1} + n_m{2};
+% Calculate electron density:
+ne = 0;
+for ss = 1:numel(n_m)
+    ne = ne + n_m{ss};
+end
 
-k = 1;
-figure('color','w')
-box on
-hold on
-hn(1) = plot(x_m,n_m{k}(:,1),'r');
-hn(2) = plot(x_m,n_m{k}(:,end),'k');
-plot(x_m,n_m{k}(:,1:3:end),'k')
-
-legendText{1} = ['t = 0 [ms]'];
-legendText{2} = ['t = 2 [ms]'];
-
-hL = legend(hn,legendText);
-
-set(hn,'lineWidth',5)
-set(hL,'interpreter','latex','FontSize',13)
-title('$n_e$ [m$^{-3}$]','Interpreter','latex','FontSize',15)
-xlabel('x [m]','Interpreter','latex','FontSize',15)
-ylim([0,8e19])
+% Plot ion densities:
+for k = 1:numel(n_m)
+    figure('color','w')
+    box on
+    hold on
+    hn(1) = plot(x_m,n_m{k}(:,1),'r');
+    hn(2) = plot(x_m,n_m{k}(:,end),'k');
+    plot(x_m,n_m{k}(:,1:3:end),'k')
+    
+    legendText{1} = ['t = 0 [ms]'];
+    legendText{2} = ['t = ',num2str(t_p(end)*1000,2),'[ms]'];
+    
+    hL = legend(hn,legendText);
+    
+    set(hn,'lineWidth',5)
+    set(hL,'interpreter','latex','FontSize',13)
+    title('$n_i$ [m$^{-3}$]','Interpreter','latex','FontSize',15)
+    xlabel('x [m]','Interpreter','latex','FontSize',15)
+    ylim([0,8e19])
+end
 
 figure('color','w')
 box on
@@ -79,38 +91,41 @@ xlabel('x [m]','Interpreter','latex','FontSize',15)
 ylim([0,8e19])
 
 %% Computational particle density:
-k = 1;
-figure('color','w')
-box on
-hold on
-hn(1) = plot(x_m,ncp_m{k}(:,1),'r');
-hn(2) = plot(x_m,ncp_m{k}(:,end),'k');
-% plot(x_m,ncp_m{k}(:,1:3:end),'k')
-
-legendText{1} = ['t = 0 [ms]'];
-legendText{2} = ['t = 2 [ms]'];
-
-hL = legend(hn,legendText);
-
-set(hn,'lineWidth',5)
-set(hL,'interpreter','latex','FontSize',13)
-title('$n^{cp}_m$ [m$^{-1}$]','Interpreter','latex','FontSize',15)
-xlabel('x [m]','Interpreter','latex','FontSize',15)
-% ylim([0,8e19])
+for k = 1:numel(n_m)
+    figure('color','w')
+    box on
+    hold on
+    hn(1) = plot(x_m,ncp_m{k}(:,1),'r');
+    hn(2) = plot(x_m,ncp_m{k}(:,end),'k');
+    plot(x_m,ncp_m{k}(:,1:end),'k')
+    
+    legendText{1} = ['t = 0 [ms]'];
+    legendText{2} = ['t = 2 [ms]'];
+    
+    hL = legend(hn,legendText);
+    
+    set(hn,'lineWidth',5)
+    set(hL,'interpreter','latex','FontSize',13)
+    title('$n^{cp}_m$ [m$^{-1}$]','Interpreter','latex','FontSize',15)
+    xlabel('x [m]','Interpreter','latex','FontSize',15)
+    % ylim([0,8e19])
+end
 
 %% Ion temperature:
-k = 1;
 figure('color','w')
+k = 1;
 subplot(1,2,1)
 box on
 hold on
-hT(1) = plot(x_m,Tper_m{k}(:,end),'r');
-hT(2) = plot(x_m,Tpar_m{k}(:,end),'k');
+tt = numel(t_p);
+tt = 2;
+hT(1) = plot(x_m,Tper_m{k}(:,tt),'r');
+hT(2) = plot(x_m,Tpar_m{k}(:,tt),'k');
 
 legendText{1} = ['t = 0 [ms]'];
 legendText{2} = ['t = 2 [ms]'];
 
-% hL = legend(hT,legendText);
+hL = legend(hT,legendText);
 
 set(hT,'lineWidth',5)
 set(hL,'interpreter','latex','FontSize',13)
@@ -122,8 +137,10 @@ k = 2;
 subplot(1,2,2)
 box on
 hold on
-hT(1) = plot(x_m,Tper_m{k}(:,end),'r');
-hT(2) = plot(x_m,Tpar_m{k}(:,end),'k');
+tt = numel(t_p);
+tt = 2;
+hT(1) = plot(x_m,Tper_m{k}(:,tt),'r');
+hT(2) = plot(x_m,Tpar_m{k}(:,tt),'k');
 
 legendText{1} = ['$T_\perp$'];
 legendText{2} = ['$T_\parallel$'];
@@ -135,7 +152,6 @@ set(hL,'interpreter','latex','FontSize',13)
 title('$T_{i}$ [eV]','Interpreter','latex','FontSize',15)
 xlabel('x [m]','Interpreter','latex','FontSize',15)
 ylim([0,30e3])
-
 
 %% Electric field plot:
 figure('color','w')
@@ -178,7 +194,7 @@ dx = double(main.mesh.dx);
 x_m_g = ((1:(Nx+4))-1)*dx + 0.5*dx - 2*dx;
 
 % Select range of velocity grid:
-a = 12;
+a = 5;
 vxMin = -a*vT;
 vxMax = +a*vT;
 vyMin = -a*vT;
@@ -306,7 +322,7 @@ figure('color','w');
 ax = gca;
 rngx = 3:(NV+4-2);
 rngy = 3:(NV+4-2);
-Limit=12;
+Limit=a;
 fmax = max(max(ftotal(:,:,end)));
 for jj = 2:size(ftotal,3)-3
     contourf(ax,vxGrid/vT,vyGrid/vT,mean(ftotal(rngx,rngy,jj:jj+3),3)',10,'LineStyle','none');

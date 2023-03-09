@@ -659,10 +659,17 @@ function f = central_diff(y)
 end
 
 function [WXL,WXC,WXR,MXI,WYL,WYC,WYR,MYI] = AssignCell_2D(Xi,Yi,Xgrid,Ygrid)
-% Xgrid and Ygrid are uniform grids
+% Xi and Yi: data vectors containing particle data such as v_p(:,1) and
+% v_p(:,2).
+% Xgrid and Ygrid are uniform grids which determine the extent over which
+% particle data is accumulated.
 
 % Total number of computational particles:
 NC = numel(Xi);
+
+if (numel(Xi) ~= numel(Yi))
+    error('Number of elements in Xi and Yi must be equal');
+end
 
 % Size of grids:
 Nx = numel(Xgrid);
@@ -687,7 +694,6 @@ WYL = zeros(size(Xi));
 WYC = zeros(size(Xi));
 WYR = zeros(size(Xi));
 
-
 for ii = 1:NC
     % Find the index "MXI" of nearest grid point to Xi:
     xii = Xi(ii) - Xoffset;
@@ -700,13 +706,13 @@ for ii = 1:NC
     end
    
     try
-    if ~isempty(MXI(ii))
-        WXC(ii) = 0.75 - (X/dX)^2;
-        WXL(ii) = 0.5*(1.5 + ((X - dX)/dX) )^2;
-        WXR(ii) = 0.5*(1.5 - ((X + dX)/dX) )^2;     
-    end
+        if ~isempty(MXI(ii))
+            WXC(ii) = 0.75 - (X/dX)^2;
+            WXL(ii) = 0.5*(1.5 + ((X - dX)/dX) )^2;
+            WXR(ii) = 0.5*(1.5 - ((X + dX)/dX) )^2;     
+        end
     catch
-        disp('hello X')
+        disp('Xi is out of bounds')
     end
     
     % Find the index "MYI" of nearest grid point to Yi:
@@ -718,14 +724,15 @@ for ii = 1:NC
     else 
         MYI(ii) = [];
     end
-try    
-    if ~isempty(MYI(ii))
-        WYC(ii) = 0.75 - (Y/dY)^2;
-        WYL(ii) = 0.5*(1.5 + ((Y - dY)/dY) )^2;
-        WYR(ii) = 0.5*(1.5 - ((Y + dY)/dY) )^2;        
+
+    try    
+        if ~isempty(MYI(ii))
+            WYC(ii) = 0.75 - (Y/dY)^2;
+            WYL(ii) = 0.5*(1.5 + ((Y - dY)/dY) )^2;
+            WYR(ii) = 0.5*(1.5 - ((Y + dY)/dY) )^2;        
+        end
+    catch
+        disp('Yi is out of bounds')
     end
-catch
-    disp('hello')
-end
 end
 end

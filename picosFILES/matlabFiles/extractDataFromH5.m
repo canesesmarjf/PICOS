@@ -21,7 +21,7 @@ Nx = main.mesh.Nx_IN_SIM;
 NxPerMPI = double(main.mesh.Nx_PER_MPI);
 
 % x axis:
-x_m  = main.mesh.x_m;
+x_m  = double(main.mesh.x_m);
 
 % Number of ions species:
 numIonSpecies = main.ions.numberOfParticleSpecies;
@@ -135,7 +135,7 @@ disp('Extracting particle data...')
 % ==========================
 for ss = 1:numIonSpecies
     % Number of particles per rank:
-    N_CP_MPI = double(ionParameters{1}.N_CP_MPI);
+    N_CP_MPI = double(ionParameters{1}.N_CP_MPI_Output);
 
     % Total number of particles:
     N_CP = N_CP_MPI*ranksParticles;

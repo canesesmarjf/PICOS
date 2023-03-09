@@ -597,6 +597,7 @@ void PIC_TYP::extrapolateMoments_AllSpecies(const params_TYP * params, fields_TY
 			// Reduce IONS moments to PARTICLE ROOT:
 			// =====================================
 			MPI_ReduceVec(params, &IONS->at(ss).n_m);
+			MPI_ReduceVec(params, &IONS->at(ss).ncp_m);
 			MPI_ReduceVec(params, &IONS->at(ss).nv_m);
 			MPI_ReduceVec(params, &IONS->at(ss).P11_m);
 			MPI_ReduceVec(params, &IONS->at(ss).P22_m);
@@ -604,9 +605,13 @@ void PIC_TYP::extrapolateMoments_AllSpecies(const params_TYP * params, fields_TY
 			// Broadcast to all PARTICLE ranks:
 			// ================================
 			MPI_Bcast(IONS->at(ss).n_m.memptr()  , IONS->at(ss).n_m.size()  , MPI_DOUBLE, 0, params->mpi.COMM);
+			MPI_Bcast(IONS->at(ss).ncp_m.memptr(), IONS->at(ss).ncp_m.size(), MPI_DOUBLE, 0, params->mpi.COMM);
 			MPI_Bcast(IONS->at(ss).nv_m.memptr() , IONS->at(ss).nv_m.size() , MPI_DOUBLE, 0, params->mpi.COMM);
 			MPI_Bcast(IONS->at(ss).P11_m.memptr(), IONS->at(ss).P11_m.size(), MPI_DOUBLE, 0, params->mpi.COMM);
 			MPI_Bcast(IONS->at(ss).P22_m.memptr(), IONS->at(ss).P22_m.size(), MPI_DOUBLE, 0, params->mpi.COMM);
+
+			// Compute the ncp_m averaged over all MPI particle ranks:
+			IONS->at(ss).ncp_m = IONS->at(ss).ncp_m/params->mpi.MPIS_PARTICLES;
 
 			// Apply smoothing:
 			// ===============

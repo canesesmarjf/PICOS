@@ -20,6 +20,7 @@
 #include "fieldSolve.h"
 #include "particleBC.h"
 #include "collisionOperator.h"
+#include "resamplingOperator.h"
 // #include "rfOperator.h"
 
 // Include headers for parallelization:
@@ -72,35 +73,38 @@ int main(int argc, char* argv[])
   init_TYP init(&params, argc, argv);
 
   // =========================================================================
-  // - Read "input_file.input" into "params"
+  // Read "input_file.input" into "params"
   init.read_inputFile(&params);
 
-  // - Read "ions_properties.ion" into "params":
+  // Read "ions_properties.ion" into "params":
   init.read_ionsPropertiesFile(&params);
 
-  // - Create mesh using input parameters:
+  // Create mesh using input parameters:
   init.create_mesh(&params,&mesh);
 
   // Create MPI topology:
   mpi_main.createMPITopology(&params);
 
-  // - Read IC profiles from external files into "IC":
+  // Read IC profiles from external files into "IC":
   init.read_IC_profiles(&params,&mesh,&IC);
 
-  // - Interpolate IC profiles to mesh grid:
+  // Interpolate IC profiles to mesh grid:
   init.interpolate_IC_profiles(&params,&mesh,&IC);
 
   // Calculate particle weight initial condition profile:
   init.calculate_IC_particleWeight(&params,&IC,&IONS);
 
-  // - Initialize fields using IC field profiles:
+  // Initialize fields using IC field profiles:
   init.initialize_fields(&params,&IC,&fields);
 
-  // - Initialize electrons using IC profiles:
+  // Initialize electrons using IC profiles:
   init.initialize_electrons(&params,&IC,&electrons);
 
-  // - Initialize ions using IC profiles:
+  // Initialize ions using IC profiles:
   init.initialize_ions(&params,&IC,&mesh,&IONS);
+
+  // Reampling operator:
+  RS_operator_TYP RS_operator;
 
   // Define characteristic scales and broadcast them to all processes in COMM_WORLD:
   units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
@@ -125,7 +129,7 @@ int main(int argc, char* argv[])
   // Define time step based on ion CFL condition:
   units.defineTimeStep(&params, &IONS);
 
-  // Normalize "params", "IONS", "electrons", "fields" using "CS"
+  // Normalize "params", "IONS", "mesh", "electrons", "fields" using "CS"
   units.normalizeVariables(&params, &mesh, &IONS, &electrons, &fields, &CS);
 
   // #########################################################################
@@ -140,7 +144,7 @@ int main(int argc, char* argv[])
   int outputIterator = 0;
   int numberOfIterationsForEstimator = 1000;
 
-  // Create EM solver:
+  // Create fields solver:
   // =========================================================================
   fields_solver_TYP fields_solver(&params, &CS);
 
@@ -178,22 +182,10 @@ int main(int argc, char* argv[])
   for(int tt=0; tt<params.timeIterations; tt++)
   {
 
-    // if (params.mpi.IS_PARTICLES_ROOT)
-    // {
-    //   if (fmod((double)(tt + 1), 100) == 0)
-    //   {
-    //       cout << "time = " << tt*params.DT*CS.time*1E3 << " [ms] "<< endl;
-    //
-    //
-    //       //cout << "N1_dot = " << particleBC.N1_dot/CS.time << " [1/s]" << endl;
-    //       //cout << "N2_dot = " << particleBC.N2_dot/CS.time << " [1/s]" << endl;
-    //       //cout << "E1_dot = " << (particleBC.E1_dot*CS.energy/CS.time)/1000 << " [kW]" << endl;
-    //       //cout << "E2_dot = " << (particleBC.E2_dot*CS.energy/CS.time)/1000 << " [kW]" << endl;
-    //       //cout << "E5_dot = " << (particleBC.E5_dot*CS.energy/CS.time)/1000 << " [kW]" << endl;
-    //       //cout << "N5_dot = " << particleBC.N5_dot/CS.time << " [1/s]" << endl;
-    //
-    //   }
-    // }
+    if (params.SW.resample == 1)
+    {
+      RS_operator.ApplyResampling_AllSpecies(&params,&mesh,&IONS);
+    }
 
     // Advance particles and re-inject:
     // =====================================================================

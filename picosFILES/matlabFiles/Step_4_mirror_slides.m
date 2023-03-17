@@ -111,6 +111,14 @@ for k = 1:numel(n_m)
     % ylim([0,8e19])
 end
 
+% Movie of the computational particle density evolve:
+figure
+for tt = 1:numel(t_p)
+    plot(x_m,ncp_m{k}(:,tt),'k');
+    
+end
+
+
 %% Ion temperature:
 figure('color','w')
 k = 1;

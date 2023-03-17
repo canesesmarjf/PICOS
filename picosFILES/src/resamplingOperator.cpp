@@ -1,28 +1,59 @@
 #include "resamplingOperator.h"
 
-RS_operator_TYP::RS_operator_TYP()
+RS_TYP::RS_TYP()
 {
   cout << "Constructor for RS_TYP" << endl;
 }
 
-bool RS_operator_TYP::IsResamplingNeeded(params_TYP * params, ions_TYP * IONS)
+RS_TYP::RS_TYP(params_TYP * params, vector<ions_TYP> * IONS, vector<binaryTree_TYP> * tree)
 {
+  cout << "Overloaded constructor for RS_TYP" << endl;
+
   // Get geometric data:
-  double L = params->mesh_params.Lx_max - params->mesh_params.Lx_min;
-  double dx = params->mesh_params.dx;
-  int Nx = params->mesh_params.Nx;
+  _L  = params->mesh_params.Lx_max - params->mesh_params.Lx_min;
+  _dx = params->mesh_params.dx;
+  _Nx = params->mesh_params.Nx;
 
+  // Number of ion species:
+  _numIONS = IONS->size();
+
+  // Mean computational particle density:
+  _mean_ncp_m = zeros(_numIONS);
+  for (int ss = 0; ss < _numIONS; ss++)
+  {
+    vec ncp_m = IONS->at(ss).ncp_m.subvec(0,_Nx-2);
+    _mean_ncp_m.at(ss) = sum(ncp_m)*_dx/_L;
+  }
+  _mean_ncp_m.print("_mean_ncp_m = ");
+
+  // Create empty binary tree vector:
+  //tree->resize(_numIONS);
+
+  // Construct all elements of binary tree vector:
+  for (int ss = 0; ss < _numIONS; ss++)
+  {
+    double x_left  = params->mesh_params.Lx_min;
+    double x_right = params->mesh_params.Lx_max;
+    int depth_max  = 6;
+    int num_elem   = IONS->at(ss).N_CP_MPI;
+    tree->push_back(binaryTree_TYP(x_left, x_right, depth_max, num_elem));
+  }
+
+}
+
+bool RS_TYP::IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, int ss)
+{
   // Get computational particle density:
-  vec ncp_m = IONS->ncp_m.subvec(0,Nx-2);
+  vec ncp_m = IONS->at(ss).ncp_m.subvec(0,_Nx-2);
 
-  // Mean computational particle density
-  double mean_ncp_m = sum(ncp_m)*dx/L;
+  // // Mean computational particle density
+  // double mean_ncp_m = sum(ncp_m)*_dx/_L;
 
   // Calculate metric:
-  arma::vec dncp_m = ncp_m - mean_ncp_m/2;
+  arma::vec dncp_m = ncp_m - _mean_ncp_m[ss]/2;
 
   // Check if dncp_m becomes negative:
-  for (int m = 0; m < Nx; m++)
+  for (int m = 0; m < _Nx; m++)
   {
     if (dncp_m.at(m) < 0)
     {
@@ -33,17 +64,17 @@ bool RS_operator_TYP::IsResamplingNeeded(params_TYP * params, ions_TYP * IONS)
   return false;
 }
 
-void RS_operator_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS)
+void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS, vector<binaryTree_TYP> * tree)
 {
   if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
   {
-    for (int ss = 0; ss < IONS->size(); ss++)
+    for (int ss = 0; ss < _numIONS; ss++)
     {
-      if (IsResamplingNeeded(params,&IONS->at(ss)))
+      if (IsResamplingNeeded(params,IONS,ss))
       {
         cout << "Apply resample, species " << ss << endl;
-        // Assemble binary tree
-        // Assemble vector of nodes:
+        tree->at(ss).insert_all(&IONS->at(ss).x_p);
+        
         // Determine deficit/surplus nodes:
         // Calculate required memory locations to repurpose
         // Loop over surplus nodes to gather memory locations

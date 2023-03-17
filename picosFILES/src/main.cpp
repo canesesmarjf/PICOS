@@ -21,6 +21,7 @@
 #include "particleBC.h"
 #include "collisionOperator.h"
 #include "resamplingOperator.h"
+#include "binaryTree.h"
 // #include "rfOperator.h"
 
 // Include headers for parallelization:
@@ -103,9 +104,6 @@ int main(int argc, char* argv[])
   // Initialize ions using IC profiles:
   init.initialize_ions(&params,&IC,&mesh,&IONS);
 
-  // Reampling operator:
-  RS_operator_TYP RS_operator;
-
   // Define characteristic scales and broadcast them to all processes in COMM_WORLD:
   units.defineCharacteristicScalesAndBcast(&params, &IONS, &CS);
 
@@ -164,6 +162,14 @@ int main(int argc, char* argv[])
     HDF_simple.saveData(fileName,&params,&fields,&IONS);
   }
 
+  // Create binary tree vector:
+  // =========================================================================
+  vector<binaryTree_TYP> tree;
+
+  // Reampling operator:
+  // =========================================================================
+  RS_TYP RS(&params,&IONS,&tree);
+
   // Create RF operator object:
   // =========================================================================
   // RF_Operator_TYP RF_operator(&params,&CS,&fields,&IONS);
@@ -184,7 +190,7 @@ int main(int argc, char* argv[])
 
     if (params.SW.resample == 1)
     {
-      RS_operator.ApplyResampling_AllSpecies(&params,&mesh,&IONS);
+      RS.ApplyResampling_AllSpecies(&params,&mesh,&IONS,&tree);
     }
 
     // Advance particles and re-inject:

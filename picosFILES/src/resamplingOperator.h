@@ -10,6 +10,7 @@
 #define ARMA_ALLOW_FAKE_GCC
 #include "armadillo"
 #include "types.h"
+#include "binaryTree.h"
 
 // Parallelization libraries:
 #include <omp.h>
@@ -18,15 +19,25 @@
 using namespace std;
 using namespace arma;
 
-class RS_operator_TYP
+class RS_TYP
 {
+  private:
+  double _L;  // Length of computational domain:
+  double _dx; // spatial increment
+  int _Nx;    // Number of grid cells
+  int _numIONS; // Total number of ion species
+  vec _mean_ncp_m; // Mean computational particle density. For each ion species
+
   public:
   // Default constructor:
-  RS_operator_TYP();
+  RS_TYP();
+
+  // Overaloaded constructor:
+  RS_TYP(params_TYP * params, vector<ions_TYP> * IONS, vector<binaryTree_TYP> * tree);
 
   // Methods:
-  bool IsResamplingNeeded(params_TYP * params, ions_TYP * IONS);
-  void ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS);
+  bool IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, int ss);
+  void ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS, vector<binaryTree_TYP> * tree);
 
 // What does the construct need?
 // It needs to method that takes in IONS, loops over all species and first calculates the metric
@@ -42,8 +53,6 @@ class RS_operator_TYP
 
   // node binaryTree
   // std::vector<node*> node_vector;
-
-
 
 };
 

@@ -50,8 +50,8 @@ bool RS_TYP::IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, in
   // double mean_ncp_m = sum(ncp_m)*_dx/_L;
 
   // Calculate metric:
-  // arma::vec dncp_m = ncp_m - _mean_ncp_m[ss]/2;
-  arma::vec dncp_m = ncp_m - _mean_ncp_m[ss]/3;
+  arma::vec dncp_m = ncp_m - _mean_ncp_m[ss]*0.66;
+  // arma::vec dncp_m = ncp_m - _mean_ncp_m[ss]/3;
 
   // Check if dncp_m becomes negative:
   for (int m = 0; m < _Nx; m++)

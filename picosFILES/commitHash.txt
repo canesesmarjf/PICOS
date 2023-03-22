@@ -1,1 +1,1 @@
-a67fb9f enabled all PIC methods except the advanceParticle ones, we will now enable the collision operator instead and complete that'
+3882e67 Succesfully added the binaryTree source code that has already been developed and tested that when we pass in IONS->at(ss).x_p, the points appear to get be succesfully indexed in the tree. need to add a way to outpt the data to confirm that it is working properly

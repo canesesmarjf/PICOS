@@ -15,7 +15,7 @@ tree_params_TYP::tree_params_TYP(double x_left, double x_right, int depth_max, i
   this->num_nodes = pow(2,depth_max);
   this->length = x_right - x_left;
   this->dx = (x_right - x_left)/this->num_nodes;
-  this->elem_per_node = round(num_elem/this->num_nodes);
+  this->mean_elems_per_node = round(num_elem/this->num_nodes);
   this->node_centers = arma::linspace(x_left,(x_right-dx),this->num_nodes) + dx/2;
 }
 
@@ -28,18 +28,17 @@ binaryTree_TYP::binaryTree_TYP(double x_left, double x_right, int depth_max, int
   // Allocate memory to node list, which is a vector of pointers:
   node_list.resize(tree_params->num_nodes);
 
+  // Allocate memory to count profile, which is an arma::vec created ti store x_count for all nodes
+  count_profile.set_size(tree_params->num_nodes);
+  delta_profile.set_size(tree_params->num_nodes);
+  total_deficit_elems = 0;
+
   // Create root node:
   int depth_root = 0;
   root = new node_TYP(tree_params->x_left,tree_params->x_right,depth_root,tree_params);
 
-  // Traverse entire tree:
-  // This is done by inserting node_centers so as to create all the node
-  // at the final depth while not writting any data to the nodes.
-  for (int nn = 0; nn < tree_params->num_nodes; nn++)
-  {
-    bool write_data = false;
-    root->insert(nn,&tree_params->node_centers,write_data);
-  }
+  // Assemble empty binary tree:
+  assemble_empty_tree();
 
   // Assemble list of nodes into a vector of pointers:
   assemble_node_list();
@@ -50,6 +49,9 @@ void binaryTree_TYP::insert_all(arma::vec * r)
 {
   // Insert points into nodes:
   this->root->insert_all(r);
+
+  // Populate the count_profile to allow classification of deficit and surplus nodes:
+  assemble_count_profile();
 }
 
 // ================================================================================================================
@@ -84,8 +86,35 @@ void binaryTree_TYP::assemble_node_list()
 }
 
 // ================================================================================================================
+void binaryTree_TYP::assemble_count_profile()
+{
+  for (int nn = 0; nn < tree_params->num_nodes; nn++)
+  {
+    // Copy the value of x_value to each element of count_profile;
+    count_profile.at(nn) = node_list.at(nn)->x_count;
+  }
+}
+
+// ================================================================================================================
+void binaryTree_TYP::assemble_empty_tree()
+{
+  // The objective of this method is to traverse the entire tree down to the final layer of nodes.
+  // This is done by inserting positions corresponding to the node_centers so as to create all the nodes
+  // at the final depth while not writting any data to the nodes.
+  // This process allows us to preallocate memory to the final nodes based on the estimated
+  // mean elements per node (See tree_params)
+
+  for (int nn = 0; nn < tree_params->num_nodes; nn++)
+  {
+    bool write_data = false;
+    root->insert(nn,&tree_params->node_centers,write_data);
+  }
+}
+
+// ================================================================================================================
 void binaryTree_TYP::clear_all()
 {
+  ix_repurpose.clear();
   for (int nn = 0; nn < node_list.size(); nn++)
   {
     node_list[nn]->x_count = 0;
@@ -137,6 +166,59 @@ void binaryTree_TYP::save_data_all(string prefix)
 }
 
 // ================================================================================================================
+void binaryTree_TYP::calculate_delta_profile()
+{
+  // Based on the mean_elems_per_node, we can calculate whether a node is in deficit or surplus.
+  // This calculation is done on a per MPI rank basis:
+  delta_profile = count_profile - tree_params->mean_elems_per_node;
+
+  // Calculate total number of memory location to repurpose using the deficit nodes:
+  arma::uvec rng = arma::find(delta_profile < 0);
+  arma::ivec deficit_elems   = -1*delta_profile.elem(rng);
+  total_deficit_elems = arma::sum(deficit_elems);
+}
+
+// ================================================================================================================
+void binaryTree_TYP::gather_all_surplus_indices()
+{
+  for (int nn = 0; nn < node_list.size(); nn++)
+  {
+    if (delta_profile[nn] > 0)
+    {
+      // Number of surplus computational particles:
+      int num_surplus = delta_profile[nn];
+
+      // Determine indices of all surplus computational particles:
+      std::vector<uint>& ix = node_list[nn]->ix;
+      auto it_end   = ix.end();
+      auto it_start = std::prev(it_end,num_surplus);
+      std::vector<uint> ix_subset(it_start,it_end);
+
+      // Copy indices of surplus computational particles to ix_repurpose:
+      for (int jj = 0; jj < num_surplus; jj++)
+      {
+        ix_repurpose.push_back(ix.back());
+        ix.pop_back();
+      }
+
+      // New number of computational particles:
+      int x_count_new = node_list[nn]->x_count - num_surplus;
+      int delta_x_count = num_surplus;
+      double weight_factor = 1 + static_cast<double>(delta_x_count)/x_count_new;
+
+      // Decrement x_count by amount removed:
+      // node_list[nn]->x_count -= num_surplus;
+    }
+  }
+
+  // Potentially need a barrier here
+
+  // Update count profile:
+  assemble_count_profile();
+}
+
+
+// ================================================================================================================
 node_TYP::node_TYP()
 {
   cout << "default constructor" << endl;
@@ -164,7 +246,7 @@ node_TYP::node_TYP(double x_left, double x_right, int depth, tree_params_TYP * t
     // memory to this node as it will be a data holding node.
 
     // Reserve memory:
-    this->ix.reserve(2*tree_params->elem_per_node);
+    this->ix.reserve(2*tree_params->mean_elems_per_node);
   }
 }
 
@@ -264,7 +346,6 @@ bool node_TYP::IsPointInsideBoundary(double p)
 bool node_TYP::HasNodeReachMaxDepth()
 {
     int depth     = this->depth;
-    // int depth_max = this->depth_max;
 
     if (depth >= tree_params->depth_max)
     {

@@ -33,7 +33,7 @@ public:
   double length; // Length of entire domain
   double dx;
   int num_nodes; // Number of nodes based on 2^depth_max
-  int elem_per_node; // number of elements per node based on a uniform distribution
+  int mean_elems_per_node; // number of elements per node based on a uniform distribution
   arma::vec node_centers; // Vector containing the center locations of the nodes
 
   // Constructor:
@@ -92,10 +92,17 @@ public:
   binaryTree_TYP(){};
   binaryTree_TYP(double x_left, double x_right, int depth_max, int num_elem);
 
-  // Variables:
-  std::vector<node_TYP *> node_list; // List of pointers to nodes at maxmimum depth
+  // Tree parameters:
   tree_params_TYP * tree_params; // Pointer to tree attributes
-  arma::ivec count_profile; // Record the profile of x_count
+
+  // Tree node list:
+  std::vector<node_TYP *> node_list; // List of pointers to nodes at maxmimum depth
+
+  // Data variables:
+  arma::ivec count_profile; // Profile of x_count
+  arma::ivec delta_profile; // Record nodes that have +ve (surplus) or -ve (deficit) number of particles relative to mean_elems_per_node
+  uint total_deficit_elems; // Total number of elements in deficit. Represents the number of elemnts from the surplues region to repurpose.
+  std::vector<uint> ix_repurpose; // List of indices to repurpose from surplus nodes
 
   // Methods:
   void insert_all(arma::vec * r);
@@ -105,12 +112,15 @@ public:
   void clear_all();
   void print_info(int ii);
   void save_data_all(string prefix);
+  void calculate_delta_profile();
+  void gather_all_surplus_indices();
 
 private:
   // Variables:
   node_TYP * root; // Root node of tree
 
   // Methods:
+  void assemble_empty_tree();
   void assemble_node_list();
   void assemble_count_profile();
   void save_data(int ii, string prefix);

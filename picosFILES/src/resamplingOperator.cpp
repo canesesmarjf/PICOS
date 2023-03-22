@@ -73,10 +73,18 @@ void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, ve
       if (IsResamplingNeeded(params,IONS,ss))
       {
         cout << "Apply resample, species " << ss << endl;
+        // Insert all computational particle positions into binary tree:
+        tree->at(ss).clear_all();
         tree->at(ss).insert_all(&IONS->at(ss).x_p);
-        
-        // Determine deficit/surplus nodes:
-        // Calculate required memory locations to repurpose
+
+        // Determine which nodes have surplus or deficit of computational particles:
+        tree->at(ss).calculate_delta_profile();
+
+        // Gather all particle indices from surplus nodes:
+        tree->at(ss).gather_all_surplus_indices();
+
+
+
         // Loop over surplus nodes to gather memory locations
         //    + Copy surplus indices to repurpose_list
         //    + Set -1 to repurposed indices

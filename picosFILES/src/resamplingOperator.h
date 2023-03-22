@@ -39,21 +39,6 @@ class RS_TYP
   bool IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, int ss);
   void ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS, vector<binaryTree_TYP> * tree);
 
-// What does the construct need?
-// It needs to method that takes in IONS, loops over all species and first calculates the metric
-// Whether or not resampling is needed.
-// IF resampling is needed, then proceed to take in IONS, params and/or mesh and create a binary tree.
-// we could create a binary tree inmeddiateby after the initial placement of ions, This will create all the nodes we will ever require
-// Each ion species requires its own resample_operatar, so in main we can create vector <resample_TYP> resample
-// We also ahve:
-//     if (params.SW.resample == 1)
-//    {
-//
-//    }
-
-  // node binaryTree
-  // std::vector<node*> node_vector;
-
 };
 
 

@@ -188,11 +188,6 @@ int main(int argc, char* argv[])
   for(int tt=0; tt<params.timeIterations; tt++)
   {
 
-    if (params.SW.resample == 1)
-    {
-      RS.ApplyResampling_AllSpecies(&params,&mesh,&IONS,&tree);
-    }
-
     // Advance particles and re-inject:
     // =====================================================================
     if (params.SW.advancePos == 1)
@@ -202,6 +197,11 @@ int main(int argc, char* argv[])
 
         // Re-inject particles that leave computational domain:
         particleBC.applyParticleReinjection(&params,&CS,&fields,&IONS);
+
+        if (params.SW.resample == 1)
+        {
+          RS.ApplyResampling_AllSpecies(&params,&mesh,&IONS,&tree);
+        }
 
         // Assign cell:
         PIC.assignCell_AllSpecies(&params,&mesh,&IONS);

@@ -200,23 +200,119 @@ void binaryTree_TYP::gather_all_surplus_indices()
         ix_repurpose.push_back(ix.back());
         ix.pop_back();
       }
+    }
+  }
+}
+
+// ================================================================================================================
+void binaryTree_TYP::renormalize_surplus_nodes(ions_TYP * IONS)
+{
+  for (int nn = 0; nn < node_list.size(); nn++)
+  {
+    if (delta_profile[nn] > 0)
+    {
+      // Number of surplus computational particles:
+      int num_surplus = delta_profile[nn];
 
       // New number of computational particles:
       int x_count_new = node_list[nn]->x_count - num_surplus;
+
+      // Calculate new particle weight:
       int delta_x_count = num_surplus;
       double weight_factor = 1 + static_cast<double>(delta_x_count)/x_count_new;
 
-      // Decrement x_count by amount removed:
-      // node_list[nn]->x_count -= num_surplus;
+      // Loop over all particles in node and rescale weight:
+      for (int jj = 0; jj < node_list[nn]->ix.size(); jj++)
+      {
+        int ii = node_list[nn]->ix[jj];
+        IONS->a_p(ii) *= weight_factor;
+      }
+
+      // Update x_count:
+      node_list[nn]->x_count = x_count_new;
     }
   }
 
-  // Potentially need a barrier here
+  // Update count profile:
+  assemble_count_profile();
+};
+
+// ================================================================================================================
+void binaryTree_TYP::renormalize_deficit_nodes(ions_TYP * IONS)
+{
+  // Create random number generator variables:
+  arma::arma_rng::set_seed_random();
+
+  for (int nn = 0; nn < node_list.size(); nn++)
+  {
+    if (delta_profile[nn] < 0)
+    {
+      // Number of deficit computational particles:
+      int num_deficit = delta_profile[nn];
+
+      // Number of computational particles indexed in present node:
+      int x_count_start = node_list[nn]->x_count;
+      int x_count_end   = x_count_start;
+
+      // Vector containing indices of computational particles in present node:
+      std::vector<uint>& ix = node_list[nn]->ix;
+
+      /*
+      // New number of computational particles:
+      int x_count_new = node_list[nn]->x_count - num_deficit;
+
+      // Calculate new particle weight:
+      int delta_x_count = num_deficit;
+      double weight_factor = 1 + static_cast<double>(delta_x_count)/x_count_new;
+
+      // Loop over all particles in node, create copies and rescale weight:
+      for (int jj = 0; jj < node_list[nn]->ix.size(); jj++)
+      {
+        int ii = node_list[nn]->ix[jj];
+        IONS->a_p(ii) *= weight_factor;
+      }
+
+      // Update x_count:
+      node_list[nn]->x_count = x_count_new;
+      */
+
+      for (int jj = 0; jj < -num_deficit; jj ++)
+      {
+        // Select a computational particle from present node at random:
+        uint jj_random = arma::randi<uint>(arma::distr_param(0,x_count_start-1));
+        uint ii = ix[jj_random];
+
+        // Copy attributes of iith computational particle:
+        double x_p    = IONS->x_p(ii);
+        double vpar_p = IONS->v_p(ii,0);
+        double vper_p = IONS->v_p(ii,1);
+        double a_p    = IONS->a_p(ii);
+
+        // Create a copy of the iith particle with the memory locations to be repurposed:
+        uint ii_copy = ix_repurpose.back();
+        IONS->x_p(ii_copy)   = x_p;
+        IONS->v_p(ii_copy,0) = vpar_p;
+        IONS->v_p(ii_copy,1) = vper_p;
+
+        // Split the computational particle weight to preserve mass:
+        IONS->a_p(ii)      = a_p/2;
+        IONS->a_p(ii_copy) = a_p/2;
+
+        // Remove repurposed index:
+        ix_repurpose.pop_back();
+
+        // Increment x_count:
+        x_count_end++;
+      }
+
+      // Update x_count:
+      node_list[nn]->x_count = x_count_end;
+    }
+  }
 
   // Update count profile:
   assemble_count_profile();
-}
-
+};
 
 // ================================================================================================================
 node_TYP::node_TYP()

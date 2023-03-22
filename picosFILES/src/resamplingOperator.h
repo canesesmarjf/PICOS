@@ -38,7 +38,7 @@ class RS_TYP
   // Methods:
   bool IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, int ss);
   void ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS, vector<binaryTree_TYP> * tree);
-
+  // void calculate_delta_profile(binaryTree_TYP * tree);
 };
 
 

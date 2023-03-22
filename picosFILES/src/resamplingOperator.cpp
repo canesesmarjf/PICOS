@@ -50,7 +50,8 @@ bool RS_TYP::IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, in
   // double mean_ncp_m = sum(ncp_m)*_dx/_L;
 
   // Calculate metric:
-  arma::vec dncp_m = ncp_m - _mean_ncp_m[ss]/2;
+  // arma::vec dncp_m = ncp_m - _mean_ncp_m[ss]/2;
+  arma::vec dncp_m = ncp_m - _mean_ncp_m[ss]/3;
 
   // Check if dncp_m becomes negative:
   for (int m = 0; m < _Nx; m++)
@@ -73,17 +74,24 @@ void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, ve
       if (IsResamplingNeeded(params,IONS,ss))
       {
         cout << "Apply resample, species " << ss << endl;
-        // Insert all computational particle positions into binary tree:
+        // Clear all previous states:
         tree->at(ss).clear_all();
+
+        // Insert all computational particle positions into binary tree:
         tree->at(ss).insert_all(&IONS->at(ss).x_p);
 
         // Determine which nodes have surplus or deficit of computational particles:
+        // calculate_delta_profile(&tree->at(ss));
         tree->at(ss).calculate_delta_profile();
 
-        // Gather all particle indices from surplus nodes:
+        // Gather all computational particle indices from surplus nodes:
         tree->at(ss).gather_all_surplus_indices();
 
+        // Renormalize distributions in all surplus nodes:
+        tree->at(ss).renormalize_surplus_nodes(&IONS->at(ss));
 
+        // Resample and renormalize distributions in all deficit nodes:
+        tree->at(ss).renormalize_deficit_nodes(&IONS->at(ss));
 
         // Loop over surplus nodes to gather memory locations
         //    + Copy surplus indices to repurpose_list
@@ -98,7 +106,7 @@ void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, ve
       }
       else
       {
-        cout << "Do not resample, species " << ss << endl;
+        // cout << "Do not resample, species " << ss << endl;
       }
     }
 

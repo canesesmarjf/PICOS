@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <armadillo>
+#include <random>
+#include "types.h"
 using namespace std;
 
 // This header file contains three main classes:
@@ -114,6 +116,8 @@ public:
   void save_data_all(string prefix);
   void calculate_delta_profile();
   void gather_all_surplus_indices();
+  void renormalize_surplus_nodes(ions_TYP * IONS);
+  void renormalize_deficit_nodes(ions_TYP * IONS);
 
 private:
   // Variables:

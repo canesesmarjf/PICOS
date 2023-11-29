@@ -20,7 +20,7 @@
 #include "fieldSolve.h"
 #include "particleBC.h"
 #include "collisionOperator.h"
-// #include "rfOperator.h"
+#include "rfOperator.h"
 
 // Include headers for parallelization:
 // =============================================================================
@@ -148,21 +148,21 @@ int main(int argc, char* argv[])
   // =========================================================================
   PIC_TYP PIC(&params, &mesh, &fields, &IONS, &electrons);
 
-  HDF_simple_TYP HDF_simple;
-  if (params.mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
-  {
-    string fileName;
-    stringstream kk;
-    kk << params.mpi.MPI_DOMAIN_NUMBER;
-
-    // General:
-    fileName = "file_1_rank_" + kk.str() + ".h5";
-    HDF_simple.saveData(fileName,&params,&fields,&IONS);
-  }
+  // HDF_simple_TYP HDF_simple;
+  // if (params.mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
+  // {
+  //   string fileName;
+  //   stringstream kk;
+  //   kk << params.mpi.MPI_DOMAIN_NUMBER;
+  //
+  //   // General:
+  //   fileName = "file_1_rank_" + kk.str() + ".h5";
+  //   HDF_simple.saveData(fileName,&params,&fields,&IONS);
+  // }
 
   // Create RF operator object:
   // =========================================================================
-  // RF_Operator_TYP RF_operator(&params,&CS,&fields,&IONS);
+  RF_Operator_TYP RF_operator(&params,&CS,&fields,&IONS);
 
   // Save 1st output:
   // =========================================================================
@@ -230,9 +230,10 @@ int main(int argc, char* argv[])
     // =====================================================================
     if (params.SW.RFheating == 1)
     {
-        if (params.currentTime >= params.RF.t_ON*CS.time && params.currentTime <= params.RF.t_OFF*CS.time)
+        // if (params.currentTime >= params.RF.t_ON*CS.time && params.currentTime <= params.RF.t_OFF*CS.time)
+        if (tt >= params.RF.t_ON && tt <= params.RF.t_OFF)
         {
-            // RF_operator.ApplyRfHeating_AllSpecies(&params,&CS,&fields,&IONS);
+            RF_operator.ApplyRfHeating_AllSpecies(&params,&CS,&fields,&IONS);
         }
     }
 

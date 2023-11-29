@@ -166,7 +166,7 @@ void particleBC_TYP::calculateParticleWeight(params_TYP * params, const CS_TYP *
             double GSUM = params->ions_BC[ss].GSUM;
             double a_p_new = GSUM/uN_total;
 
-            if (a_p_new > 1000)
+            if (a_p_new > 5000)
             {
               if (params->mpi.IS_PARTICLES_ROOT)
               {
@@ -175,7 +175,7 @@ void particleBC_TYP::calculateParticleWeight(params_TYP * params, const CS_TYP *
                 cout << "a_p_new:" << a_p_new << endl;
                 cout << "GSUM:" << GSUM << endl;
               }
-              a_p_new = 1000;
+              a_p_new = 5000;
             }
             // IONS->at(ss).p_BC.a_p_new = a_p_new;
             params->ions_BC[ss].a_p_new = a_p_new;
@@ -464,10 +464,13 @@ void particleBC_TYP::particleReinjection(int ii, params_TYP * params, const CS_T
 		arma_rng::set_seed_random();
 		arma::vec phi = 2.0*M_PI*randu<vec>(1);
 
+    // Generate an additional random number that is either +1 or -1
+    int sign = (rand() % 2 == 0) ? 1 : -1; // Generate random number: 1 or -1
+
 		// Gaussian distribution in space:
 		double mean_x  = params->ions_BC[ss].mean_x;
 		double sigma_x = params->ions_BC[ss].sigma_x;
-		double new_x   = mean_x;
+		double new_x   = mean_x*sign;
     new_x += (sigma_x)*sqrt( -2*log(R(0)) )*cos(phi(0));
 
     // Domain boundaries:

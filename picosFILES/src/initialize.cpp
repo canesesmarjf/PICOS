@@ -289,8 +289,8 @@ void init_TYP::read_inputFile(params_TYP * params)
   params->RF.freq       = stod( parametersStringMap["RF_freq"]);
   params->RF.x1         = stod( parametersStringMap["RF_x1"]  );
   params->RF.x2         = stod( parametersStringMap["RF_x2"]  );
-  params->RF.t_ON       = stod( parametersStringMap["RF_t_ON"]  );
-  params->RF.t_OFF      = stod( parametersStringMap["RF_t_OFF"]  );
+  params->RF.t_ON       = stoi( parametersStringMap["RF_t_ON"]  );
+  params->RF.t_OFF      = stoi( parametersStringMap["RF_t_OFF"]  );
   params->RF.kpar       = stod( parametersStringMap["RF_kpar"]);
   params->RF.kper       = stod( parametersStringMap["RF_kper"]);
   params->RF.handedness = stoi( parametersStringMap["RF_handedness"]);
@@ -557,6 +557,9 @@ void init_TYP::read_IC_profiles(params_TYP * params, mesh_TYP * mesh, IC_TYP * I
   arma::vec y;
   double offset;
   double scale;
+
+  cout << "here I am" << endl;
+  cout << "fullPath = " << fullPath << endl;
 
   // Load and assign data:
   y.load(arma::hdf5_name(fullPath,"x"));

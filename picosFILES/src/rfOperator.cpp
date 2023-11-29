@@ -183,7 +183,7 @@ void RF_Operator_TYP::calculateRfTerms_AllSpecies(params_TYP * params, CS_TYP * 
 {
     for (int ss=0; ss<IONS->size();ss++)
     {
-        int N_CP = IONS->at(ss).N_CP;
+        int N_CP = IONS->at(ss).N_CP_MPI;
 
         #pragma omp parallel for default(none) shared(params, IONS, ss, CS, fields, std::cout) firstprivate(N_CP)
         for(int ii=0; ii<N_CP; ii++)

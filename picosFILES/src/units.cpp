@@ -378,8 +378,11 @@ void units_TYP::normalizeVariables(params_TYP * params, mesh_TYP * mesh, vector<
   params->RF.freq *= CS->time;
   params->RF.x1   /= CS->length;
   params->RF.x2   /= CS->length;
-  params->RF.t_ON  /= CS->time;
-  params->RF.t_OFF /= CS->time;
+
+  // Commented so that t_ON and t_OFF are interpreted as time steps (tt):
+  // params->RF.t_ON  /= CS->time;
+  // params->RF.t_OFF /= CS->time;
+  
   params->RF.kpar *= CS->length;
   params->RF.kper *= CS->length;
 

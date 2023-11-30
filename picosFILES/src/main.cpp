@@ -21,6 +21,7 @@
 #include "particleBC.h"
 #include "collisionOperator.h"
 #include "rfOperator.h"
+#include "rs_operator.h"
 
 // Include headers for parallelization:
 // =============================================================================
@@ -159,6 +160,11 @@ int main(int argc, char* argv[])
   //   fileName = "file_1_rank_" + kk.str() + ".h5";
   //   HDF_simple.saveData(fileName,&params,&fields,&IONS);
   // }
+
+  // Resampling operator:
+  // =========================================================================
+  vector<particle_tree_TYP> particle_tree;
+  RS_TYP rs_operator(&params,&CS,&IONS,&particle_tree);
 
   // Create RF operator object:
   // =========================================================================

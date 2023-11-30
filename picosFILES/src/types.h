@@ -409,14 +409,15 @@ struct CV_TYP
 		Tpar = 0;
 		Tper = 0;
 	}
-  
+
 };
 
 //  Define structure to store switches that control physics modules:
 // =============================================================================
 struct SW_TYP
 {
-	int EfieldSolve;
+  int resample;
+  int EfieldSolve;
 	int BfieldSolve;
 	int Collisions;
 	int RFheating;
@@ -425,6 +426,7 @@ struct SW_TYP
 
 	SW_TYP()
 	{
+    resample      = 0;
 		EfieldSolve   = 0;
 		BfieldSolve   = 0;
 		Collisions    = 0;

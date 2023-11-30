@@ -249,6 +249,7 @@ void init_TYP::read_inputFile(params_TYP * params)
 
   // Switches:
   // -------------------------------------------------------------------------
+  params->SW.resample      = stoi( parametersStringMap["SW_resample"] );
   params->SW.EfieldSolve   = stoi( parametersStringMap["SW_EfieldSolve"] );
   params->SW.BfieldSolve   = stoi( parametersStringMap["SW_BfieldSolve"] );
   params->SW.Collisions    = stoi( parametersStringMap["SW_Collisions"] );

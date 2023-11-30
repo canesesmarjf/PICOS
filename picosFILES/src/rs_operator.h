@@ -27,7 +27,9 @@ class RS_TYP
   int _Nx;    // Number of grid cells
   int _numIONS; // Total number of ion species
   vec _mean_ncp_m; // Mean computational particle density. For each ion species
-
+  bt_params_TYP bt_params;
+  qt_params_TYP qt_params;
+  
   public:
   // Default constructor:
   RS_TYP();

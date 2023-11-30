@@ -38,13 +38,11 @@ RS_TYP::RS_TYP(params_TYP * params, CS_TYP *CS, vector<ions_TYP> * IONS, vector<
     double v_p_max = sqrt(2*F_KB_DS*E_max/mass);
 
     // Create tree parameters:
-    bt_params_TYP bt_params;
     bt_params.dimensionality = 1;
     bt_params.min       = {params->mesh_params.Lx_min};
     bt_params.max       = {params->mesh_params.Lx_max};
-    bt_params.max_depth = {+6};
+    bt_params.max_depth = {+7};
 
-    qt_params_TYP qt_params;
     qt_params.min = {-v_p_max,-v_p_max};
     qt_params.max = {+v_p_max,+v_p_max};
     qt_params.min_depth = +5;
@@ -61,7 +59,7 @@ RS_TYP::RS_TYP(params_TYP * params, CS_TYP *CS, vector<ions_TYP> * IONS, vector<
     }
   }
 }
-/*
+
 bool RS_TYP::IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, int ss)
 {
   // Get computational particle density:
@@ -86,7 +84,7 @@ bool RS_TYP::IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, in
   return false;
 }
 
-void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS, vector<binaryTree_TYP> * tree)
+void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS, vector<particle_tree_TYP> * particle_tree)
 {
   if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
   {
@@ -95,6 +93,10 @@ void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, ve
       if (IsResamplingNeeded(params,IONS,ss))
       {
         cout << "Apply resample, species " << ss << endl;
+
+        particle_tree->at(ss).populate_tree("binary and quad");
+        particle_tree->at(ss).resample_distribution();
+        /*
         // Clear all previous states:
         tree->at(ss).clear_all();
 
@@ -113,17 +115,7 @@ void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, ve
 
         // Resample and renormalize distributions in all deficit nodes:
         tree->at(ss).renormalize_deficit_nodes(&IONS->at(ss));
-
-        // Loop over surplus nodes to gather memory locations
-        //    + Copy surplus indices to repurpose_list
-        //    + Set -1 to repurposed indices
-        //    + scale weights of current surplus cell using a factor a_new = a_old*(1 + dN/N1),
-        // where dN is number of indices repurposed and N1 is new number of indices which should approach the mean
-        //  end loop
-        // Loop over deficit nodes:
-        //    + replicate each particle until all indices_to_be_repurposed have been used
-        //    + Scale weight by 1/2
-        //  end loop
+        */
       }
       else
       {
@@ -134,4 +126,3 @@ void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, ve
   } // MPI_COLOR
 
 }
-*/

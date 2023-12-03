@@ -129,6 +129,20 @@ void vranic_TYP::down_sample_node_2D(merge_cell_TYP * set_N, merge_cell_TYP * se
   arma::vec& yi_M = set_M->yi;
   arma::vec& zi_M = set_M->zi;
 
+  // Check the input for problematic data:
+  for (int nn = 0; nn < wi.size(); nn++)
+  {
+    if (wi[nn] == -1)
+      cout << "vranic in wi == -1" << endl;
+    if (wi[nn] < 1e-6)
+      //cout << "vranic in wi < 1e-6" << endl;
+
+    if (yi[nn] == -1 || zi[nn] == -1)
+      cout << "vranic in yi or zi == -1" << endl;
+    if (isnan(zi[nn]) || isnan(zi[nn]))
+      cout << "vranic in isnan yi or zi" << endl;
+  }
+
   // Since this method has been repurposed from the 3D case, to make it 2D we need to neglect the non-velocity variable which in this case is the "xi" variable (physical space):
   xi = xi*0;
 
@@ -231,6 +245,22 @@ void vranic_TYP::down_sample_node_2D(merge_cell_TYP * set_N, merge_cell_TYP * se
   xi_M = E_x + dx_M;
   yi_M = E_y + dy_M;
   zi_M = E_z + dz_M;
+
+  // Check the output for problematic data:
+  for (int nn = 0; nn < wi_M.size(); nn++)
+  {
+    if (wi_M[nn] == -1)
+      cout << "vranic OUT wi == -1" << endl;
+    if (wi_M[nn] < 1e-6)
+      //cout << "vranic OUT wi < 1e-6" << endl;
+
+    if (yi_M[nn] == -1 || zi_M[nn] == -1)
+      cout << "vranic OUT yi or zi == -1" << endl;
+    if (isnan(zi_M[nn]) || isnan(zi_M[nn]))
+      cout << "vranic OUT isnan yi or zi" << endl;
+  }
+
+
 }
 
 // ======================================================================================

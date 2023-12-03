@@ -348,6 +348,15 @@ void particle_tree_TYP::downsample_surplus_nodes(vector<uint> * ip_free)
         set_N.zi = v_p_subset.col(1);
         set_N.wi = a_p->elem(ip_subset);
 
+        for (int jj = 0; jj < N; jj++)
+        {
+          if (set_N.wi(jj) == -1)
+            cout << "RS, wi == -1" << endl;
+
+          //if (set_N.wi(jj) < 1e-6)
+            //cout << "RS, wi < 1e-6" << endl;
+        }
+
         // Calculate set M based on set N:
         // We have observed that using the 2D implementation we get conservation of energy down to the machine precision (1E-14); however, using the 3D method, we get conservation of energy not as good (1E-5):
         vranic.down_sample_node_2D(&set_N, &set_M);
@@ -381,6 +390,15 @@ void particle_tree_TYP::downsample_surplus_nodes(vector<uint> * ip_free)
 
             // Set N:
             (*x_p)(jj) = set_N.xi(ii);
+
+            if (isnan(set_M.yi(ii)))
+              cout << "RS, isnan" << endl;
+
+            if (isnan(set_M.zi(ii)))
+              cout << "RS, isnan" << endl;
+
+            if (set_M.wi(ii) == -1)
+              cout << "wi == -1" << endl;
 
             // Set M:
             (*v_p)(jj,0) = set_M.yi(ii);
@@ -439,7 +457,7 @@ void particle_tree_TYP::upsample_deficit_nodes(vector<uint> * ip_free)
 
   for (int ll = 0; ll < layer.n_elem; ll++)
   {
-    cout << "ll = " << ll << endl;
+    // cout << "ll = " << ll << endl;
     for (int xx = 0; xx < Nx ; xx++)
     {
       // If ip_free is empty, then stop replication:
@@ -499,6 +517,12 @@ void particle_tree_TYP::upsample_deficit_nodes(vector<uint> * ip_free)
             (*v_p)(jj_free,0) = yi;
             (*v_p)(jj_free,1) = zi;
             (*a_p)(jj_free)   = wi/((double)num_new + 1.0);
+
+            // bool res = wi/((double)num_new + 1.0) < 1e-10;
+            // if (res)
+            // {
+            //   cout << "upsampling wi < 1e-10" << endl;
+            // }
 
             // Modify deficit:
             particle_deficit++;

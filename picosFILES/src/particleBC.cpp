@@ -166,6 +166,12 @@ void particleBC_TYP::calculateParticleWeight(params_TYP * params, const CS_TYP *
             double GSUM = params->ions_BC[ss].GSUM;
             double a_p_new = GSUM/uN_total;
 
+            if (a_p_new < 1e-4)
+            {
+              if (params->mpi.IS_PARTICLES_ROOT)
+                cout << "a_p_new < 1e-4" << endl;
+            }
+
             if (a_p_new > 5000)
             {
               if (params->mpi.IS_PARTICLES_ROOT)

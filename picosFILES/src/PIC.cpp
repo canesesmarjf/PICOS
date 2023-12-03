@@ -283,10 +283,10 @@ void PIC_TYP::interpolateElectrons_AllSpecies(const params_TYP * params, vector<
 void PIC_TYP::interpEM(const params_TYP * params, mesh_TYP * mesh, const ions_TYP * IONS, const fields_TYP * fields, arma::rowvec * ZN, arma::rowvec * EM)
 {
     // Assign cell:
-    double xp   = (*ZN)(0);
-    double xMin = params->mesh_params.Lx_min;
-    double dx   = params->mesh_params.dx;
-    int m       = round( 0.5 + (xp - xMin)/dx ) - 1;
+		double xp   = (*ZN)(0);
+		double xMin = params->mesh_params.Lx_min;
+		double dx   = params->mesh_params.dx;
+		int m       = round( 0.5 + (xp - xMin)/dx ) - 1;
 
     // During RK4, some projections can be go out of bound
     if ( m >= params->mesh_params.Nx)
@@ -384,45 +384,53 @@ void PIC_TYP::advanceParticles(const params_TYP * params, mesh_TYP * mesh, field
 			// Number of particles:
 			int N_CP = IONS->at(ss).N_CP_MPI;
 
-      // Time step:
-      double DT = params->DT;
+			// Time step:
+			double DT = params->DT;
 
 			// Ion mass:
 			double Ma = IONS->at(ss).M;
 
 			#pragma omp parallel for default(none) shared(IONS, params, fields, DT, ss, Ma, std::cout, mesh) firstprivate(N_CP, F_C_DS)
-      for(int ii=0;ii<N_CP;ii++)
+			for(int ii=0;ii<N_CP;ii++)
 			{
-        // Start RK4 solution:
-        //==============================================================
+			// Start RK4 solution:
+			//==============================================================
 
-        // Equations of motion are expressed as follows:
-        //
-        // dZ/dt = F, thus Z1 = Z0 + dZ
-				//
-        // where
-				//
-        // dZ = F(Z0)*dt
-        // Z = [z, vz, vp]
-        // F(1) = +vz
-        // F(2) = -0.5*vp*vp*dB/B + (q/Ma)*E
-        // F(3) = +0.5*vp*vz*dB/B
+			// Equations of motion are expressed as follows:
+			//
+			// dZ/dt = F, thus Z1 = Z0 + dZ
+			//
+			// where
+			//
+			// dZ = F(Z0)*dt
+			// Z = [z, vz, vp]
+			// F(1) = +vz
+			// F(2) = -0.5*vp*vp*dB/B + (q/Ma)*E
+			// F(3) = +0.5*vp*vz*dB/B
 
 				// Assemble vectors to use in RK4 method:
 				arma::rowvec Z0  = zeros<rowvec>(3);
-        arma::rowvec ZN  = zeros<rowvec>(3);
+				arma::rowvec ZN  = zeros<rowvec>(3);
 				arma::rowvec Z1  = zeros<rowvec>(3);
 				arma::rowvec EM  = zeros<rowvec>(3);
-        arma::rowvec F   = zeros<rowvec>(3);
-        arma::rowvec dZ1 = zeros<rowvec>(3);
-        arma::rowvec dZ2 = zeros<rowvec>(3);
-        arma::rowvec dZ3 = zeros<rowvec>(3);
-        arma::rowvec dZ4 = zeros<rowvec>(3);
+				arma::rowvec F   = zeros<rowvec>(3);
+				arma::rowvec dZ1 = zeros<rowvec>(3);
+				arma::rowvec dZ2 = zeros<rowvec>(3);
+				arma::rowvec dZ3 = zeros<rowvec>(3);
+				arma::rowvec dZ4 = zeros<rowvec>(3);
+				arma::rowvec dZ  = zeros<rowvec>(3);
 
 				// Extract particle states:
 				double x    = IONS->at(ss).x_p(ii);
 				double vpar = IONS->at(ss).v_p(ii,0);
 				double vper = IONS->at(ss).v_p(ii,1);
+
+				if ( (Z0(0) == -1) || (Z0(1) == -1) || (Z0(2) == 1) )
+				{
+					cout << "**Z0(0), 1 = " << Z0(0) << endl;
+					cout << "**Z0(1), 1 = " << Z0(1) << endl;
+					cout << "**Z0(2), 1 = " << Z0(2) << endl;
+				}
 
 				// Extract particle-defined fields:
 				double E  = IONS->at(ss).Ex_p(ii);
@@ -456,31 +464,32 @@ void PIC_TYP::advanceParticles(const params_TYP * params, mesh_TYP * mesh, field
 					break;
 				}
 
-        // Step 1:
-        ZN = Z0;
-        calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
-        dZ1 = F*DT;
+				// Step 1:
+				ZN = Z0;
+				calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
+				dZ1 = F*DT;
 
-        // Step 2:
-        ZN = Z0 + dZ1/2;
-        interpEM(params, mesh, &IONS->at(ss), fields, &ZN, &EM);
-        calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
-        dZ2 = F*DT;
+				// Step 2:
+				ZN = Z0 + dZ1/2;
+				interpEM(params, mesh, &IONS->at(ss), fields, &ZN, &EM);
+				calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
+				dZ2 = F*DT;
 
-        // Step 3:
-        ZN = Z0 + dZ2/2;
-        interpEM(params, mesh, &IONS->at(ss), fields, &ZN, &EM);
-        calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
-        dZ3 = F*DT;
+				// Step 3:
+				ZN = Z0 + dZ2/2;
+				interpEM(params, mesh, &IONS->at(ss), fields, &ZN, &EM);
+				calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
+				dZ3 = F*DT;
 
-        // Step 4:
-        ZN = Z0 + dZ3;
-        interpEM(params, mesh, &IONS->at(ss), fields, &ZN, &EM);
-        calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
-        dZ4 = F*DT;
+				// Step 4:
+				ZN = Z0 + dZ3;
+				interpEM(params, mesh, &IONS->at(ss), fields, &ZN, &EM);
+				calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
+				dZ4 = F*DT;
 
-        // Assemble RK4 solution:
-        Z1 = Z0 + (dZ1 + 2*dZ2 + 2*dZ3 + dZ4)/6;
+				// Assemble RK4 solution:
+				dZ = (dZ1 + 2*dZ2 + 2*dZ3 + dZ4)/6;
+				Z1 = Z0 + dZ;
 
 				if ( isnan(ZN(0)) || isnan(ZN(1)) || isnan(ZN(2)) )
 				{
@@ -509,6 +518,16 @@ void PIC_TYP::advanceParticles(const params_TYP * params, mesh_TYP * mesh, field
 				}
         // End of RK solution:
         //==============================================================
+
+				// Increments:
+				double delta_x    = dZ(0);
+				double delta_vpar = dZ(1);
+				double delta_vper = dZ(2);
+
+				if (abs(delta_x) > (3*mesh->dx))
+				{
+					//cout << "delta_x = " << delta_x << endl;
+				}
 
         // Update new particle states:
         IONS->at(ss).x_p(ii)   = Z1(0);

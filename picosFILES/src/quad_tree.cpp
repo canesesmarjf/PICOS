@@ -33,7 +33,7 @@ void qt_TYP::clear_tree()
 {
   if (NULL == root)
   {
-    cout << "Tree has NULL root node" << endl;
+    //cout << "Tree has NULL root node" << endl;
     return;
   }
 
@@ -253,7 +253,7 @@ void q_node_TYP::populate_subnodes()
   {
     // Declare parent node as a leaf node:
     this->is_leaf = true;
-    cout << "leaf_node" << endl;
+    // cout << "leaf_node" << endl;
   }
 
   // If accepted, populate subnodes

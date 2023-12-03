@@ -38,7 +38,7 @@ void bt_TYP::clear_all()
 {
   if (NULL == root)
   {
-    cout << "Tree has NULL root node" << endl;
+    // cout << "Tree has NULL root node" << endl;
     return;
   }
 

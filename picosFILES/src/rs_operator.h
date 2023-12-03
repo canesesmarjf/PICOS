@@ -29,7 +29,7 @@ class RS_TYP
   vec _mean_ncp_m; // Mean computational particle density. For each ion species
   bt_params_TYP bt_params;
   qt_params_TYP qt_params;
-  
+
   public:
   // Default constructor:
   RS_TYP();
@@ -38,8 +38,9 @@ class RS_TYP
   RS_TYP(params_TYP * params, CS_TYP * CS, vector<ions_TYP> * IONS, vector<particle_tree_TYP> * tree);
 
   // Methods:
-  bool IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, int ss);
+  bool IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, mesh_TYP * mesh, vector<particle_tree_TYP> * tree, int ss);
   void ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS, vector<particle_tree_TYP> * tree);
+  void check_for_nans(params_TYP * params, vector<ions_TYP> * IONS);
 
 };
 

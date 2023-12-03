@@ -183,12 +183,17 @@ int main(int argc, char* argv[])
   // #########################################################################
   for(int tt=0; tt<params.timeIterations; tt++)
   {
+
+    rs_operator.check_for_nans(&params, &IONS);
+
     // Resample distribution if needed:
     // =====================================================================
     if (params.SW.resample == 1)
     {
         rs_operator.ApplyResampling_AllSpecies(&params,&mesh,&IONS,&particle_tree);
     }
+
+    rs_operator.check_for_nans(&params, &IONS);
 
     // Advance particles and re-inject:
     // =====================================================================

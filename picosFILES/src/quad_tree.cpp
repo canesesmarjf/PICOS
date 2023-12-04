@@ -368,7 +368,8 @@ void q_node_TYP::organze_ip_into_proposed_subnodes()
     if (!IsPointInsideBoundary(r))
     {
       cout << "point (" << r[0] << "," << r[1] << ") is out of bounds" << endl;
-      return;
+      //return;
+      continue;
     }
 
     // Determine which subnode to insert point:

@@ -57,7 +57,7 @@ public:
 
   // Constructor:
   node_TYP(){};
-  node_TYP(vec min, vec max, uint depth, bt_params_TYP * bt_params);
+  node_TYP(vec min, vec max, uint depth, bt_params_TYP * bt_params, vec * x_p, vec * a_p);
 
   // Methods:
   void insert(uint i, vector<vec *> data, bool write_data); // Insert the ith element of data
@@ -74,6 +74,8 @@ private:
   // Variables:
   bt_params_TYP * bt_params; // Pointer to tree parameters
   vector<node_TYP *> subnode;
+  vec * x_p;
+  vec * a_p;
 
   // Subnodes within this node:
   // subnode[0] : right_node
@@ -96,7 +98,7 @@ class bt_TYP
 public:
   // Constructor:
   bt_TYP();
-  bt_TYP(bt_params_TYP * bt_params);
+  bt_TYP(bt_params_TYP * bt_params, vec * x_p, vec * a_p);
 
   // Variables:
   node_TYP * root; // Root node of tree

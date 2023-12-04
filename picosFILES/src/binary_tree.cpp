@@ -10,7 +10,7 @@ bt_TYP::bt_TYP()
 }
 
 // =======================================================================================
-bt_TYP::bt_TYP(bt_params_TYP * bt_params)
+bt_TYP::bt_TYP(bt_params_TYP * bt_params, vec * x_p, vec * a_p)
 {
   // Update bt_params:
   bt_params->num_nodes = pow(2,sum(bt_params->max_depth));
@@ -23,7 +23,7 @@ bt_TYP::bt_TYP(bt_params_TYP * bt_params)
   uint depth_root = 0;
   vec min = bt_params->min;
   vec max = bt_params->max;
-  root = new node_TYP(min,max,depth_root,bt_params);
+  root = new node_TYP(min,max,depth_root,bt_params,x_p,a_p);
 }
 
 // =======================================================================================
@@ -135,7 +135,7 @@ void node_TYP::delete_nodes()
 }
 
 // =======================================================================================
-node_TYP::node_TYP(vec min, vec max, uint depth, bt_params_TYP * bt_params)
+node_TYP::node_TYP(vec min, vec max, uint depth, bt_params_TYP * bt_params, vec * x_p, vec * a_p)
 {
   // Node attributes:
   this->center  = (min + max)/2;
@@ -149,6 +149,10 @@ node_TYP::node_TYP(vec min, vec max, uint depth, bt_params_TYP * bt_params)
   this->subnode[0] = NULL;
   this->subnode[1] = NULL;
   this->ip_count    = 0;
+
+  // Pointers to data:
+  this->x_p = x_p;
+  this->a_p = a_p;
 }
 
 // insert method:
@@ -163,6 +167,11 @@ void node_TYP::insert(uint i, vector<vec *> data, bool write_data)
 
     // Current data point:
     double p = as_scalar(data[dim]->at(i)); // make it a function that takes in i, data,dim
+
+    // Get the particle weight:
+    double w = (*a_p)[i];
+    if (w < 1e-2)
+      return;
 
     // Check if data is within node's boundaries:
     // ===============================================
@@ -470,7 +479,7 @@ void node_TYP::CreateSubNode(int node_index, int dim)
     }
 
     // Create new subnode:
-    this->subnode[node_index] = new node_TYP(min, max, depth, bt_params);
+    this->subnode[node_index] = new node_TYP(min, max, depth, bt_params,x_p,a_p);
 }
 
 // ================================================================================================================

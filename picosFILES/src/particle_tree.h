@@ -54,7 +54,7 @@ private:
   int mean_ip_count;
   vec * x_p; // Pointer to particle x data
   mat * v_p; // Pointer to particle v data
-  mat * a_p; // Pointer to particle weight data
+  vec * a_p; // Pointer to particle weight data
 };
 
 #endif

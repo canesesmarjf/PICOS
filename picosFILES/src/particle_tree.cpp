@@ -20,7 +20,7 @@ particle_tree_TYP::particle_tree_TYP(bt_params_TYP * bt_params, qt_params_TYP * 
   this->a_p = a_p;
 
   // Instance of binary tree for x dimension:
-  bt = bt_TYP(bt_params);
+  bt = bt_TYP(bt_params,x_p,a_p);
 
   // Instance of quad tree vector, one for each node of binary tree:
   int Nx = bt_params->num_nodes;

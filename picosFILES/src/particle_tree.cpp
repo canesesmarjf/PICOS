@@ -193,6 +193,21 @@ void particle_tree_TYP::clear_all_contents()
 }
 
 // =======================================================================================
+void particle_tree_TYP::release_memory()
+{
+  // Release memory of binary tree:
+  this->bt.delete_nodes();
+
+  // Release memory of quad tree:
+  int Nx = this->qt.size();
+  for (int xx = 0; xx < Nx; xx++)
+  {
+    this->qt[xx].delete_tree();
+  }
+
+}
+
+// =======================================================================================
 void particle_tree_TYP::save_leaf_v_structure(string output_dir)
 {
   // This method saves data from leaf_v so that the entire tree structure (binary + quad) can be visualized in MATLAB:

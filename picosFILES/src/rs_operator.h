@@ -29,6 +29,7 @@ class RS_TYP
   vec _mean_ncp_m; // Mean computational particle density. For each ion species
   bt_params_TYP bt_params;
   qt_params_TYP qt_params;
+  uvec resample_count;
 
   public:
   // Default constructor:

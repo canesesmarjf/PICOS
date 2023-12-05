@@ -7,6 +7,7 @@ bt_TYP::bt_TYP()
   // All pointers must be made NULL:
   this->bt_params = NULL;
   root = NULL;
+  subnodes_created = 0;
 }
 
 // =======================================================================================

@@ -39,6 +39,7 @@ public:
   void clear_all_contents();
   void assess_conservation(string output_dir, string suffix);
   void save_leaf_v_structure(string output_dir);
+  void release_memory();
 
 private:
   void downsample_surplus_nodes(vector<uint> * ip_free);

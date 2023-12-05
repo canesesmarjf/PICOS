@@ -20,6 +20,9 @@ RS_TYP::RS_TYP(params_TYP * params, CS_TYP *CS, vector<ions_TYP> * IONS, vector<
     // Number of ion species:
     _numIONS = IONS->size();
 
+    // Initialize the resamaple count:
+    resample_count = zeros<uvec>(_numIONS);
+
     // Mean computational particle density:
     _mean_ncp_m = zeros(_numIONS);
     for (int ss = 0; ss < _numIONS; ss++)
@@ -41,7 +44,7 @@ RS_TYP::RS_TYP(params_TYP * params, CS_TYP *CS, vector<ions_TYP> * IONS, vector<
     bt_params.dimensionality = 1;
     bt_params.min       = {params->mesh_params.Lx_min};
     bt_params.max       = {params->mesh_params.Lx_max};
-    bt_params.max_depth = {+6};
+    bt_params.max_depth = {+5};
 
     qt_params.min = {-v_p_max,-v_p_max};
     qt_params.max = {+v_p_max,+v_p_max};
@@ -81,7 +84,7 @@ bool RS_TYP::IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, me
   }
 
   // Calculate metric:
-  arma::vec dncp_q = ncp_q - _mean_ncp_m[ss]/20;
+  arma::vec dncp_q = ncp_q - _mean_ncp_m[ss]/30;
 
   // Check if dncp_q becomes negative:
   int count = 0;
@@ -137,33 +140,15 @@ void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, ve
 
         particle_tree->at(ss).populate_tree("binary and quad");
         particle_tree->at(ss).resample_distribution();
-        /*
-        // Clear all previous states:
-        tree->at(ss).clear_all();
+        resample_count[ss] = resample_count[ss] + 1;
 
-        // Insert all computational particle positions into binary tree:
-        tree->at(ss).insert_all(&IONS->at(ss).x_p);
+        // Release memory if needed:
+        if (resample_count[ss] > 150)
+        {
+          //particle_tree->at(ss).release_memory();
+        }
 
-        // Determine which nodes have surplus or deficit of computational particles:
-        // calculate_delta_profile(&tree->at(ss));
-        tree->at(ss).calculate_delta_profile();
-
-        // Gather all computational particle indices from surplus nodes:
-        tree->at(ss).gather_all_surplus_indices();
-
-        // Renormalize distributions in all surplus nodes:
-        tree->at(ss).renormalize_surplus_nodes(&IONS->at(ss));
-
-        // Resample and renormalize distributions in all deficit nodes:
-        tree->at(ss).renormalize_deficit_nodes(&IONS->at(ss));
-        */
-      }
-      else
-      {
-        // cout << "Do not resample, species " << ss << endl;
       }
     }
-
   } // MPI_COLOR
-
 }

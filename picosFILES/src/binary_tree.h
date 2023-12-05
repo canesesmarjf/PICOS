@@ -114,6 +114,8 @@ public:
   void delete_nodes();
 
 private:
+  int subnodes_created;
+  vector<node_TYP> * subnode_pointers;
 
 };
 

@@ -16,8 +16,14 @@ public:
   uint max_depth; // Maximum depth to be reached of min_count is not reached first
   uint min_count; // Minimum number of particles in cell allowed.
 
-  // Note:
-  // We need to add am additional variable that enables us to determine the exit condition to form a leaf node based on either max_depth or min_count
+  // Tree structure information:
+  int subnodes_created;
+
+  // Constructor:
+  qt_params_TYP()
+  {
+    subnodes_created = 0;
+  }
 };
 
 // =====================================================================================

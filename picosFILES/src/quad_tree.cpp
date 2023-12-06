@@ -113,6 +113,9 @@ void q_node_TYP::delete_nodes()
       // Prevent dangling pointer:
       this->subnode[nn] = NULL;
 
+      // Decrease counter for the number of nodes in tree:
+      this->qt_params->subnodes_created--;
+
     } // if
   } // for
 }
@@ -212,6 +215,7 @@ void q_node_TYP::create_subnode(int n, vector<uint> ip)
   // Create subnode:
   uint depth = this->depth + 1;
   subnode[n] = new q_node_TYP(min_local,max_local,depth,qt_params,ip,v);
+  this->qt_params->subnodes_created++;
 }
 
 // =======================================================================================

@@ -32,13 +32,15 @@ public:
   uvec dim_levels; // Determines when the tree needs to change to the next dimension
   uint num_nodes; // Number of nodes based on 2^depth_max
 
-  // Derived variables:
-  // double length; // Length of entire domain
-  // double dx;
-  // int num_elem; // Total number of elements to hold in tree
+  // Tree structure information:
+  int subnodes_created;
 
-  // int elem_per_node; // number of elements per node based on a uniform distribution
-  // vec node_centers; // Vector containing the center locations of the nodes
+  // Constructor:
+  bt_params_TYP()
+  {
+    subnodes_created = 0;
+  }
+
 };
 
 // =====================================================================================
@@ -60,8 +62,7 @@ public:
   node_TYP(vec min, vec max, uint depth, bt_params_TYP * bt_params, vec * x_p, vec * a_p);
 
   // Methods:
-  void insert(uint i, vector<vec *> data, bool write_data); // Insert the ith element of data
-  void insert_all(vector<vec *> data); // Insert all elements of the data
+  void insert(uint i, vector<vec *> data, bool write_data); // Insert ith element of data
   node_TYP * find(uint i, vector<vec *> data, int search_dimensionality);
   void clear_node();
   node_TYP * find(double xq); // Find and return pointer of node corresponding to position xq
@@ -114,8 +115,6 @@ public:
   void delete_nodes();
 
 private:
-  int subnodes_created;
-  vector<node_TYP> * subnode_pointers;
 
 };
 

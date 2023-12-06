@@ -7,7 +7,6 @@ bt_TYP::bt_TYP()
   // All pointers must be made NULL:
   this->bt_params = NULL;
   root = NULL;
-  subnodes_created = 0;
 }
 
 // =======================================================================================
@@ -25,13 +24,14 @@ bt_TYP::bt_TYP(bt_params_TYP * bt_params, vec * x_p, vec * a_p)
   vec min = bt_params->min;
   vec max = bt_params->max;
   root = new node_TYP(min,max,depth_root,bt_params,x_p,a_p);
+
 }
 
 // =======================================================================================
 void bt_TYP::insert_all(vector<vec *> data)
 {
-  // Insert points into nodes:
-  this->root->insert_all(data);
+  for (int i = 0; i < data[0]->size(); i++)
+    this->root->insert(i,data,true);
 }
 
 // =======================================================================================
@@ -125,6 +125,7 @@ void node_TYP::delete_nodes()
     this->subnode[0]->delete_nodes();
     delete this->subnode[0]; // Release memory pointed by subnode[0]
     this->subnode[0] = NULL; // Prevent dangling pointer
+    this->bt_params->subnodes_created--;
   }
 
   if (this->subnode[1] != NULL)
@@ -132,6 +133,7 @@ void node_TYP::delete_nodes()
     this->subnode[1]->delete_nodes();
     delete this->subnode[1]; // Release memory pointed by subnode[1]
     this->subnode[1] = NULL; // Prevent dangling pointer
+    this->bt_params->subnodes_created--;
   }
 }
 
@@ -171,7 +173,7 @@ void node_TYP::insert(uint i, vector<vec *> data, bool write_data)
 
     // Get the particle weight:
     double w = (*a_p)[i];
-    if (w < 1e-2)
+    if (w < 1e-4)
       return;
 
     // Check if data is within node's boundaries:
@@ -225,21 +227,6 @@ void node_TYP::insert(uint i, vector<vec *> data, bool write_data)
     this->subnode[node_index]->insert(i,data,write_data);
 
 } // node_TYP::insert
-
-// insert_all method:
-// ================================================================================================================
-void node_TYP::insert_all(vector<vec *> data)
-{
-  for (int i = 0; i < data[0]->size(); i++)
-  {
-      // if ( i == 9500 - 1 )
-      // {
-      //   cout << i << endl;
-      // }
-      this->insert(i,data,true);
-  }
-}
-
 
 // =================================================================================================================
 bool node_TYP::IsPointInsideBoundary(double p, int dim)
@@ -481,6 +468,9 @@ void node_TYP::CreateSubNode(int node_index, int dim)
 
     // Create new subnode:
     this->subnode[node_index] = new node_TYP(min, max, depth, bt_params,x_p,a_p);
+
+    // Increment subnode_count:
+    bt_params->subnodes_created++;
 }
 
 // ================================================================================================================

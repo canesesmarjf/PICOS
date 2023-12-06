@@ -59,7 +59,10 @@ void particle_tree_TYP::calculate_leaf_x()
   for (int xx = 0; xx < Nx ; xx++)
   {
    leaf_x[xx] = bt.find(xq(xx));
-   ip_count[xx] = leaf_x[xx]->ip_count;
+   if (leaf_x[xx] != NULL)
+    ip_count[xx] = leaf_x[xx]->ip_count;
+   else
+    ip_count[xx] = 0;
   }
 }
 

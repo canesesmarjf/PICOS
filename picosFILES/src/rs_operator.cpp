@@ -44,7 +44,7 @@ RS_TYP::RS_TYP(params_TYP * params, CS_TYP *CS, vector<ions_TYP> * IONS, vector<
     bt_params.dimensionality = 1;
     bt_params.min       = {params->mesh_params.Lx_min};
     bt_params.max       = {params->mesh_params.Lx_max};
-    bt_params.max_depth = {+5};
+    bt_params.max_depth = {+6};
 
     qt_params.min = {-v_p_max,-v_p_max};
     qt_params.max = {+v_p_max,+v_p_max};
@@ -84,7 +84,7 @@ bool RS_TYP::IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, me
   }
 
   // Calculate metric:
-  arma::vec dncp_q = ncp_q - _mean_ncp_m[ss]/30;
+  arma::vec dncp_q = ncp_q - _mean_ncp_m[ss]/3;
 
   // Check if dncp_q becomes negative:
   int count = 0;
@@ -130,22 +130,22 @@ void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, ve
   {
     for (int ss = 0; ss < _numIONS; ss++)
     {
-      if (IsResamplingNeeded(params,IONS,mesh,particle_tree,ss))
+      if (true)//(IsResamplingNeeded(params,IONS,mesh,particle_tree,ss))
       {
 
         if (params->mpi.IS_PARTICLES_ROOT)
         {
-          cout << "Apply resample, species " << ss << endl;
+          //cout << "Apply resample, species " << ss << endl;
         }
-
+        
         particle_tree->at(ss).populate_tree("binary and quad");
         particle_tree->at(ss).resample_distribution();
         resample_count[ss] = resample_count[ss] + 1;
 
         // Release memory if needed:
-        if (resample_count[ss] > 150)
+        if (resample_count[ss] % 1 == 0)
         {
-          //particle_tree->at(ss).release_memory();
+          particle_tree->at(ss).release_memory();
         }
 
       }

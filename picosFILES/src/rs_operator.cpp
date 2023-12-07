@@ -84,7 +84,7 @@ bool RS_TYP::IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, me
   }
 
   // Calculate metric:
-  arma::vec dncp_q = ncp_q - _mean_ncp_m[ss]/3;
+  arma::vec dncp_q = ncp_q - _mean_ncp_m[ss]/10;
 
   // Check if dncp_q becomes negative:
   int count = 0;
@@ -137,7 +137,7 @@ void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, ve
         {
           //cout << "Apply resample, species " << ss << endl;
         }
-        
+
         particle_tree->at(ss).populate_tree("binary and quad");
         particle_tree->at(ss).resample_distribution();
         resample_count[ss] = resample_count[ss] + 1;

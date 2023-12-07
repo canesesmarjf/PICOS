@@ -81,7 +81,7 @@ void coll_operator_TYP:: xi_CollisionOperator(double * xi, double xab, double wT
   // ===========================
   if (Nstep > 100)
   {
-    if(0)
+    if(1)
       cout << "Nstep for 'xi' operator = " << Nstep << endl;
 
     Nstep = 100;

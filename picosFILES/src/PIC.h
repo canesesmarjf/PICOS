@@ -81,6 +81,8 @@ protected:
 
   void advanceParticles(const params_TYP * params, mesh_TYP * mesh, fields_TYP * fields, vector<ions_TYP> * IONS);
 
+  void advanceParticles_subcycle(const params_TYP * params, mesh_TYP * mesh, fields_TYP * fields, vector<ions_TYP> * IONS);
+
 	void assignCell_AllSpecies(const params_TYP * params, const mesh_TYP * mesh, vector<ions_TYP> * IONS);
 
 	void interpolateFields_AllSpecies(const params_TYP * params, vector<ions_TYP> * IONS, const fields_TYP * fields);

@@ -273,7 +273,7 @@ void units_TYP::defineTimeStep(params_TYP * params, vector<ions_TYP> * IONS)
       // Check against user defined time step:
       if (DT > DT_CFL_I)
       {
-              DT = DT_CFL_I;
+              //DT = DT_CFL_I;
               CFL_I = true;
       }
 

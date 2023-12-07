@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
   double t2 = 0.0;
   params.currentTime = 0.0;
   int outputIterator = 0;
-  int numberOfIterationsForEstimator = 1000;
+  int numberOfIterationsForEstimator = 20;
 
   // Create EM solver:
   // =========================================================================
@@ -200,7 +200,7 @@ int main(int argc, char* argv[])
     if (params.SW.advancePos == 1)
     {
         // Advance particle position and velocity to level X^(N+1):
-        PIC.advanceParticles(&params, &mesh, &fields, &IONS);
+        PIC.advanceParticles_subcycle(&params, &mesh, &fields, &IONS);
 
         // Re-inject particles that leave computational domain:
         particleBC.applyParticleReinjection(&params,&CS,&fields,&IONS);

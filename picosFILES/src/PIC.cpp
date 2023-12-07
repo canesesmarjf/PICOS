@@ -540,6 +540,188 @@ void PIC_TYP::advanceParticles(const params_TYP * params, mesh_TYP * mesh, field
 	}//structure to iterate over all the ion species.
 }
 
+void PIC_TYP::advanceParticles_subcycle(const params_TYP * params, mesh_TYP * mesh, fields_TYP * fields, vector<ions_TYP> * IONS)
+{
+	// Get latest mesh-defined values from FIELDS MPIs:
+	MPI_Recv_AllFields(params,fields);
+
+	// Fill the ghost cells in all fields:
+	fillGhost_AllFields(params,fields);
+
+	// Iterate over all the ion species:
+	for(int ss=0; ss<IONS->size(); ss++)
+	{
+		if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
+		{
+			// Number of particles:
+			int N_CP = IONS->at(ss).N_CP_MPI;
+
+			// Time step:
+			double DT = params->DT;
+
+			// Ion mass:
+			double Ma = IONS->at(ss).M;
+
+			// Cell size:
+			double DX = params->mesh_params.dx;
+
+			// Start RK4 solution:
+			#pragma omp parallel for default(none) shared(IONS, params, fields, DT, ss, Ma, std::cout, mesh, DX) firstprivate(N_CP, F_C_DS)
+			for(int ii = 0; ii < N_CP; ii++)
+			{
+			// Equations of motion are expressed as follows:
+			//
+			// dZ/dt = F, thus Z1 = Z0 + dZ
+			//
+			// where
+			//
+			// dZ = F(Z0)*dt
+			// Z = [z, vz, vp]
+			// F(1) = +vz
+			// F(2) = -0.5*vp*vp*dB/B + (q/Ma)*E
+			// F(3) = +0.5*vp*vz*dB/B
+
+				// Extract particle states:
+				double x    = IONS->at(ss).x_p(ii);
+				double vpar = IONS->at(ss).v_p(ii,0);
+				double vper = IONS->at(ss).v_p(ii,1);
+				double B = 0;
+
+				// Define subcycling steps:
+				// double dx_ion = abs(vpar)*DT;
+				// double R = dx_ion/DX;
+				// if (R > 15)
+				// {
+				// 	cout << "R > 15" << endl;
+				// 	R = 15;
+				// }
+
+				double R = 100;
+				double delta_t = DT/R; // time it takes ion to traverse DX
+				int integer_num_steps = floor(R);
+				double frac_num_steps = R - integer_num_steps;
+				double dt_sub = 0;
+				double dt_test = 0;
+
+				// Subcycle particle:
+				for (int kk = 0; kk < (integer_num_steps+1); kk++)
+				{
+					// Assemble vectors to use in RK4 method:
+					arma::rowvec Z0  = zeros<rowvec>(3);
+					arma::rowvec ZN  = zeros<rowvec>(3);
+					arma::rowvec Z1  = zeros<rowvec>(3);
+					arma::rowvec EM  = zeros<rowvec>(3);
+					arma::rowvec F   = zeros<rowvec>(3);
+					arma::rowvec dZ1 = zeros<rowvec>(3);
+					arma::rowvec dZ2 = zeros<rowvec>(3);
+					arma::rowvec dZ3 = zeros<rowvec>(3);
+					arma::rowvec dZ4 = zeros<rowvec>(3);
+					arma::rowvec dZ  = zeros<rowvec>(3);
+
+					// Initialize initial particle state Z0:
+					Z0 = {x, vpar, vper};
+
+					if ( (Z0(0) == -1) || (Z0(1) == -1) || (Z0(2) == 1) )
+					{
+						cout << "**Z0(0), 1 = " << Z0(0) << endl;
+						cout << "**Z0(1), 1 = " << Z0(1) << endl;
+						cout << "**Z0(2), 1 = " << Z0(2) << endl;
+					}
+
+					// Define subcycle time step:
+					if (kk == integer_num_steps)
+						dt_sub = frac_num_steps*delta_t;
+					else
+						dt_sub = delta_t;
+
+					dt_test = dt_test + dt_sub;
+
+					// Interpolate fields at current particle postion:
+					interpEM(params, mesh, &IONS->at(ss), fields, &Z0, &EM);
+
+					// Select solution method:
+					switch (params->advanceParticleMethod)
+					{
+					case 1:
+						// Do nothing
+						break;
+					case 2:
+						// Use magnetic moment
+						cout << "Magnetic moment is not enabled for this method!" << endl;
+						break;
+					}
+
+					// Step 1:
+					ZN = Z0;
+					calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
+					dZ1 = F*dt_sub;
+
+					// Step 2:
+					ZN = Z0 + dZ1/2;
+					interpEM(params, mesh, &IONS->at(ss), fields, &ZN, &EM);
+					calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
+					dZ2 = F*dt_sub;
+
+					// Step 3:
+					ZN = Z0 + dZ2/2;
+					interpEM(params, mesh, &IONS->at(ss), fields, &ZN, &EM);
+					calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
+					dZ3 = F*dt_sub;
+
+					// Step 4:
+					ZN = Z0 + dZ3;
+					interpEM(params, mesh, &IONS->at(ss), fields, &ZN, &EM);
+					calculateF(params, &IONS->at(ss), &ZN, &EM, &F);
+					dZ4 = F*dt_sub;
+
+					// Assemble RK4 solution:
+					dZ = (dZ1 + 2*dZ2 + 2*dZ3 + dZ4)/6;
+					Z1 = Z0 + dZ;
+
+					// Interpolate fields at new particle position:
+					interpEM(params, mesh, &IONS->at(ss), fields, &Z1, &EM);
+
+					// Assign solution to output vector:
+					switch (params->advanceParticleMethod)
+					{
+					case 1:
+						// Do nothing, RK4 solved for (x, vpar, vper)
+						break;
+					case 2:
+						// Calculate vper since RK4 solved for (x, vpar, mu)
+						cout << "Magnetic moment is not enabled for this method!" << endl;
+						break;
+					}
+
+					// Increments:
+					double delta_x    = dZ(0);
+					double delta_vpar = dZ(1);
+					double delta_vper = dZ(2);
+
+					// Update new particle states:
+					x    = Z1(0);
+					vpar = Z1(1); // vpar
+					vper = Z1(2); // vper
+					B    = EM(1);
+
+					// Check boundary:
+					if (x < params->mesh_params.Lx_min || x > params->mesh_params.Lx_max)
+					{
+						break;
+					}
+				} // subcycling loop
+
+        // Update new particle states:
+        IONS->at(ss).x_p(ii)   = x;
+        IONS->at(ss).v_p(ii,0) = vpar;
+        IONS->at(ss).v_p(ii,1) = vper;
+				IONS->at(ss).mu_p(ii)  = 0.5*Ma*pow(vper,2)/B;
+
+			} // End of parallel region
+		} // MPI color
+	} // Ion species loop
+}
+
 void PIC_TYP::assignCell(const params_TYP * params, const mesh_TYP * mesh, ions_TYP * IONS)
 {
 	// Total number of computational particles:

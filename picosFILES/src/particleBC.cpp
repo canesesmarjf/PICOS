@@ -417,7 +417,7 @@ void particleBC_TYP::particleReinjection(int ii, params_TYP * params, const CS_T
     double vT = sqrt(2*F_KB_DS*T/Ma);
 
 		// Pitch angle of source:
-		double xip = cos(eta);
+		double xip = cos(eta*M_PI/180);
 
 		// Drift velocity of source:
 		double U  = sqrt(2*F_KB_DS*E/Ma);

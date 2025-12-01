@@ -10,10 +10,11 @@ coll_operator_TYP::coll_operator_TYP()
 // =============================================================================
 void coll_operator_TYP::u_CollisionOperator(double * w, double xab,double wTb, double nb, double Tb, double Mb, double Zb, double Za, double Ma, double DT)
 {
-  // double BoozerFactor = (double)0.5;
-  double BoozerFactor = (double)1.0;
+  double BoozerFactor = (double)0.5; // This factor has been seen to give MC results consistent with analytical solution obtained using ODE45
+  // double BoozerFactor = (double)1.0;
   double nu_E_dt(0.0);
   int energyOperatorModel = 2;
+  //int energyOperatorModel = 1;
 
   // Normalized collision rate:
   nu_E_dt = BoozerFactor*nu_E(xab,nb,Tb,Mb,Zb,Za,Ma,energyOperatorModel)*DT;
@@ -437,7 +438,8 @@ double coll_operator_TYP::Gb(double xab)
 {
   double y;
 
-  if (xab < 0.01)
+  //if (xab < 0.01)
+  if (xab < 0.001)
   {
       y = (2.0/sqrt(M_PI))*xab/3;
   }

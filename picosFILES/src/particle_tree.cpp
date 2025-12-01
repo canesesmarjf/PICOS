@@ -35,6 +35,9 @@ particle_tree_TYP::particle_tree_TYP(bt_params_TYP * bt_params, qt_params_TYP * 
 
   // Allocate memory and resize ip_count:
   ip_count = zeros<ivec>(Nx);
+
+  // Initialize:
+  num_extract = 0;
 }
 
 // ======================================================================================
@@ -311,6 +314,7 @@ void particle_tree_TYP::downsample_surplus_nodes(vector<uint> * ip_free)
   for (int xx = 0; xx < leaf_x.size() ; xx++)
   {
     // Calculate particle surplus
+    if (leaf_x[xx] == NULL){continue;}
     particle_surplus = leaf_x[xx]->ip_count - mean_ip_count;
 
     // Apply Vranic method if x-node is NOT NULL:
@@ -446,6 +450,194 @@ void particle_tree_TYP::downsample_surplus_nodes(vector<uint> * ip_free)
 }
 
 // ======================================================================================
+void particle_tree_TYP::downsample_surplus_nodes_in_confined_region(vector<uint> * ip_free)
+{
+  // Create vranic down-sampling object:
+  vranic_TYP vranic;
+
+  // Set the min and maximum number of computational particles per node:
+  int N_min = 7;
+  int N_max = 50;
+
+  // Set the particle set sizes for the input and output sets:
+  int N; // Input set
+  int M = 6; // Output set0
+
+  // Total number of particles in confined region:
+  int num_confined = 0;
+  double L_ex_max = bt_params->L_ex_max;
+  double L_ex_min = bt_params->L_ex_min;
+  double dxq = xq[1] - xq[0];
+  for (int xx = 0; xx < leaf_x.size() ; xx++)
+  {
+    if ( (xq[xx] - dxq/2) > L_ex_min && (xq[xx] + dxq/2) < L_ex_max)
+    {
+      if (leaf_v[xx][0] != NULL)
+        num_confined = num_confined + leaf_x[xx]->ip_count;
+    }
+  }
+
+  // Fraction of particles to extract from each x-node in the confined region:
+  double frac_extract = (double)this->num_extract/(double)num_confined;
+
+  // Down-sample distribution and populate ip_free vector:
+  for (int xx = 0; xx < leaf_x.size() ; xx++)
+  {
+    // Check if all particles needed have been extracted:
+    if (this->num_extract == 0)
+        break;
+
+    // Calculate particle surplus
+    if (leaf_x[xx] == NULL)
+      continue;
+
+    if ( (xq[xx] - dxq/2) <= L_ex_min || (xq[xx] + dxq/2) >= L_ex_max)
+      continue;
+
+    int num_extract_x_node = ceil(frac_extract*leaf_x[xx]->ip_count);
+
+    if (num_extract_x_node < 7)
+      continue;
+
+    // Apply Vranic method if x-node is NOT NULL:
+    if (leaf_v[xx][0] != NULL)
+    {
+      // Total number of v-nodes for this xx position:
+      int Nv = leaf_v[xx].size();
+
+      // Assemble depth and ip_count vectors:
+      vec depth(Nv);
+      vec ip_count(Nv);
+      vec node_metric(Nv);
+      for(int vv = 0; vv < Nv; vv++){depth(vv) = leaf_v[xx][vv]->depth;}
+      for(int vv = 0; vv < Nv; vv++){ip_count(vv) = leaf_v[xx][vv]->ip_count;}
+
+      // Calculate metric for every node based on depth*ip_count (elementwise multiplication). The higher the depth AND number of particles, the higher the metric:
+      node_metric = depth%ip_count;
+
+      // Create sorted list starting from highest depth to lowest:
+      // By giving priority to nodes with highest metric, we are operating on the regions that minimize the changes to the distribution function since they are more localized in velocity space:
+      uvec sorted_index_list = sort_index(node_metric,"descend");
+
+      // Loop over sorted leaf_v and apply vranic method:
+      for (int vv = 0; vv < sorted_index_list.n_elem; vv++)
+      {
+        // Check if all the required particles have been extracted:
+        if (num_extract_x_node == 0 || this->num_extract == 0)
+          break;
+
+        // Sorted index:
+        int tt = sorted_index_list(vv);
+
+        // Total number of particles in leaf_v cube:
+        N = leaf_v[xx][tt]->ip_count;
+
+        // Test if current node is suitable for resampling:
+        if (N < N_min){continue;}
+
+        // Upper limit to the number of particles to down-sample in present cell:
+        if (N > N_max){N = N_max;}
+
+        // Check that we do not go into deficit:
+        if (num_extract_x_node - (N-M) < 0){N = num_extract_x_node + M;}
+        if (this->num_extract - (N-M) < 0){N = this->num_extract + M;}
+
+        // Create objects for down-sampling:
+        merge_cell_TYP set_N(N);
+        merge_cell_TYP set_M(M);
+
+        // Define particle indices for set N:
+        uvec ip = conv_to<uvec>::from(leaf_v[xx][tt]->ip);
+        uvec ip_subset = ip.head(N);
+
+        // Assign particle attributes for set N:
+        mat v_p_subset = v_p->rows(ip_subset);
+        set_N.xi = x_p->elem(ip_subset);
+        set_N.yi = v_p_subset.col(0);
+        set_N.zi = v_p_subset.col(1);
+        set_N.wi = a_p->elem(ip_subset);
+
+        for (int jj = 0; jj < N; jj++)
+        {
+          if (set_N.wi(jj) == -1)
+            cout << "RS, wi == -1" << endl;
+        }
+
+        // Calculate set M based on set N:
+        // We have observed that using the 2D implementation we get conservation of energy down to the machine precision (1E-14); however, using the 3D method, we get conservation of energy not as good (1E-5):
+        vranic.down_sample_node_2D(&set_N, &set_M);
+
+        // Diagnostics:
+        if (false)
+        {
+          // Print statistics:
+          cout << "Set N: " << endl;
+          vranic.print_stats(&set_N);
+
+          // Print statistics:
+          cout << "Set M: " << endl;
+          vranic.print_stats(&set_M);
+        }
+
+        // Apply changes to distribution function:
+        // Loop over all particles that underwent down-sampling:
+        for (int ii = 0; ii < N; ii++)
+        {
+          // Get global index:
+          int jj = ip(ii);
+
+          // Apply changes to x_p, v_p, a_p OR create new mem locations:
+          if (ii < set_M.n_elem)
+          {
+            // Down-sample global distribution:
+            // Use set_N for xi in order to remove oscillations in density:
+            // Use set_M for all other quantities (v and a):
+
+            // Set N:
+            (*x_p)(jj) = set_N.xi(ii);
+
+            if (isnan(set_M.yi(ii)))
+              cout << "RS, isnan" << endl;
+
+            if (isnan(set_M.zi(ii)))
+              cout << "RS, isnan" << endl;
+
+            if (set_M.wi(ii) == -1)
+              cout << "wi == -1" << endl;
+
+            // Set M:
+            (*v_p)(jj,0) = set_M.yi(ii);
+            (*v_p)(jj,1) = set_M.zi(ii);
+            (*a_p)(jj)   = set_M.wi(ii);
+
+          }
+          else
+          {
+            // Record global indices that correspond to memory locations that are to be repurposed:
+            ip_free->push_back(jj);
+
+            // Set values to -1 to flag them as undefined values memory locations:
+            (*x_p)(jj)   = -1;
+            (*v_p)(jj,0) = -1;
+            (*v_p)(jj,1) = -1;
+            (*a_p)(jj)   = -1;
+
+            // Consider putting the extracted particles in the ghost cells of the boundary as a staging area and setting the f1 and f2 and E1 and E1 flags to the appropriate values. These particles need to be flagged as leaving the domain but contribute nothing to the particle and energy flux at the boundary. Also we need to make sure that f1 and f2 are not cleared later in the PIC.cpp source code.
+
+            // Decrement the number of particles to extract from the x-node:
+            // To be performed after ip_free.push_back operation:
+            num_extract_x_node--;
+            this->num_extract--;
+          }
+        } // for ip loop
+      } // sorted index Loop
+
+    } // if not NULL
+  } // xx loop
+
+}
+
+// ======================================================================================
 void particle_tree_TYP::upsample_deficit_nodes(vector<uint> * ip_free)
 {
   // Initialize replication flag:
@@ -456,7 +648,12 @@ void particle_tree_TYP::upsample_deficit_nodes(vector<uint> * ip_free)
   int Nx = leaf_x.size();
   ivec node_counts(Nx, fill::zeros);
   for (int xx = 0; xx < Nx; xx++)
-    node_counts(xx) = leaf_x[xx]->ip_count;
+  {
+    if (leaf_x[xx] == NULL)
+      node_counts(xx) = 0;
+    else
+      node_counts(xx) = leaf_x[xx]->ip_count;
+  }
 
   // Vector to keep track how many times we need to replicate particles per node:
   ivec rep_num_vec(Nx,fill::ones);
@@ -486,7 +683,7 @@ void particle_tree_TYP::upsample_deficit_nodes(vector<uint> * ip_free)
       int target_counts = sum(layer.subvec(0,ll));
       particle_deficit = node_counts(xx) - target_counts;
 
-      if (particle_deficit < 0)
+      if (particle_deficit < 0 && leaf_x[xx] != NULL)
       {
         // Number of particles to replicate (original particles in node):
         int num_0 = leaf_x[xx]->ip_count;
@@ -577,6 +774,156 @@ void particle_tree_TYP::upsample_deficit_nodes(vector<uint> * ip_free)
 }
 
 // ======================================================================================
+void particle_tree_TYP::upsample_deficit_nodes_in_exhaust(vector<uint> * ip_free)
+{
+  // Initialize replication flag:
+  int ip_free_flag = 0;
+  int particle_deficit;
+
+  // Vector to keep track of particle counts in x-nodes:
+  int Nx = leaf_x.size();
+  ivec node_counts(Nx, fill::zeros);
+  for (int xx = 0; xx < Nx; xx++)
+  {
+    if (leaf_x[xx] == NULL)
+      node_counts(xx) = 0;
+    else
+      node_counts(xx) = leaf_x[xx]->ip_count;
+  }
+
+  // Vector to keep track how many times we need to replicate particles per node:
+  ivec rep_num_vec(Nx,fill::ones);
+  for (int xx = 0; xx < Nx; xx++)
+    rep_num_vec(xx) = ceil((double)mean_ip_count/node_counts(xx));
+
+  // Layers:
+  // The idea is to use the ip_free memory locations to fill in the locations where particles are needed but we aim to this in a layered manner so that we topup the deficits in stages. This prevents neglecting certain x-nodes in cases where insufficient number of particles where extracted from the down sampling process
+  vec layer_fraction = {1/2, 1/4, 1/8, 1/16, 1/16};
+  ivec layer(5);
+  layer(0) = (int)round((double)mean_ip_count/2);
+  layer(1) = (int)round((double)mean_ip_count/4);
+  layer(2) = (int)round((double)mean_ip_count/8);
+  layer(3) = (int)round((double)mean_ip_count/16);
+  layer(4) = mean_ip_count - sum(layer.subvec(0,layer.n_elem - 2));
+
+  // Exhaust boundary:
+  double L_ex_max = bt_params->L_ex_max;
+  double L_ex_min = bt_params->L_ex_min;
+  double dxq = xq[1] - xq[0];
+
+  for (int ll = 0; ll < layer.n_elem; ll++)
+  {
+    // cout << "ll = " << ll << endl;
+    for (int xx = 0; xx < Nx ; xx++)
+    {
+      // If ip_free is empty, then stop replication:
+      if (ip_free_flag == 1)
+        break;
+
+      // Current cell boundaries:
+      double x_min = xq[xx] - dxq/2;
+      double x_max = xq[xx] + dxq/2;
+
+      // Exclude confined region:
+      if ( x_min > L_ex_min && x_max < L_ex_max)
+        continue;
+
+      // Calculate particle deficit
+      int target_counts = sum(layer.subvec(0,ll));
+      particle_deficit = node_counts(xx) - target_counts;
+
+      if (particle_deficit < 0 && leaf_x[xx] != NULL)
+      {
+        // Number of particles to replicate (original particles in node):
+        int num_0 = leaf_x[xx]->ip_count;
+
+        // Replication number: represents how many times a particle needs to be replicated
+        // rep_num - 1 gives you the number of new particles per parent particle
+        // int rep_num = ceil((double)layer(ll)/num_0);
+        int rep_num = rep_num_vec(xx);
+
+        // Loop over all particles in node:
+        for (int ii = num_0 - 1; ii >= 0; ii--)
+        {
+          // Get global index of particle to replicate:
+          uint jj = leaf_x[xx]->ip[ii];
+
+          // On the last layer, remove the indexes since they have been fully used:
+          if (ll == layer.n_elem)
+          {
+            leaf_x[xx]->ip.pop_back();
+            leaf_x[xx]->ip_count--;
+          }
+
+          // Diagnostics:
+          if (leaf_x[xx]->ip_count < 0)
+            cout << "error:" << endl;
+
+          // Parent particle attributes:
+          double xi = (*x_p)(jj);
+          double yi = (*v_p)(jj,0);
+          double zi = (*v_p)(jj,1);
+          double wi = (*a_p)(jj);
+
+          // Calculate number of new daughter particles to create:
+          int num_free_left = ip_free->size();
+          int num_deficit_left = -particle_deficit;
+          int num_requested = rep_num - 1;
+          ivec num_vec = {num_requested, num_free_left, num_deficit_left};
+          int num_new = num_vec(num_vec.index_min());
+
+          // Create num_new daughter particles:
+          for (int rr = 0; rr < num_new; rr++)
+          {
+            uint jj_free = ip_free->back();
+            ip_free->pop_back();
+            // (*x_p)(jj_free)   = xi;
+            (*x_p)(jj_free)   = x_min + (x_max - x_min)*randu();            
+            (*v_p)(jj_free,0) = yi;
+            (*v_p)(jj_free,1) = zi;
+            (*a_p)(jj_free)   = wi/((double)num_new + 1.0);
+
+            // bool res = wi/((double)num_new + 1.0) < 1e-10;
+            // if (res)
+            // {
+            //   cout << "upsampling wi < 1e-10" << endl;
+            // }
+
+            // Modify deficit:
+            particle_deficit++;
+            node_counts(xx)++;
+          }
+
+          // Adjust weight of parent particle to conserve mass:
+          (*a_p)(jj) = wi/((double)num_new + 1.0);
+
+          // if size of ip_free vanishes, then stop all replication:
+          int num_free = ip_free->size();
+          if (num_free == 0)
+          {
+            ip_free_flag = 1;
+            break;
+          }
+
+          // If deficit becomes +ve, then stop:
+          if (particle_deficit >= 0)
+          {
+            break;
+          }
+        } // particle Loop
+
+        if (particle_deficit != 0)
+        {
+          //abort();
+        }
+
+      } // deficit if
+    } // xx loop
+  } // ll Loop
+
+}
+
+// ======================================================================================
 void particle_tree_TYP::resample_distribution()
 {
   // Create vector to hold indices of computational particles that can be reused:
@@ -597,4 +944,50 @@ void particle_tree_TYP::resample_distribution()
   // Since the distribution has been changed, the particle tree is no longer current and needs to be cleared.
   this->clear_all_contents();
 
+}
+
+// ======================================================================================
+void particle_tree_TYP::resample_distribution_exhaust()
+{
+  // Create vector to hold indices of computational particles that can be reused:
+  // -------------------------------------------------------------------------------------
+  vector<uint> ip_free;
+
+  // Calculate particles needed in exhaust region:
+  // -------------------------------------------------------------------------------------
+  this->calculate_particles_needed_in_exhaust();
+
+  // Extract particles from confined region via down-sampling surplus nodes:
+  // -------------------------------------------------------------------------------------
+  this->downsample_surplus_nodes_in_confined_region(&ip_free);
+
+  // Populate exhaust region via up-sampling deficit nodes via replication:
+  // -------------------------------------------------------------------------------------
+  this->upsample_deficit_nodes_in_exhaust(&ip_free);
+
+  // Clear contents of particle tree:
+  // -------------------------------------------------------------------------------------
+  // Since the distribution has been changed, the particle tree is no longer current and needs to be cleared.
+  // this->clear_all_contents();
+}
+
+// ======================================================================================
+void particle_tree_TYP::calculate_particles_needed_in_exhaust()
+{
+  double L_ex_max = bt_params->L_ex_max;
+  double L_ex_min = bt_params->L_ex_min;
+  double dxq = xq[1] - xq[0];
+
+  int total_deficit = 0;
+  for (int xx = 0; xx < ip_count.size(); xx++)
+  {
+    if ( (xq[xx] + dxq/2) <= L_ex_min || (xq[xx] - dxq/2) >= L_ex_max)
+    {
+      int local_deficit = mean_ip_count - leaf_x[xx]->ip_count;
+      total_deficit = total_deficit + local_deficit;
+    }
+  }
+
+  // Allocate space:
+  num_extract = total_deficit;
 }

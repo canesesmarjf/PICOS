@@ -35,6 +35,10 @@ public:
   // Tree structure information:
   int subnodes_created;
 
+  // Exhaust region boundaries:
+  double L_ex_min;
+  double L_ex_max;
+
   // Constructor:
   bt_params_TYP()
   {

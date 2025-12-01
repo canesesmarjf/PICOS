@@ -595,8 +595,13 @@ void PIC_TYP::advanceParticles_subcycle(const params_TYP * params, mesh_TYP * me
 				// 	cout << "R > 15" << endl;
 				// 	R = 15;
 				// }
+				double R;
+				if (ss == 1)
+					//  R = 500; // For 100 keV cases
+					R = 250; // 25 keV case
+				else
+					R = 250;
 
-				double R = 100;
 				double delta_t = DT/R; // time it takes ion to traverse DX
 				int integer_num_steps = floor(R);
 				double frac_num_steps = R - integer_num_steps;

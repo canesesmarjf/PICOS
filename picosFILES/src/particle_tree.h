@@ -28,6 +28,7 @@ public:
   vector<node_TYP *> leaf_x; // Vector of x-space LEAF nodes
   vector<vector<q_node_TYP *>> leaf_v; // Vector of v-space LEAF nodes
   ivec ip_count; // Hold the particle count for each leaf_x node
+  int num_extract;
 
   // Constructor:
   particle_tree_TYP(){};
@@ -36,12 +37,16 @@ public:
   // Methods:
   void populate_tree(string calculation_type);
   void resample_distribution();
+  void resample_distribution_exhaust();
   void clear_all_contents();
   void assess_conservation(string output_dir, string suffix);
   void save_leaf_v_structure(string output_dir);
   void release_memory();
 
 private:
+  void calculate_particles_needed_in_exhaust();
+  void downsample_surplus_nodes_in_confined_region(vector<uint> * ip_free);
+  void upsample_deficit_nodes_in_exhaust(vector<uint> * ip_free);
   void downsample_surplus_nodes(vector<uint> * ip_free);
   void upsample_deficit_nodes(vector<uint> * ip_free);
   void populate_binary_tree();

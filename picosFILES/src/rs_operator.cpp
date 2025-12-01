@@ -17,6 +17,14 @@ RS_TYP::RS_TYP(params_TYP * params, CS_TYP *CS, vector<ions_TYP> * IONS, vector<
     _dx = params->mesh_params.dx;
     _Nx = params->mesh_params.Nx;
 
+    // Define exhaust region boundaries:
+    _L_ex_max = +5.5/CS->length;
+    _L_ex_min = -5.5/CS->length;
+
+    // Record exhaust region boundaries for use in binary tree:
+    bt_params.L_ex_max = _L_ex_max;
+    bt_params.L_ex_min = _L_ex_min;
+
     // Number of ion species:
     _numIONS = IONS->size();
 
@@ -31,9 +39,6 @@ RS_TYP::RS_TYP(params_TYP * params, CS_TYP *CS, vector<ions_TYP> * IONS, vector<
       _mean_ncp_m.at(ss) = sum(ncp_m)*_dx/_L;
     }
     _mean_ncp_m.print("_mean_ncp_m = ");
-
-    // Create empty binary tree vector:
-    //particle_tree->resize(_numIONS);
 
     // Calculate the maximum velocity to use in quad tree grid:
     double E_max = F_E*30e3/CS->energy;
@@ -99,6 +104,46 @@ bool RS_TYP::IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, me
   return false;
 }
 
+bool RS_TYP::IsResamplingNeeded_exhaust(params_TYP * params, vector<ions_TYP> * IONS, mesh_TYP * mesh, vector<particle_tree_TYP> * tree, int ss)
+{
+  // Get computational particle density:
+  vec ncp_m = IONS->at(ss).ncp_m.subvec(0,_Nx-1);
+  vec& x_m  = mesh->xm;
+
+  // x grid for leaf_x nodes:
+  vec& xq = tree->at(ss).xq;
+  double dxq = xq[2] - xq[1];
+  vec x_min = xq - dxq/2;
+  vec x_max = xq + dxq/2;
+  vec ncp_q = zeros(xq.size());
+
+  // Average ncp_m over each x node from binary tree:
+  for (int xx = 0; xx < tree->at(ss).leaf_x.size(); xx++)
+  {
+    uvec indices = find(x_m >= x_min[xx] && x_m < x_max[xx]);
+    ncp_q[xx] = mean(ncp_m.elem(indices));
+  }
+
+  // Calculate metric:
+  arma::vec dncp_q = ncp_q - _mean_ncp_m[ss]/5;
+
+  // Check if dncp_q becomes negative in exhaust region:
+  double L_ex_min = _L_ex_min;
+  double L_ex_max = _L_ex_max;
+  for (int q = 0; q < ncp_q.size(); q++)
+  {
+    if ( (xq[q] + dxq/2) > L_ex_min && (xq[q] - dxq/2) < L_ex_max)
+      continue;
+
+    if (dncp_q.at(q) < 0)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void RS_TYP::check_for_nans(params_TYP * params, vector<ions_TYP> * IONS)
 {
   if (params->mpi.COMM_COLOR == PARTICLES_MPI_COLOR)
@@ -130,7 +175,7 @@ void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, ve
   {
     for (int ss = 0; ss < _numIONS; ss++)
     {
-      if (true)//(IsResamplingNeeded(params,IONS,mesh,particle_tree,ss))
+      if (IsResamplingNeeded_exhaust(params,IONS,mesh,particle_tree,ss))
       {
 
         if (params->mpi.IS_PARTICLES_ROOT)
@@ -139,7 +184,7 @@ void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, ve
         }
 
         particle_tree->at(ss).populate_tree("binary and quad");
-        particle_tree->at(ss).resample_distribution();
+        particle_tree->at(ss).resample_distribution_exhaust();
         resample_count[ss] = resample_count[ss] + 1;
 
         // Release memory if needed:
@@ -147,6 +192,8 @@ void RS_TYP::ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, ve
         {
           particle_tree->at(ss).release_memory();
         }
+
+        particle_tree->at(ss).populate_tree("binary only");
 
       }
     }

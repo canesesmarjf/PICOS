@@ -30,6 +30,8 @@ class RS_TYP
   bt_params_TYP bt_params;
   qt_params_TYP qt_params;
   uvec resample_count;
+  double _L_ex_max; // Right boundary where the exhaust region begins
+  double _L_ex_min;
 
   public:
   // Default constructor:
@@ -40,6 +42,7 @@ class RS_TYP
 
   // Methods:
   bool IsResamplingNeeded(params_TYP * params, vector<ions_TYP> * IONS, mesh_TYP * mesh, vector<particle_tree_TYP> * tree, int ss);
+  bool IsResamplingNeeded_exhaust(params_TYP * params, vector<ions_TYP> * IONS, mesh_TYP * mesh, vector<particle_tree_TYP> * tree, int ss);
   void ApplyResampling_AllSpecies(params_TYP * params, mesh_TYP * mesh, vector<ions_TYP> * IONS, vector<particle_tree_TYP> * tree);
   void check_for_nans(params_TYP * params, vector<ions_TYP> * IONS);
 
